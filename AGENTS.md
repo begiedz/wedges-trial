@@ -91,6 +91,12 @@ All agents working in this repository must follow these coding rules:
 - Avoid unnecessary boilerplate, repeated logic, and speculative abstractions.
 - Do not hide straightforward logic behind extra layers unless the abstraction clearly improves readability, reuse, or correctness.
 - Prefer small pure functions, explicit data flow, and predictable control flow.
+- For UI work, follow atomic design principles:
+  - keep reusable primitive UI pieces as atoms
+  - compose atoms into focused molecules
+  - keep screen-level composition in organism/page components
+  - do not leave large mixed-responsibility UI screens in a single component when a smaller atomic split would improve clarity
+  - avoid fake layering; only introduce atoms and molecules that are meaningfully reusable or simplify the parent component
 - Follow clean code principles:
   - use clear names
   - keep functions focused

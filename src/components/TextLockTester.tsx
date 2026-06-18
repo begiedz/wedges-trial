@@ -1,26 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { ActionButton } from "@/components/text-lock/atoms/ActionButton";
+import { MetricCard } from "@/components/text-lock/atoms/MetricCard";
+import { SectionCard } from "@/components/text-lock/atoms/SectionCard";
+import { PinControlCard } from "@/components/text-lock/molecules/PinControlCard";
+import { PinTable } from "@/components/text-lock/molecules/PinTable";
+import { PinVisualizerRow } from "@/components/text-lock/molecules/PinVisualizerRow";
+import type { TextLockCopy } from "@/components/text-lock/types";
 import { applyMove } from "@/game/applyMove";
 import { createRun, openSolvedChest } from "@/game/createRun";
 import { loadRunState, saveRunState } from "@/game/persistence";
 import { cloneLockState, resetCurrentLock } from "@/game/resetLock";
 import { solveLock } from "@/game/solver";
-import type { Direction, LockState, RunState } from "@/game/types";
-
-type TextLockCopy = {
-  actions: Record<string, string>;
-  labels: Record<string, string>;
-  messages: Record<string, string>;
-  states: Record<string, string>;
-  subtitle: string;
-  title: string;
-};
+import type { ChestReward, Direction, LockState, RunState } from "@/game/types";
 
 type TextLockTesterProps = {
   copy: TextLockCopy;
 };
+
+const MAX_EVENT_LOG_ITEMS = 8;
+
+function pushEvent(log: string[], entry: string): string[] {
+  return [entry, ...log].slice(0, MAX_EVENT_LOG_ITEMS);
+}
+
+function getNextSelectedPinId(
+  pins: LockState["pins"],
+  selectedPinId: number | null,
+  offset: number,
+): number | null {
+  if (pins.length === 0) {
+    return null;
+  }
+
+  const currentIndex = pins.findIndex((pin) => pin.id === selectedPinId);
+  const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+  const nextIndex = (safeIndex + offset + pins.length) % pins.length;
+  return pins[nextIndex]?.id ?? null;
+}
 
 function formatRuleText(
   copy: TextLockCopy,
@@ -90,11 +109,45 @@ function applySelectedMove(
   return applyMove(run, selectedPinId, direction);
 }
 
+function describeMoveOutcome(
+  copy: TextLockCopy,
+  previousRun: RunState,
+  nextRun: RunState,
+  pinId: number,
+  direction: Direction,
+): string {
+  const directionLabel = direction === 1 ? copy.labels.right : copy.labels.left;
+  const pinLabel = copy.labels.pinPrefix;
+
+  if (nextRun === previousRun) {
+    return `${pinLabel} ${pinId} ${directionLabel}: ${copy.labels.ignoredEvent}`;
+  }
+
+  if (nextRun.currentLock.isSolved && !previousRun.currentLock.isSolved) {
+    return `${pinLabel} ${pinId} ${directionLabel}: ${copy.labels.solvedChestEvent} ${previousRun.chestIndex + 1}`;
+  }
+
+  if (nextRun.lockpicks < previousRun.lockpicks) {
+    return `${pinLabel} ${pinId} ${directionLabel}: ${copy.labels.lockpickBrokeEvent}`;
+  }
+
+  if (
+    nextRun.currentLock.invalidMovesOnCurrentPick >
+    previousRun.currentLock.invalidMovesOnCurrentPick
+  ) {
+    return `${pinLabel} ${pinId} ${directionLabel}: ${copy.labels.invalidMoveEvent}`;
+  }
+
+  return `${pinLabel} ${pinId} ${directionLabel}: ${copy.labels.movedEvent}`;
+}
+
 export function TextLockTester({ copy }: TextLockTesterProps) {
   const [run, setRun] = useState<RunState | null>(null);
   const [initialLock, setInitialLock] = useState<LockState | null>(null);
   const [savedRun, setSavedRun] = useState<RunState | null>(null);
   const [selectedPinId, setSelectedPinId] = useState<number | null>(null);
+  const [eventLog, setEventLog] = useState<string[]>([]);
+  const [lastReward, setLastReward] = useState<ChestReward | null>(null);
 
   useEffect(() => {
     const persistedRun = loadRunState();
@@ -124,6 +177,8 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
     setRun(nextRun);
     setInitialLock(cloneLockState(nextRun.currentLock));
     setSelectedPinId(nextRun.currentLock.pins[0]?.id ?? null);
+    setLastReward(null);
+    setEventLog([`${copy.labels.startedChestEvent} ${nextRun.chestIndex + 1}`]);
   };
 
   const continueSavedRun = () => {
@@ -134,47 +189,177 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
     setRun(savedRun);
     setInitialLock(cloneLockState(savedRun.currentLock));
     setSelectedPinId(savedRun.currentLock.pins[0]?.id ?? null);
+    setLastReward(null);
+    setEventLog((currentLog) =>
+      pushEvent(
+        currentLog,
+        `${copy.labels.continuedSavedChestEvent} ${savedRun.chestIndex + 1}`,
+      ),
+    );
   };
 
-  const moveSelectedPin = (direction: Direction) => {
-    setRun((currentRun) => {
-      if (!currentRun) {
-        return currentRun;
+  const movePin = useCallback(
+    (pinId: number | null, direction: Direction) => {
+      if (!run || pinId === null) {
+        return;
       }
 
-      return applySelectedMove(currentRun, selectedPinId, direction);
-    });
-  };
+      const nextRun = applySelectedMove(run, pinId, direction);
+      setRun(nextRun);
+      setSelectedPinId(pinId);
+      setEventLog((currentLog) =>
+        pushEvent(
+          currentLog,
+          describeMoveOutcome(copy, run, nextRun, pinId, direction),
+        ),
+      );
+    },
+    [copy, run],
+  );
 
-  const resetLock = () => {
-    setRun((currentRun) => {
-      if (!currentRun || !initialLock) {
-        return currentRun;
-      }
+  const resetLock = useCallback(() => {
+    if (!run || !initialLock) {
+      return;
+    }
 
-      return resetCurrentLock(currentRun, initialLock);
-    });
-  };
+    const nextRun = resetCurrentLock(run, initialLock);
+    setRun(nextRun);
+    setLastReward(null);
+    setEventLog((currentLog) =>
+      pushEvent(
+        currentLog,
+        `${copy.labels.resetChestEvent} ${run.chestIndex + 1} ${copy.labels.toInitialState}`,
+      ),
+    );
+  }, [copy, initialLock, run]);
 
   const continueToNextChest = () => {
-    setRun((currentRun) => {
-      if (!currentRun || !currentRun.currentLock.isSolved) {
-        return currentRun;
+    if (!run || !run.currentLock.isSolved) {
+      return;
+    }
+
+    const nextRun = openSolvedChest(run);
+    saveRunState(nextRun);
+    setRun(nextRun);
+    setSavedRun(nextRun);
+    setInitialLock(cloneLockState(nextRun.currentLock));
+    setSelectedPinId(nextRun.currentLock.pins[0]?.id ?? null);
+    setLastReward(nextRun.reward);
+    setEventLog((currentLog) =>
+      pushEvent(
+        currentLog,
+        `${copy.labels.openedChestEvent} ${run.chestIndex + 1}: +${nextRun.reward.oreNuggets} ${copy.labels.oreUnit}, +${nextRun.reward.lockpicks} ${copy.labels.rewardLockpicks}`,
+      ),
+    );
+  };
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!run) {
+        return;
       }
 
-      const nextRun = openSolvedChest(currentRun);
-      saveRunState(nextRun);
-      setSavedRun(nextRun);
-      setInitialLock(cloneLockState(nextRun.currentLock));
-      setSelectedPinId(nextRun.currentLock.pins[0]?.id ?? null);
+      if (event.key >= "1" && event.key <= "9") {
+        const nextPinIndex = Number(event.key) - 1;
+        const nextPin = run.currentLock.pins[nextPinIndex];
 
-      return nextRun;
-    });
-  };
+        if (nextPin) {
+          setSelectedPinId(nextPin.id);
+          setEventLog((currentLog) =>
+            pushEvent(
+              currentLog,
+              `${copy.labels.selectedPinFromKeyboardEvent} ${nextPin.id}`,
+            ),
+          );
+          event.preventDefault();
+        }
+
+        return;
+      }
+
+      if (event.key === "a" || event.key === "ArrowLeft") {
+        event.preventDefault();
+        movePin(selectedPinId, 1);
+        return;
+      }
+
+      if (event.key === "d" || event.key === "ArrowRight") {
+        event.preventDefault();
+        movePin(selectedPinId, -1);
+        return;
+      }
+
+      if (event.key === "w" || event.key === "ArrowUp") {
+        const nextPinId = getNextSelectedPinId(
+          run.currentLock.pins,
+          selectedPinId,
+          1,
+        );
+
+        if (nextPinId !== null) {
+          event.preventDefault();
+          setSelectedPinId(nextPinId);
+          setEventLog((currentLog) =>
+            pushEvent(
+              currentLog,
+              `${copy.labels.selectedPinFromKeyboardEvent} ${nextPinId}`,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (event.key === "s" || event.key === "ArrowDown") {
+        const nextPinId = getNextSelectedPinId(
+          run.currentLock.pins,
+          selectedPinId,
+          -1,
+        );
+
+        if (nextPinId !== null) {
+          event.preventDefault();
+          setSelectedPinId(nextPinId);
+          setEventLog((currentLog) =>
+            pushEvent(
+              currentLog,
+              `${copy.labels.selectedPinFromKeyboardEvent} ${nextPinId}`,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (event.key === "r") {
+        event.preventDefault();
+        resetLock();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [
+    copy.labels.selectedPinFromKeyboardEvent,
+    movePin,
+    resetLock,
+    run,
+    selectedPinId,
+  ]);
 
   const selectedPin =
     run?.currentLock.pins.find((pin) => pin.id === selectedPinId) ?? null;
   const solverPath = run ? solveLock(run.currentLock) : null;
+  const selectPin = useCallback(
+    (pinId: number) => {
+      setSelectedPinId(pinId);
+      setEventLog((currentLog) =>
+        pushEvent(currentLog, `${copy.labels.selectedPinEvent} ${pinId}`),
+      );
+    },
+    [copy.labels.selectedPinEvent],
+  );
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
@@ -189,37 +374,25 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
           {copy.subtitle}
         </p>
         <div className="flex flex-wrap gap-3">
-          <button
-            className="rounded-md border border-amber-500 bg-amber-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-amber-300"
-            onClick={startNewRun}
-            type="button"
-          >
+          <ActionButton onClick={startNewRun} variant="accent">
             {copy.actions.newRun}
-          </button>
-          <button
-            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-900 transition disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-100"
-            disabled={!savedRun}
-            onClick={continueSavedRun}
-            type="button"
-          >
+          </ActionButton>
+          <ActionButton disabled={!savedRun} onClick={continueSavedRun}>
             {copy.actions.continueRun}
-          </button>
-          <button
-            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-900 transition disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-100"
+          </ActionButton>
+          <ActionButton
             disabled={!run || !initialLock || run.currentLock.isFailed}
             onClick={resetLock}
-            type="button"
           >
             {copy.actions.reset}
-          </button>
-          <button
-            className="rounded-md border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-800 transition disabled:cursor-not-allowed disabled:opacity-40 dark:text-emerald-100"
+          </ActionButton>
+          <ActionButton
             disabled={!run?.currentLock.isSolved}
             onClick={continueToNextChest}
-            type="button"
+            variant="success"
           >
             {copy.actions.continueToNextChest}
-          </button>
+          </ActionButton>
         </div>
         {savedRun ? (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -231,178 +404,145 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
       <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-4 rounded-2xl border border-zinc-200 bg-white/90 p-5 dark:border-zinc-800 dark:bg-zinc-950/90">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-              <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
-                {copy.labels.chest}
-              </p>
-              <p className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
-                {run ? run.chestIndex + 1 : copy.labels.noValue}
-              </p>
-            </div>
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-              <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
-                {copy.labels.oreNuggets}
-              </p>
-              <p className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
-                {run?.oreNuggets ?? 0}
-              </p>
-            </div>
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-              <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
-                {copy.labels.lockpicks}
-              </p>
-              <p className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
-                {run?.lockpicks ?? 0}
-              </p>
-            </div>
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-              <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
-                {copy.labels.invalidMoves}
-              </p>
-              <p className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
-                {run?.currentLock.invalidMovesOnCurrentPick ?? 0}
-              </p>
-            </div>
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-              <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
-                {copy.labels.maxInvalidMoves}
-              </p>
-              <p className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
-                {run?.currentLock.maxInvalidMovesPerPick ?? 3}
-              </p>
-            </div>
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-              <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
-                {copy.labels.state}
-              </p>
-              <p className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
-                {getLockStateLabel(copy, run)}
-              </p>
-            </div>
+            <MetricCard
+              label={copy.labels.chest}
+              value={run ? run.chestIndex + 1 : copy.labels.noValue}
+            />
+            <MetricCard
+              label={copy.labels.oreNuggets}
+              value={run?.oreNuggets ?? 0}
+            />
+            <MetricCard
+              label={copy.labels.lockpicks}
+              value={run?.lockpicks ?? 0}
+            />
+            <MetricCard
+              label={copy.labels.invalidMoves}
+              value={run?.currentLock.invalidMovesOnCurrentPick ?? 0}
+            />
+            <MetricCard
+              label={copy.labels.maxInvalidMoves}
+              value={run?.currentLock.maxInvalidMovesPerPick ?? 3}
+            />
+            <MetricCard
+              label={copy.labels.state}
+              value={getLockStateLabel(copy, run)}
+            />
           </div>
 
-          <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <SectionCard>
             <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
               {copy.labels.selectedPin}
             </p>
             <p className="mt-2 text-lg text-zinc-900 dark:text-zinc-100">
               {selectedPin ? `#${selectedPin.id}` : copy.labels.noValue}
             </p>
+            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+              {copy.labels.moveHint}
+            </p>
+          </SectionCard>
+
+          <SectionCard>
+            <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
+              {copy.labels.pinColumns}
+            </p>
+            <div className="mt-4 flex flex-col-reverse gap-3">
+              {run?.currentLock.pins.map((pin) => {
+                return (
+                  <PinVisualizerRow
+                    copy={copy}
+                    isSelected={pin.id === selectedPinId}
+                    key={`visual-${pin.id}`}
+                    onSelect={selectPin}
+                    pin={pin}
+                  />
+                );
+              })}
+              {!run ? (
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {copy.messages.idle}
+                </p>
+              ) : null}
+            </div>
+          </SectionCard>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {run?.currentLock.pins.map((pin) => {
+              return (
+                <PinControlCard
+                  copy={copy}
+                  isDisabled={run.currentLock.isFailed}
+                  isSelected={pin.id === selectedPinId}
+                  key={`control-${pin.id}`}
+                  onMove={movePin}
+                  onSelect={selectPin}
+                  pin={pin}
+                />
+              );
+            })}
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
-            <table className="min-w-full divide-y divide-zinc-200 text-left text-sm dark:divide-zinc-800">
-              <thead className="bg-zinc-100 text-zinc-600 dark:bg-zinc-900/70 dark:text-zinc-400">
-                <tr>
-                  <th className="px-4 py-3 font-medium">{copy.labels.pin}</th>
-                  <th className="px-4 py-3 font-medium">
-                    {copy.labels.position}
-                  </th>
-                  <th className="px-4 py-3 font-medium">
-                    {copy.labels.target}
-                  </th>
-                  <th className="px-4 py-3 font-medium">{copy.labels.range}</th>
-                  <th className="px-4 py-3 font-medium">
-                    {copy.actions.selectPin}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-200 bg-white/90 dark:divide-zinc-800 dark:bg-zinc-950/80">
-                {run?.currentLock.pins.map((pin) => {
-                  const isSelected = pin.id === selectedPinId;
-                  const isOnTarget = pin.position === pin.target;
-
-                  return (
-                    <tr
-                      className={
-                        isSelected
-                          ? "bg-amber-500/10"
-                          : isOnTarget
-                            ? "bg-emerald-500/10"
-                            : ""
-                      }
-                      key={pin.id}
-                    >
-                      <td className="px-4 py-3 font-mono text-zinc-950 dark:text-zinc-100">
-                        #{pin.id}
-                      </td>
-                      <td className="px-4 py-3 font-mono text-zinc-950 dark:text-zinc-100">
-                        {pin.position}
-                      </td>
-                      <td className="px-4 py-3 font-mono text-zinc-950 dark:text-zinc-100">
-                        {pin.target}
-                      </td>
-                      <td className="px-4 py-3 font-mono text-zinc-600 dark:text-zinc-300">
-                        {pin.min}..{pin.max}
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-900 transition hover:border-zinc-400 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-100 dark:hover:border-zinc-500"
-                          disabled={run.currentLock.isFailed}
-                          onClick={() => setSelectedPinId(pin.id)}
-                          type="button"
-                        >
-                          {copy.actions.selectPin}
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {!run ? (
-                  <tr>
-                    <td
-                      className="px-4 py-6 text-zinc-500 dark:text-zinc-400"
-                      colSpan={5}
-                    >
-                      {copy.messages.idle}
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
+          <PinTable
+            copy={copy}
+            lock={run?.currentLock ?? null}
+            onSelect={selectPin}
+            selectedPinId={selectedPinId}
+          />
         </div>
 
         <aside className="space-y-4 rounded-2xl border border-zinc-200 bg-white/90 p-5 dark:border-zinc-800 dark:bg-zinc-950/90">
-          <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
-              {copy.labels.solverHint}
-            </p>
-            <p className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
-              {solverPath ? solverPath.length : copy.labels.noValue}
-            </p>
-          </div>
+          <MetricCard
+            label={copy.labels.solverHint}
+            value={solverPath ? solverPath.length : copy.labels.noValue}
+          />
 
-          <div className="space-y-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-            <button
-              className="w-full rounded-md border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-900 transition disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-100"
-              disabled={
-                !run || selectedPinId === null || run.currentLock.isFailed
-              }
-              onClick={() => moveSelectedPin(-1)}
-              type="button"
-            >
-              {copy.actions.moveLeft}
-            </button>
-            <button
-              className="w-full rounded-md border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-900 transition disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-100"
-              disabled={
-                !run || selectedPinId === null || run.currentLock.isFailed
-              }
-              onClick={() => moveSelectedPin(1)}
-              type="button"
-            >
-              {copy.actions.moveRight}
-            </button>
-          </div>
-
-          <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <SectionCard>
             <p className="text-sm leading-7 text-zinc-600 dark:text-zinc-300">
               {getStatusMessage(copy, run)}
             </p>
-          </div>
+          </SectionCard>
 
-          <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <SectionCard>
+            <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
+              {copy.labels.rewardSummary}
+            </p>
+            <p className="mt-2 text-sm leading-7 text-zinc-600 dark:text-zinc-300">
+              {lastReward
+                ? `+${lastReward.oreNuggets} ${copy.labels.oreUnit}, +${lastReward.lockpicks} ${copy.labels.rewardLockpicks}`
+                : copy.labels.noValue}
+            </p>
+          </SectionCard>
+
+          <SectionCard>
+            <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
+              {copy.labels.keyboardHelp}
+            </p>
+            <ul className="mt-3 space-y-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+              <li>{copy.labels.keyboardSelectPin}</li>
+              <li>{copy.labels.keyboardSelectPreviousPin}</li>
+              <li>{copy.labels.keyboardSelectNextPin}</li>
+              <li>{copy.labels.keyboardMoveLeft}</li>
+              <li>{copy.labels.keyboardMoveRight}</li>
+              <li>{copy.labels.keyboardReset}</li>
+            </ul>
+          </SectionCard>
+
+          <SectionCard>
+            <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
+              {copy.labels.eventLog}
+            </p>
+            <ul className="mt-3 space-y-2 font-mono text-xs leading-6 text-zinc-700 dark:text-zinc-300">
+              {eventLog.length > 0 ? (
+                eventLog.map((entry, index) => (
+                  <li key={`${index}-${entry}`}>{entry}</li>
+                ))
+              ) : (
+                <li>{copy.messages.noEvents}</li>
+              )}
+            </ul>
+          </SectionCard>
+
+          <SectionCard>
             <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
               {copy.labels.rules}
             </p>
@@ -419,7 +559,7 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
               ))}
               {!run ? <li>{copy.messages.idle}</li> : null}
             </ul>
-          </div>
+          </SectionCard>
         </aside>
       </section>
     </main>
