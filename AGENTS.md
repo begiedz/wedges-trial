@@ -67,6 +67,7 @@ These rules must not be changed.
 
 Use:
 
+- pnpm
 - Next.js
 - React
 - TypeScript
@@ -79,6 +80,31 @@ Use provided UI elements from the components folder. If there is not component r
 Do not introduce a backend for MVP.
 
 Use local browser persistence only, preferably `localStorage`.
+
+---
+
+## 4.1 Implementation Style Rules
+
+All agents working in this repository must follow these coding rules:
+
+- Write the minimal and simplest code that correctly solves the task.
+- Avoid unnecessary boilerplate, repeated logic, and speculative abstractions.
+- Do not hide straightforward logic behind extra layers unless the abstraction clearly improves readability, reuse, or correctness.
+- Prefer small pure functions, explicit data flow, and predictable control flow.
+- For UI work, follow atomic design principles:
+  - keep reusable primitive UI pieces as atoms
+  - compose atoms into focused molecules
+  - keep screen-level composition in organism/page components
+  - do not leave large mixed-responsibility UI screens in a single component when a smaller atomic split would improve clarity
+  - avoid fake layering; only introduce atoms and molecules that are meaningfully reusable or simplify the parent component
+- Follow clean code principles:
+  - use clear names
+  - keep functions focused
+  - keep modules cohesive
+  - remove duplication where it materially improves clarity
+  - avoid clever code when simple code is enough
+- Add short comments to complicated or non-obvious code when the intent, constraint, or invariant would not be clear from the code alone.
+- Do not add comments for obvious code or use comments as a substitute for better naming and structure.
 
 ---
 
