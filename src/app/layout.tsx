@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Noto_Serif } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
-import Header from "@/components/header";
+import Header from "@/components/general/molecules/header";
 
 const boucherieBlock = localFont({
   src: "../assets/fonts/BoucherieBlockExtended.otf",

@@ -1,4 +1,4 @@
-import Logo from "./logo";
+import Logo from "../atoms/logo";
 
 export default function Header() {
   return (

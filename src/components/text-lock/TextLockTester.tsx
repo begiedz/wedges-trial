@@ -362,15 +362,15 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
   );
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
-      <header className="space-y-3 rounded-2xl border border-zinc-200 bg-white/95 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.10)] dark:border-zinc-800 dark:bg-zinc-950/95 dark:shadow-[0_18px_60px_rgba(0,0,0,0.45)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-700 dark:text-amber-300">
+    <main className="flex flex-col gap-6 mx-auto px-4 sm:px-6 py-8 w-full max-w-5xl min-h-screen">
+      <header className="space-y-3 bg-white/95 dark:bg-zinc-950/95 shadow-[0_18px_60px_rgba(15,23,42,0.10)] dark:shadow-[0_18px_60px_rgba(0,0,0,0.45)] p-6 border border-zinc-200 dark:border-zinc-800 rounded-2xl">
+        <p className="font-semibold text-amber-700 dark:text-amber-300 text-xs uppercase tracking-[0.3em]">
           {copy.labels.debugUi}
         </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50 sm:text-4xl">
+        <h1 className="font-semibold text-zinc-950 dark:text-zinc-50 text-3xl sm:text-4xl tracking-tight">
           {copy.title}
         </h1>
-        <p className="max-w-3xl text-sm leading-7 text-zinc-600 dark:text-zinc-300 sm:text-base">
+        <p className="max-w-3xl text-zinc-600 dark:text-zinc-300 text-sm sm:text-base leading-7">
           {copy.subtitle}
         </p>
         <div className="flex flex-wrap gap-3">
@@ -395,15 +395,15 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
           </ActionButton>
         </div>
         {savedRun ? (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-zinc-500 dark:text-zinc-400 text-sm">
             {copy.messages.saved}
           </p>
         ) : null}
       </header>
 
-      <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="space-y-4 rounded-2xl border border-zinc-200 bg-white/90 p-5 dark:border-zinc-800 dark:bg-zinc-950/90">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <section className="gap-4 grid lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="space-y-4 bg-white/90 dark:bg-zinc-950/90 p-5 border border-zinc-200 dark:border-zinc-800 rounded-2xl">
+          <div className="gap-3 grid sm:grid-cols-2 xl:grid-cols-3">
             <MetricCard
               label={copy.labels.chest}
               value={run ? run.chestIndex + 1 : copy.labels.noValue}
@@ -431,22 +431,22 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
           </div>
 
           <SectionCard>
-            <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
+            <p className="text-zinc-500 dark:text-zinc-500 text-xs uppercase tracking-[0.24em]">
               {copy.labels.selectedPin}
             </p>
-            <p className="mt-2 text-lg text-zinc-900 dark:text-zinc-100">
+            <p className="mt-2 text-zinc-900 dark:text-zinc-100 text-lg">
               {selectedPin ? `#${selectedPin.id}` : copy.labels.noValue}
             </p>
-            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="mt-2 text-zinc-500 dark:text-zinc-400 text-sm">
               {copy.labels.moveHint}
             </p>
           </SectionCard>
 
           <SectionCard>
-            <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
+            <p className="text-zinc-500 dark:text-zinc-500 text-xs uppercase tracking-[0.24em]">
               {copy.labels.pinColumns}
             </p>
-            <div className="mt-4 flex flex-col-reverse gap-3">
+            <div className="flex flex-col-reverse gap-3 mt-4">
               {run?.currentLock.pins.map((pin) => {
                 return (
                   <PinVisualizerRow
@@ -459,14 +459,14 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
                 );
               })}
               {!run ? (
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="text-zinc-500 dark:text-zinc-400 text-sm">
                   {copy.messages.idle}
                 </p>
               ) : null}
             </div>
           </SectionCard>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="gap-3 grid sm:grid-cols-2 xl:grid-cols-3">
             {run?.currentLock.pins.map((pin) => {
               return (
                 <PinControlCard
@@ -490,23 +490,23 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
           />
         </div>
 
-        <aside className="space-y-4 rounded-2xl border border-zinc-200 bg-white/90 p-5 dark:border-zinc-800 dark:bg-zinc-950/90">
+        <aside className="space-y-4 bg-white/90 dark:bg-zinc-950/90 p-5 border border-zinc-200 dark:border-zinc-800 rounded-2xl">
           <MetricCard
             label={copy.labels.solverHint}
             value={solverPath ? solverPath.length : copy.labels.noValue}
           />
 
           <SectionCard>
-            <p className="text-sm leading-7 text-zinc-600 dark:text-zinc-300">
+            <p className="text-zinc-600 dark:text-zinc-300 text-sm leading-7">
               {getStatusMessage(copy, run)}
             </p>
           </SectionCard>
 
           <SectionCard>
-            <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
+            <p className="text-zinc-500 dark:text-zinc-500 text-xs uppercase tracking-[0.24em]">
               {copy.labels.rewardSummary}
             </p>
-            <p className="mt-2 text-sm leading-7 text-zinc-600 dark:text-zinc-300">
+            <p className="mt-2 text-zinc-600 dark:text-zinc-300 text-sm leading-7">
               {lastReward
                 ? `+${lastReward.oreNuggets} ${copy.labels.oreUnit}, +${lastReward.lockpicks} ${copy.labels.rewardLockpicks}`
                 : copy.labels.noValue}
@@ -514,10 +514,10 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
           </SectionCard>
 
           <SectionCard>
-            <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
+            <p className="text-zinc-500 dark:text-zinc-500 text-xs uppercase tracking-[0.24em]">
               {copy.labels.keyboardHelp}
             </p>
-            <ul className="mt-3 space-y-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+            <ul className="space-y-2 mt-3 text-zinc-600 dark:text-zinc-300 text-sm leading-6">
               <li>{copy.labels.keyboardSelectPin}</li>
               <li>{copy.labels.keyboardSelectPreviousPin}</li>
               <li>{copy.labels.keyboardSelectNextPin}</li>
@@ -528,10 +528,10 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
           </SectionCard>
 
           <SectionCard>
-            <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
+            <p className="text-zinc-500 dark:text-zinc-500 text-xs uppercase tracking-[0.24em]">
               {copy.labels.eventLog}
             </p>
-            <ul className="mt-3 space-y-2 font-mono text-xs leading-6 text-zinc-700 dark:text-zinc-300">
+            <ul className="space-y-2 mt-3 font-mono text-zinc-700 dark:text-zinc-300 text-xs leading-6">
               {eventLog.length > 0 ? (
                 eventLog.map((entry, index) => (
                   <li key={`${index}-${entry}`}>{entry}</li>
@@ -543,10 +543,10 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
           </SectionCard>
 
           <SectionCard>
-            <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-500">
+            <p className="text-zinc-500 dark:text-zinc-500 text-xs uppercase tracking-[0.24em]">
               {copy.labels.rules}
             </p>
-            <ul className="mt-3 space-y-2 font-mono text-xs leading-6 text-zinc-700 dark:text-zinc-300">
+            <ul className="space-y-2 mt-3 font-mono text-zinc-700 dark:text-zinc-300 text-xs leading-6">
               {run?.currentLock.rules.map((rule) => (
                 <li key={`${rule.sourcePinId}:${rule.direction}`}>
                   {formatRuleText(
