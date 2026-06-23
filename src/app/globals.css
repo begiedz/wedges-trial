@@ -2,12 +2,17 @@
 
 :root {
   --foreground: #ffffff;
-  --background: #171717;
+  --primary: #f9ddd0;
+  --secondary: #a9a9a9;
+  --background: #292729;
+  --background-secondary: #211F21;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
   --font-sans: var(--font-noto-serif);
   --font-heading: var(--font-boucherie);
 }
