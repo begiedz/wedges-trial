@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Noto_Serif } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
+import Navbar from "@/components/navbar";
 
 const boucherieBlock = localFont({
   src: "../assets/fonts/BoucherieBlockExtended.otf",
@@ -29,7 +30,10 @@ export default function RootLayout({
       lang="en"
       className={`${boucherieBlock.variable} ${notoSerif.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="flex flex-col min-h-full">
+        <Navbar />
+        {children}
+      </body>
     </html>
   );
 }
