@@ -12,7 +12,7 @@ export const textLockCopy = {
     chest: "Chest",
     debugUi: "Debug UI",
     eventLog: "Event log",
-    invalidMoves: "Invalid moves on current pick",
+    invalidMoves: "Invalid moves",
     invalidMoveEvent: "invalid move",
     ignoredEvent: "ignored",
     keyboardHelp: "Keyboard help",
