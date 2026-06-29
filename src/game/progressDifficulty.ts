@@ -5,20 +5,20 @@ import {
 } from "@/game/constants";
 import type { DifficultyConfig, LockDifficulty } from "@/game/types";
 
-function getDifficultyBand(chestIndex: number): LockDifficulty {
+export function getDifficultyBand(chestIndex: number): LockDifficulty {
   if (chestIndex >= 18) {
-    return "master";
+    return 4;
   }
 
   if (chestIndex >= 10) {
-    return "hard";
+    return 3;
   }
 
   if (chestIndex >= 4) {
-    return "medium";
+    return 2;
   }
 
-  return "easy";
+  return 1;
 }
 
 export function getDifficultyForChest(chestIndex: number): DifficultyConfig {
@@ -26,18 +26,18 @@ export function getDifficultyForChest(chestIndex: number): DifficultyConfig {
   const band = getDifficultyBand(safeIndex);
 
   switch (band) {
-    case "easy":
+    case 1:
       return {
-        pinCount: 3,
+        tumblerCount: 3,
         minPosition: DEFAULT_MIN_POSITION,
         maxPosition: DEFAULT_MAX_POSITION,
         targetPosition: DEFAULT_TARGET_POSITION,
         dependencyDensity: Math.min(0.2 + safeIndex * 0.04, 0.35),
         guaranteedSolvableMoves: Math.min(5, 3 + safeIndex),
       };
-    case "medium":
+    case 2:
       return {
-        pinCount: 4,
+        tumblerCount: 4,
         minPosition: DEFAULT_MIN_POSITION,
         maxPosition: DEFAULT_MAX_POSITION,
         targetPosition: DEFAULT_TARGET_POSITION,
@@ -47,9 +47,9 @@ export function getDifficultyForChest(chestIndex: number): DifficultyConfig {
           5 + Math.floor((safeIndex - 4) / 2),
         ),
       };
-    case "hard":
+    case 3:
       return {
-        pinCount: 5,
+        tumblerCount: 5,
         minPosition: DEFAULT_MIN_POSITION,
         maxPosition: DEFAULT_MAX_POSITION,
         targetPosition: DEFAULT_TARGET_POSITION,
@@ -59,9 +59,9 @@ export function getDifficultyForChest(chestIndex: number): DifficultyConfig {
           8 + Math.floor((safeIndex - 10) / 2),
         ),
       };
-    case "master":
+    case 4:
       return {
-        pinCount: 6,
+        tumblerCount: 6,
         minPosition: DEFAULT_MIN_POSITION,
         maxPosition: DEFAULT_MAX_POSITION,
         targetPosition: DEFAULT_TARGET_POSITION,

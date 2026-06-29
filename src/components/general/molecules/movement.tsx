@@ -1,6 +1,7 @@
 import Image from "next/image";
 import AIcon from "@/assets/images/icons/T_Icon_PC_A.png";
 import DIcon from "@/assets/images/icons/T_Icon_PC_D.png";
+import NIcon from "@/assets/images/icons/T_Icon_PC_N.png";
 import RIcon from "@/assets/images/icons/T_Icon_PC_R.png";
 import WIcon from "@/assets/images/icons/T_Icon_PC_W.png";
 import SIcon from "@/assets/images/icons/T_Icon_PS_S.png";
@@ -47,14 +48,25 @@ export default function Movement() {
           <p>Move up/down</p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Image
-            src={RIcon.src}
-            width={iconSize}
-            height={iconSize}
-            alt="Reset"
-          />
-          <p>Reset</p>
+        <div className="flex items-center gap-8">
+          <div className="flex items-center gap-2">
+            <Image
+              src={RIcon.src}
+              width={iconSize}
+              height={iconSize}
+              alt="Reset"
+            />
+            <p>Reset</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Image
+              src={NIcon.src}
+              width={iconSize}
+              height={iconSize}
+              alt="Next"
+            />
+            <p>Next</p>
+          </div>
         </div>
       </div>
     </div>

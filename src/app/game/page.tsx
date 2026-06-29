@@ -1,19 +1,20 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { textLockCopy } from "@/app/textLockCopy";
 import LockPickIcon from "@/assets/images/icons/items/T_ItemIcon_ItKe_Lockpick.png";
 import OreNuggetIcon from "@/assets/images/icons/items/T_ItemIcon_ItMi_Orenugget.png";
-import LockEmptyIcon from "@/assets/images/icons/T_LockDifficulty_Empty.png";
 import Separator from "@/assets/images/T_TitleLine_Small.png";
+import Button from "@/components/general/atoms/button";
 import Card from "@/components/general/atoms/card";
+import Difficulty from "@/components/general/molecules/difficulty";
 import ItemFrame from "@/components/general/molecules/item-frame";
 import Movement from "@/components/general/molecules/movement";
 import Lock from "@/components/lock";
 import { applyMove } from "@/game/applyMove";
 import { createRun, openSolvedChest } from "@/game/createRun";
 import { loadRunState, saveRunState } from "@/game/persistence";
+import { getDifficultyBand } from "@/game/progressDifficulty";
 import { cloneLockState, resetCurrentLock } from "@/game/resetLock";
 import type { Direction, LockState, RunState } from "@/game/types";
 
@@ -141,6 +142,11 @@ export default function Game() {
         event.preventDefault();
         resetLock();
       }
+
+      if (key === "n") {
+        event.preventDefault();
+        continueToNextChest();
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -148,19 +154,26 @@ export default function Game() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [moveSelectedPin, resetLock, run]);
+  }, [continueToNextChest, moveSelectedPin, resetLock, run]);
 
   if (!run) {
     return null;
   }
 
+  const difficultyLevel = getDifficultyBand(run.chestIndex);
+
   return (
     <main className="flex flex-col items-center gap-6">
+      <Button onClick={startNewRun} className="top-0 right-1 absolute">
+        New run
+      </Button>
       <section className="flex flex-col items-center pt-8">
         <h2 className="font-heading text-6xl">Open Chest</h2>
         <div
-          className="bg-foreground w-[388px] h-[36px]"
+          className="bg-foreground"
           style={{
+            width: 388,
+            height: 36,
             WebkitMaskImage: `url(${Separator.src})`,
             maskImage: `url(${Separator.src})`,
             WebkitMaskRepeat: "no-repeat",
@@ -173,20 +186,9 @@ export default function Game() {
         />
       </section>
 
-      <div className="flex gap-1">
-        <span className="font-medium text-secondary text-lg tracking-wide">
-          Difficulty:
-        </span>
-        <div className="flex justify-center items-center">
-          <Image src={LockEmptyIcon.src} alt="" width={24} height={24} />
-          <Image src={LockEmptyIcon.src} alt="" width={24} height={24} />
-          <Image src={LockEmptyIcon.src} alt="" width={24} height={24} />
-          <Image src={LockEmptyIcon.src} alt="" width={24} height={24} />
-        </div>
-      </div>
+      <Difficulty level={difficultyLevel} />
 
       {/* Game */}
-
       <Lock
         onSelectPin={setSelectedPinId}
         pins={run.currentLock.pins}

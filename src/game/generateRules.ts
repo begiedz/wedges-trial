@@ -29,9 +29,12 @@ export function generateRules(
   random: RandomSource = Math.random,
 ): MoveRule[] {
   const rules: MoveRule[] = [];
-  const pinIds = Array.from({ length: config.pinCount }, (_, index) => index);
+  const pinIds = Array.from(
+    { length: config.tumblerCount },
+    (_, index) => index,
+  );
   const secondaryBudget = Math.round(
-    Math.max(0, config.pinCount - 1) * config.dependencyDensity,
+    Math.max(0, config.tumblerCount - 1) * config.dependencyDensity,
   );
 
   for (const sourcePinId of pinIds) {

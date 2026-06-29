@@ -32,7 +32,7 @@ function findRule(
 
 describe("generateRules", () => {
   const baseConfig: DifficultyConfig = {
-    pinCount: 4,
+    tumblerCount: 4,
     minPosition: 0,
     maxPosition: 6,
     targetPosition: 3,
@@ -46,9 +46,9 @@ describe("generateRules", () => {
       createSequenceRandom([0.1, 0.8, 0.3]),
     );
 
-    expect(rules).toHaveLength(baseConfig.pinCount * 2);
+    expect(rules).toHaveLength(baseConfig.tumblerCount * 2);
 
-    for (let pinId = 0; pinId < baseConfig.pinCount; pinId += 1) {
+    for (let pinId = 0; pinId < baseConfig.tumblerCount; pinId += 1) {
       expect(findRule(rules, pinId, 1)).toBeDefined();
       expect(findRule(rules, pinId, -1)).toBeDefined();
     }
@@ -73,7 +73,7 @@ describe("generateRules", () => {
       createSequenceRandom([0.2, 0.7, 0.4]),
     );
 
-    for (let pinId = 0; pinId < baseConfig.pinCount; pinId += 1) {
+    for (let pinId = 0; pinId < baseConfig.tumblerCount; pinId += 1) {
       const rightRule = findRule(rules, pinId, 1);
       const leftRule = findRule(rules, pinId, -1);
 
