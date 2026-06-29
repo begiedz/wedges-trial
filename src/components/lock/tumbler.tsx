@@ -15,11 +15,7 @@ const trackVariables = {
   "--slot-size": "2rem",
 } as CSSProperties;
 
-export default function Tumbler({
-  pin,
-  isSelected = false,
-  onSelect,
-}: TumblerProps) {
+export default function Tumbler({ pin, isSelected = false }: TumblerProps) {
   const slotCount = pin.max - pin.min + 1;
   const currentIndex = pin.position - pin.min;
   const isOnTarget = pin.position === pin.target;
@@ -28,13 +24,11 @@ export default function Tumbler({
   };
 
   return (
-    <button
+    <div
       className={[
-        "w-fit rounded-sm  px-4 py-3 text-left transition-colors",
+        "w-fit rounded-sm  px-10 py-3 text-left transition-colors",
         isSelected ? "bg-[#898c9e]" : "bg-[#AAA8A6]",
       ].join(" ")}
-      onClick={() => onSelect?.(pin.id)}
-      type="button"
     >
       <div className="relative" style={trackVariables}>
         <div className="gap-(--slot-gap) grid grid-flow-col">
@@ -42,8 +36,9 @@ export default function Tumbler({
             const value = pin.min + index;
 
             return (
+              //pin-hole
               <div
-                className="flex justify-center items-center bg-background shadow-[inset_0_1px_4px_rgba(0,0,0,0.45)] rounded-full size-8"
+                className="flex justify-center items-center bg-background shadow-[inset_0_1px_4px_rgba(0,0,0,0.45)] rounded-full size-7"
                 key={value}
               />
             );
@@ -56,6 +51,6 @@ export default function Tumbler({
           <Pin isOnTarget={isOnTarget} />
         </div>
       </div>
-    </button>
+    </div>
   );
 }

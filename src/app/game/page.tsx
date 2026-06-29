@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
-
 import { textLockCopy } from "@/app/textLockCopy";
+import LockEmpty from "@/assets/images/T_LockDifficulty_Empty.png";
+import Separator from "@/assets/images/T_TitleLine_Small.png";
 import Lock from "@/components/lock";
 import { applyMove } from "@/game/applyMove";
 import { createRun, openSolvedChest } from "@/game/createRun";
@@ -152,7 +154,34 @@ export default function Game() {
   );
 
   return (
-    <main className="flex flex-col gap-6 w-full max-w-5xl">
+    <main className="flex flex-col items-center gap-6">
+      <section className="flex flex-col items-center pt-8">
+        <h2 className="font-heading text-6xl">Open Chest</h2>
+        <div
+          className="bg-foreground w-[388px] h-[36px]"
+          style={{
+            WebkitMaskImage: `url(${Separator.src})`,
+            maskImage: `url(${Separator.src})`,
+            WebkitMaskRepeat: "no-repeat",
+            maskRepeat: "no-repeat",
+            WebkitMaskSize: "contain",
+            maskSize: "contain",
+            WebkitMaskPosition: "center",
+            maskPosition: "center",
+          }}
+        />
+      </section>
+      <div className="flex gap-1">
+        <span className="font-medium text-secondary text-lg tracking-wide">
+          Difficulty:
+        </span>
+        <div className="flex justify-center items-center">
+          <Image src={LockEmpty.src} alt="" width={24} height={24} />
+          <Image src={LockEmpty.src} alt="" width={24} height={24} />
+          <Image src={LockEmpty.src} alt="" width={24} height={24} />
+          <Image src={LockEmpty.src} alt="" width={24} height={24} />
+        </div>
+      </div>
       <section className="bg-[#211F21] px-5 py-4 border border-[#6d6a68] rounded-sm">
         <div className="flex flex-wrap justify-between items-center gap-4">
           <div className="flex flex-wrap gap-3 text-sm">

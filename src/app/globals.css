@@ -11,6 +11,7 @@
   --color-background: var(--background);
   --color-background-secondary: var(--background-secondary);
   --color-foreground: var(--foreground);
+  --color-secondary: var(--secondary);
   --font-sans: var(--font-noto-serif);
   --font-heading: var(--font-boucherie);
 }
