@@ -77,6 +77,30 @@ export default function Game() {
     [run, selectedPinId],
   );
 
+  const moveLeft = useCallback(() => {
+    moveSelectedPin(1);
+  }, [moveSelectedPin]);
+
+  const moveRight = useCallback(() => {
+    moveSelectedPin(-1);
+  }, [moveSelectedPin]);
+
+  const selectPreviousPin = useCallback(() => {
+    if (!run) {
+      return;
+    }
+
+    setSelectedPinId((currentPinId) => getNextPinId(run, currentPinId, -1));
+  }, [run]);
+
+  const selectNextPin = useCallback(() => {
+    if (!run) {
+      return;
+    }
+
+    setSelectedPinId((currentPinId) => getNextPinId(run, currentPinId, 1));
+  }, [run]);
+
   const resetLock = useCallback(() => {
     if (!run || !initialLock) {
       return;
@@ -116,25 +140,25 @@ export default function Game() {
 
       if (key === "a" || key === "arrowleft") {
         event.preventDefault();
-        moveSelectedPin(1);
+        moveLeft();
         return;
       }
 
       if (key === "d" || key === "arrowright") {
         event.preventDefault();
-        moveSelectedPin(-1);
+        moveRight();
         return;
       }
 
       if (key === "w" || key === "arrowup") {
         event.preventDefault();
-        setSelectedPinId((currentPinId) => getNextPinId(run, currentPinId, -1));
+        selectPreviousPin();
         return;
       }
 
       if (key === "s" || key === "arrowdown") {
         event.preventDefault();
-        setSelectedPinId((currentPinId) => getNextPinId(run, currentPinId, 1));
+        selectNextPin();
         return;
       }
 
@@ -154,7 +178,15 @@ export default function Game() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [continueToNextChest, moveSelectedPin, resetLock, run]);
+  }, [
+    continueToNextChest,
+    moveLeft,
+    moveRight,
+    resetLock,
+    run,
+    selectNextPin,
+    selectPreviousPin,
+  ]);
 
   if (!run) {
     return null;
@@ -164,7 +196,7 @@ export default function Game() {
 
   return (
     <main className="flex flex-col items-center gap-6">
-      <Button onClick={startNewRun} className="top-0 right-1 absolute">
+      <Button onClick={startNewRun} className="top-1 right-1 absolute">
         New run
       </Button>
       <section className="flex flex-col items-center pt-8">
@@ -213,7 +245,7 @@ export default function Game() {
             amount={run.oreNuggets}
           />
 
-          <Card>
+          <Card className="flex items-center">
             {textLockCopy.labels.invalidMoves}:{" "}
             {run.currentLock.invalidMovesOnCurrentPick}/
             {run.currentLock.maxInvalidMovesPerPick}
@@ -221,7 +253,14 @@ export default function Game() {
         </div>
       </section>
 
-      <Movement />
+      <Movement
+        onMoveLeft={moveLeft}
+        onMoveRight={moveRight}
+        onSelectPreviousPin={selectPreviousPin}
+        onSelectNextPin={selectNextPin}
+        onReset={resetLock}
+        onContinueToNextChest={continueToNextChest}
+      />
     </main>
   );
 }

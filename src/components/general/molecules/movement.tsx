@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { textLockCopy } from "@/app/textLockCopy";
 import AIcon from "@/assets/images/icons/T_Icon_PC_A.png";
 import DIcon from "@/assets/images/icons/T_Icon_PC_D.png";
 import NIcon from "@/assets/images/icons/T_Icon_PC_N.png";
@@ -6,66 +7,102 @@ import RIcon from "@/assets/images/icons/T_Icon_PC_R.png";
 import WIcon from "@/assets/images/icons/T_Icon_PC_W.png";
 import SIcon from "@/assets/images/icons/T_Icon_PS_S.png";
 
-export default function Movement() {
+type MovementProps = {
+  onContinueToNextChest: () => void;
+  onMoveLeft: () => void;
+  onMoveRight: () => void;
+  onReset: () => void;
+  onSelectNextPin: () => void;
+  onSelectPreviousPin: () => void;
+};
+
+type MovementButtonProps = {
+  alt: string;
+  iconSize: number;
+  onClick: () => void;
+  src: string;
+};
+
+function MovementButton({ alt, iconSize, onClick, src }: MovementButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={alt}
+      className="bg-transparent p-0 border-0 appearance-none cursor-pointer"
+    >
+      <Image src={src} width={iconSize} height={iconSize} alt={alt} />
+    </button>
+  );
+}
+
+export default function Movement({
+  onContinueToNextChest,
+  onMoveLeft,
+  onMoveRight,
+  onReset,
+  onSelectNextPin,
+  onSelectPreviousPin,
+}: MovementProps) {
   const iconSize = 32;
 
   return (
-    <div className="flex flex-col items-center font-medium tracking-wider">
+    <div className="flex flex-col items-center tracking-wide">
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <div className="flex">
-            <Image
+            <MovementButton
               src={AIcon.src}
-              width={iconSize}
-              height={iconSize}
-              alt="Left"
+              iconSize={iconSize}
+              alt={textLockCopy.actions.moveLeft}
+              onClick={onMoveLeft}
             />
-            <Image
+            <MovementButton
               src={DIcon.src}
-              width={iconSize}
-              height={iconSize}
-              alt="Right"
+              iconSize={iconSize}
+              alt={textLockCopy.actions.moveRight}
+              onClick={onMoveRight}
             />
           </div>
-          <p>Move left/right</p>
+          <p>{textLockCopy.labels.moveHorizontal}</p>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="flex">
-            <Image
+            <MovementButton
               src={WIcon.src}
-              width={iconSize}
-              height={iconSize}
-              alt="Up"
+              iconSize={iconSize}
+              alt={textLockCopy.actions.selectPreviousPin}
+              onClick={onSelectPreviousPin}
             />
-            <Image
+            <MovementButton
               src={SIcon.src}
-              width={iconSize}
-              height={iconSize}
-              alt="Down"
+              iconSize={iconSize}
+              alt={textLockCopy.actions.selectNextPin}
+              onClick={onSelectNextPin}
             />
           </div>
-          <p>Move up/down</p>
+          <p>{textLockCopy.labels.moveVertical}</p>
         </div>
 
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
-            <Image
+            <MovementButton
               src={RIcon.src}
-              width={iconSize}
-              height={iconSize}
-              alt="Reset"
+              iconSize={iconSize}
+              alt={textLockCopy.actions.reset}
+              onClick={onReset}
             />
-            <p>Reset</p>
+            <p>{textLockCopy.labels.reset}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Image
+            <MovementButton
               src={NIcon.src}
-              width={iconSize}
-              height={iconSize}
-              alt="Next"
+              iconSize={iconSize}
+              alt={textLockCopy.actions.continueToNextChest}
+              onClick={onContinueToNextChest}
             />
-            <p>Next</p>
+            <p>{textLockCopy.labels.next}</p>
           </div>
         </div>
       </div>
