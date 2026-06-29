@@ -1,12 +1,28 @@
+import type { Pin } from "@/game/types";
+
 import Tumbler from "./tumbler";
 
-export default function Lock() {
+type LockProps = {
+  pins: Pin[];
+  selectedPinId?: number | null;
+  onSelectPin?: (pinId: number) => void;
+};
+
+export default function Lock({
+  pins,
+  selectedPinId = null,
+  onSelectPin,
+}: LockProps) {
   return (
-    <div className="flex flex-col gap-1">
-      <Tumbler />
-      <Tumbler />
-      <Tumbler />
-      <Tumbler />
+    <div className="flex flex-col gap-3">
+      {pins.map((pin) => (
+        <Tumbler
+          isSelected={pin.id === selectedPinId}
+          key={pin.id}
+          onSelect={onSelectPin}
+          pin={pin}
+        />
+      ))}
     </div>
   );
 }
