@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { ActionButton } from "@/components/text-lock/atoms/ActionButton";
-import { MetricCard } from "@/components/text-lock/atoms/MetricCard";
-import { SectionCard } from "@/components/text-lock/atoms/SectionCard";
-import { PinControlCard } from "@/components/text-lock/molecules/PinControlCard";
-import { PinTable } from "@/components/text-lock/molecules/PinTable";
-import { PinVisualizerRow } from "@/components/text-lock/molecules/PinVisualizerRow";
-import type { TextLockCopy } from "@/components/text-lock/types";
+import { ActionButton } from "@/components/lock-debug/atoms/ActionButton";
+import { MetricCard } from "@/components/lock-debug/atoms/MetricCard";
+import { SectionCard } from "@/components/lock-debug/atoms/SectionCard";
+import { PinControlCard } from "@/components/lock-debug/molecules/PinControlCard";
+import { PinTable } from "@/components/lock-debug/molecules/PinTable";
+import { PinVisualizerRow } from "@/components/lock-debug/molecules/PinVisualizerRow";
+import type { TextLockCopy } from "@/components/lock-debug/types";
 import { applyMove } from "@/game/applyMove";
 import { createRun, openSolvedChest } from "@/game/createRun";
 import { loadRunState, saveRunState } from "@/game/persistence";

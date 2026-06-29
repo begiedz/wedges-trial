@@ -1,4 +1,4 @@
-import { TextLockTester } from "@/components/text-lock/TextLockTester";
+import { TextLockTester } from "@/components/lock-debug/LockTester";
 import { textLockCopy } from "../textLockCopy";
 
 export default function Debug() {
