@@ -22,59 +22,38 @@ export default function Tumbler({
 }: TumblerProps) {
   const slotCount = pin.max - pin.min + 1;
   const currentIndex = pin.position - pin.min;
-  const targetIndex = pin.target - pin.min;
   const isOnTarget = pin.position === pin.target;
   const pinStyle = {
     transform: `translateX(calc(${currentIndex} * (var(--slot-size) + var(--slot-gap))))`,
-  } satisfies CSSProperties;
+  };
 
   return (
     <button
       className={[
-        "w-fit rounded-sm border px-4 py-3 text-left transition-colors",
-        isSelected
-          ? "border-[#f9ddd0] bg-[#3b363b]"
-          : "border-[#6d6a68] bg-[#AAA8A6]",
+        "w-fit rounded-sm  px-4 py-3 text-left transition-colors",
+        isSelected ? "bg-[#898c9e]" : "bg-[#AAA8A6]",
       ].join(" ")}
       onClick={() => onSelect?.(pin.id)}
       type="button"
     >
-      <div className="mb-2 flex items-center justify-between gap-4 text-xs text-background">
-        <span className="font-semibold">#{pin.id}</span>
-        <span className="font-mono">
-          {pin.position}/{pin.target}
-        </span>
-      </div>
       <div className="relative" style={trackVariables}>
-        <div className="grid grid-flow-col gap-[var(--slot-gap)]">
+        <div className="gap-(--slot-gap) grid grid-flow-col">
           {Array.from({ length: slotCount }, (_, index) => {
             const value = pin.min + index;
-            const isTargetSlot = index === targetIndex;
 
             return (
               <div
-                className={[
-                  "flex size-[var(--slot-size)] items-center justify-center rounded-full bg-background shadow-[inset_0_1px_4px_rgba(0,0,0,0.45)]",
-                  isTargetSlot
-                    ? isSelected
-                      ? "ring-2 ring-[#5f7a43]/80 ring-offset-2 ring-offset-[#3b363b]"
-                      : "ring-2 ring-[#5f7a43]/80 ring-offset-2 ring-offset-[#AAA8A6]"
-                    : "",
-                ].join(" ")}
+                className="flex justify-center items-center bg-background shadow-[inset_0_1px_4px_rgba(0,0,0,0.45)] rounded-full size-8"
                 key={value}
-              >
-                <span className="font-mono text-[10px] text-[#a9a9a9]">
-                  {value}
-                </span>
-              </div>
+              />
             );
           })}
         </div>
         <div
-          className="pointer-events-none absolute inset-y-0 left-0 flex items-center transition-transform duration-300 ease-out"
+          className="left-0 absolute inset-y-0 flex items-center transition-transform duration-300 ease-out pointer-events-none"
           style={pinStyle}
         >
-          <Pin isOnTarget={isOnTarget} isSelected={isSelected} />
+          <Pin isOnTarget={isOnTarget} />
         </div>
       </div>
     </button>
