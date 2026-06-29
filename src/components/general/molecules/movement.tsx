@@ -29,7 +29,7 @@ function MovementButton({ alt, iconSize, onClick, src }: MovementButtonProps) {
       type="button"
       onClick={onClick}
       aria-label={alt}
-      className="cursor-pointer appearance-none border-0 bg-transparent p-0"
+      className="bg-transparent p-0 border-0 appearance-none cursor-pointer"
     >
       <Image src={src} width={iconSize} height={iconSize} alt={alt} />
     </button>
@@ -47,7 +47,7 @@ export default function Movement({
   const iconSize = 32;
 
   return (
-    <div className="flex flex-col items-center font-medium tracking-wider">
+    <div className="flex flex-col items-center tracking-wide">
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <div className="flex">

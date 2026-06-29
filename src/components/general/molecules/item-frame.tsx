@@ -32,7 +32,7 @@ export default function ItemFrame({
         alt={alt}
         className="-translate-y-2"
       />
-      <div className="right-1 bottom-1 absolute bg-foreground p-1 aspect-square">
+      <div className="right-1 bottom-1 absolute flex justify-center items-center bg-foreground p-1 min-w-5">
         <span className="font-heading text-background">{amount}</span>
       </div>
     </div>

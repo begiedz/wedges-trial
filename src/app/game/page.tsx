@@ -196,7 +196,7 @@ export default function Game() {
 
   return (
     <main className="flex flex-col items-center gap-6">
-      <Button onClick={startNewRun} className="top-0 right-1 absolute">
+      <Button onClick={startNewRun} className="top-1 right-1 absolute">
         New run
       </Button>
       <section className="flex flex-col items-center pt-8">
@@ -245,7 +245,7 @@ export default function Game() {
             amount={run.oreNuggets}
           />
 
-          <Card>
+          <Card className="flex items-center">
             {textLockCopy.labels.invalidMoves}:{" "}
             {run.currentLock.invalidMovesOnCurrentPick}/
             {run.currentLock.maxInvalidMovesPerPick}
