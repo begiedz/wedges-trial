@@ -21,7 +21,7 @@ export type MoveRule = {
   effects: PinEffect[];
 };
 
-export type LockDifficulty = "easy" | "medium" | "hard" | "master";
+export type LockDifficulty = 1 | 2 | 3 | 4;
 
 export type LockState = {
   pins: Pin[];
