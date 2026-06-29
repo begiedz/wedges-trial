@@ -3,8 +3,10 @@
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { textLockCopy } from "@/app/textLockCopy";
+import LockPickIcon from "@/assets/images/T_ItemIcon_ItKe_Lockpick.png";
 import LockEmpty from "@/assets/images/T_LockDifficulty_Empty.png";
 import Separator from "@/assets/images/T_TitleLine_Small.png";
+import ItemFrame from "@/components/general/molecules/item-frame";
 import Lock from "@/components/lock";
 import { applyMove } from "@/game/applyMove";
 import { createRun, openSolvedChest } from "@/game/createRun";
@@ -171,6 +173,7 @@ export default function Game() {
           }}
         />
       </section>
+
       <div className="flex gap-1">
         <span className="font-medium text-secondary text-lg tracking-wide">
           Difficulty:
@@ -182,24 +185,8 @@ export default function Game() {
           <Image src={LockEmpty.src} alt="" width={24} height={24} />
         </div>
       </div>
-      <section className="bg-[#211F21] px-5 py-4 border border-[#6d6a68] rounded-sm">
-        <div className="flex flex-wrap justify-between items-center gap-4">
-          <div className="flex flex-wrap gap-3 text-sm">
-            <div className="bg-[#292729] px-3 py-2 border border-[#6d6a68] rounded-sm">
-              {textLockCopy.labels.oreNuggets}: {run.oreNuggets}
-            </div>
-            <div className="bg-[#292729] px-3 py-2 border border-[#6d6a68] rounded-sm">
-              {textLockCopy.labels.lockpicks}: {run.lockpicks}
-            </div>
-            <div className="bg-[#292729] px-3 py-2 border border-[#6d6a68] rounded-sm">
-              {textLockCopy.labels.invalidMoves}:{" "}
-              {run.currentLock.invalidMovesOnCurrentPick}/
-              {run.currentLock.maxInvalidMovesPerPick}
-            </div>
-          </div>
-        </div>
-      </section>
 
+      {/* Game */}
       <section className="gap-6 grid lg:grid-cols-[minmax(0,1fr)_280px]">
         <div className="bg-[#211F21] p-5 border border-[#6d6a68] rounded-sm">
           <Lock
@@ -209,7 +196,8 @@ export default function Game() {
           />
         </div>
 
-        <aside className="flex flex-col gap-4 bg-[#211F21] p-5 border border-[#6d6a68] rounded-sm">
+        {/* Movement */}
+        <div className="flex flex-col gap-4 bg-[#211F21] p-5 border border-[#6d6a68] rounded-sm">
           <div>
             <p className="text-[#a9a9a9] text-xs uppercase tracking-[0.18em]">
               {textLockCopy.labels.selectedPin}
@@ -288,7 +276,28 @@ export default function Game() {
                 : textLockCopy.labels.noValue}
             </p>
           </div>
-        </aside>
+        </div>
+      </section>
+
+      {/* Resources */}
+      <section>
+        <div className="flex flex-wrap gap-3 text-sm">
+          <ItemFrame
+            item={LockPickIcon.src}
+            alt="Lockpick"
+            width={64}
+            height={64}
+            amount={4}
+          />
+          <div className="bg-[#292729] px-3 py-2 border border-[#6d6a68] rounded-sm">
+            {textLockCopy.labels.oreNuggets}: {run.oreNuggets}
+          </div>
+          <div className="bg-[#292729] px-3 py-2 border border-[#6d6a68] rounded-sm">
+            {textLockCopy.labels.invalidMoves}:{" "}
+            {run.currentLock.invalidMovesOnCurrentPick}/
+            {run.currentLock.maxInvalidMovesPerPick}
+          </div>
+        </div>
       </section>
     </main>
   );
