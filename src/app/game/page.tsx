@@ -3,10 +3,13 @@
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { textLockCopy } from "@/app/textLockCopy";
-import LockPickIcon from "@/assets/images/T_ItemIcon_ItKe_Lockpick.png";
-import LockEmpty from "@/assets/images/T_LockDifficulty_Empty.png";
+import LockPickIcon from "@/assets/images/icons/items/T_ItemIcon_ItKe_Lockpick.png";
+import OreNuggetIcon from "@/assets/images/icons/items/T_ItemIcon_ItMi_Orenugget.png";
+import LockEmptyIcon from "@/assets/images/icons/T_LockDifficulty_Empty.png";
 import Separator from "@/assets/images/T_TitleLine_Small.png";
+import Card from "@/components/general/atoms/card";
 import ItemFrame from "@/components/general/molecules/item-frame";
+import Movement from "@/components/general/molecules/movement";
 import Lock from "@/components/lock";
 import { applyMove } from "@/game/applyMove";
 import { createRun, openSolvedChest } from "@/game/createRun";
@@ -151,10 +154,6 @@ export default function Game() {
     return null;
   }
 
-  const selectedPin = run.currentLock.pins.find(
-    (pin) => pin.id === selectedPinId,
-  );
-
   return (
     <main className="flex flex-col items-center gap-6">
       <section className="flex flex-col items-center pt-8">
@@ -179,105 +178,20 @@ export default function Game() {
           Difficulty:
         </span>
         <div className="flex justify-center items-center">
-          <Image src={LockEmpty.src} alt="" width={24} height={24} />
-          <Image src={LockEmpty.src} alt="" width={24} height={24} />
-          <Image src={LockEmpty.src} alt="" width={24} height={24} />
-          <Image src={LockEmpty.src} alt="" width={24} height={24} />
+          <Image src={LockEmptyIcon.src} alt="" width={24} height={24} />
+          <Image src={LockEmptyIcon.src} alt="" width={24} height={24} />
+          <Image src={LockEmptyIcon.src} alt="" width={24} height={24} />
+          <Image src={LockEmptyIcon.src} alt="" width={24} height={24} />
         </div>
       </div>
 
       {/* Game */}
-      <section className="gap-6 grid lg:grid-cols-[minmax(0,1fr)_280px]">
-        <div className="bg-[#211F21] p-5 border border-[#6d6a68] rounded-sm">
-          <Lock
-            onSelectPin={setSelectedPinId}
-            pins={run.currentLock.pins}
-            selectedPinId={selectedPinId}
-          />
-        </div>
 
-        {/* Movement */}
-        <div className="flex flex-col gap-4 bg-[#211F21] p-5 border border-[#6d6a68] rounded-sm">
-          <div>
-            <p className="text-[#a9a9a9] text-xs uppercase tracking-[0.18em]">
-              {textLockCopy.labels.selectedPin}
-            </p>
-            <p className="mt-2 text-lg">
-              {selectedPin ? `#${selectedPin.id}` : textLockCopy.labels.noValue}
-            </p>
-          </div>
-
-          <div className="gap-3 grid grid-cols-2">
-            <button
-              className="hover:bg-[#94876F] disabled:opacity-50 px-3 py-2 border border-[#94876F] rounded-sm hover:text-background transition disabled:cursor-not-allowed"
-              disabled={
-                selectedPinId === null ||
-                run.currentLock.isFailed ||
-                run.currentLock.isSolved
-              }
-              onClick={() => moveSelectedPin(-1)}
-              type="button"
-            >
-              {textLockCopy.actions.moveLeft}
-            </button>
-            <button
-              className="hover:bg-[#94876F] disabled:opacity-50 px-3 py-2 border border-[#94876F] rounded-sm hover:text-background transition disabled:cursor-not-allowed"
-              disabled={
-                selectedPinId === null ||
-                run.currentLock.isFailed ||
-                run.currentLock.isSolved
-              }
-              onClick={() => moveSelectedPin(1)}
-              type="button"
-            >
-              {textLockCopy.actions.moveRight}
-            </button>
-          </div>
-
-          <button
-            className="hover:bg-[#3b363b] disabled:opacity-50 px-3 py-2 border border-[#6d6a68] rounded-sm transition disabled:cursor-not-allowed"
-            disabled={!initialLock || run.currentLock.isFailed}
-            onClick={resetLock}
-            type="button"
-          >
-            {textLockCopy.actions.reset}
-          </button>
-
-          <button
-            className="hover:bg-[#5f7a43] disabled:opacity-50 px-3 py-2 border border-[#8ea56e] rounded-sm hover:text-background transition disabled:cursor-not-allowed"
-            disabled={!run.currentLock.isSolved}
-            onClick={continueToNextChest}
-            type="button"
-          >
-            {textLockCopy.actions.continueToNextChest}
-          </button>
-
-          <button
-            className="hover:bg-[#3b363b] px-3 py-2 border border-[#6d6a68] rounded-sm transition"
-            onClick={startNewRun}
-            type="button"
-          >
-            {textLockCopy.actions.newRun}
-          </button>
-
-          <div className="space-y-2 pt-4 border-[#6d6a68] border-t text-[#c6b8ad] text-sm">
-            <p>
-              {textLockCopy.labels.state}:{" "}
-              {run.currentLock.isFailed
-                ? textLockCopy.states.failed
-                : run.currentLock.isSolved
-                  ? textLockCopy.states.solved
-                  : textLockCopy.states.active}
-            </p>
-            <p>
-              {textLockCopy.labels.selectedPin}:{" "}
-              {selectedPin
-                ? `${textLockCopy.labels.position} ${selectedPin.position}, ${textLockCopy.labels.target} ${selectedPin.target}`
-                : textLockCopy.labels.noValue}
-            </p>
-          </div>
-        </div>
-      </section>
+      <Lock
+        onSelectPin={setSelectedPinId}
+        pins={run.currentLock.pins}
+        selectedPinId={selectedPinId}
+      />
 
       {/* Resources */}
       <section>
@@ -287,18 +201,25 @@ export default function Game() {
             alt="Lockpick"
             width={64}
             height={64}
-            amount={4}
+            amount={run.lockpicks}
           />
-          <div className="bg-[#292729] px-3 py-2 border border-[#6d6a68] rounded-sm">
-            {textLockCopy.labels.oreNuggets}: {run.oreNuggets}
-          </div>
-          <div className="bg-[#292729] px-3 py-2 border border-[#6d6a68] rounded-sm">
+          <ItemFrame
+            item={OreNuggetIcon.src}
+            alt="Ore Nuggets"
+            width={64}
+            height={64}
+            amount={run.oreNuggets}
+          />
+
+          <Card>
             {textLockCopy.labels.invalidMoves}:{" "}
             {run.currentLock.invalidMovesOnCurrentPick}/
             {run.currentLock.maxInvalidMovesPerPick}
-          </div>
+          </Card>
         </div>
       </section>
+
+      <Movement />
     </main>
   );
 }
