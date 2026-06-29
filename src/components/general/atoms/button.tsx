@@ -10,7 +10,7 @@ export default function Button({ iconSrc, children }: ButtonProps) {
   return (
     <button
       type="button"
-      className="flex gap-2 hover:bg-primary p-3 border border-primary font-medium text-primary hover:text-background transition-all"
+      className="flex gap-2 hover:bg-foreground p-3 border border-foreground font-medium text-foreground hover:text-background tracking-wide transition-all"
     >
       {iconSrc && <Image src={iconSrc} alt="" />}
       {children}
