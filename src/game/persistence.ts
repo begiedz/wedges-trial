@@ -55,6 +55,7 @@ function isLockState(value: unknown): value is LockState {
 
   return (
     Array.isArray(lock.pins) &&
+    lock.pins.length > 0 &&
     lock.pins.every(isPin) &&
     Array.isArray(lock.rules) &&
     lock.rules.every(isMoveRule) &&
@@ -118,8 +119,14 @@ export function loadRunState(storage?: StorageLike): RunState | null {
 
   try {
     const parsed = JSON.parse(raw);
-    return isRunState(parsed) ? parsed : null;
+    if (isRunState(parsed)) {
+      return parsed;
+    }
+
+    target.removeItem(RUN_STORAGE_KEY);
+    return null;
   } catch {
+    target.removeItem(RUN_STORAGE_KEY);
     return null;
   }
 }

@@ -17,7 +17,7 @@ function createSequenceRandom(values: number[]): RandomSource {
 
 describe("createLock", () => {
   const config: DifficultyConfig = {
-    pinCount: 4,
+    tumblerCount: 4,
     minPosition: 0,
     maxPosition: 6,
     targetPosition: 3,

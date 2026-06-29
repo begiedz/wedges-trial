@@ -2,10 +2,10 @@ import {
   DEFAULT_MAX_POSITION,
   DEFAULT_MIN_POSITION,
   DEFAULT_TARGET_POSITION,
-} from '@/game/constants';
-import type { DifficultyConfig, LockDifficulty } from '@/game/types';
+} from "@/game/constants";
+import type { DifficultyConfig, LockDifficulty } from "@/game/types";
 
-function getDifficultyBand(chestIndex: number): LockDifficulty {
+export function getDifficultyBand(chestIndex: number): LockDifficulty {
   if (chestIndex >= 18) {
     return 4;
   }
@@ -28,7 +28,7 @@ export function getDifficultyForChest(chestIndex: number): DifficultyConfig {
   switch (band) {
     case 1:
       return {
-        pinCount: 3,
+        tumblerCount: 3,
         minPosition: DEFAULT_MIN_POSITION,
         maxPosition: DEFAULT_MAX_POSITION,
         targetPosition: DEFAULT_TARGET_POSITION,
@@ -37,7 +37,7 @@ export function getDifficultyForChest(chestIndex: number): DifficultyConfig {
       };
     case 2:
       return {
-        pinCount: 4,
+        tumblerCount: 4,
         minPosition: DEFAULT_MIN_POSITION,
         maxPosition: DEFAULT_MAX_POSITION,
         targetPosition: DEFAULT_TARGET_POSITION,
@@ -49,7 +49,7 @@ export function getDifficultyForChest(chestIndex: number): DifficultyConfig {
       };
     case 3:
       return {
-        pinCount: 5,
+        tumblerCount: 5,
         minPosition: DEFAULT_MIN_POSITION,
         maxPosition: DEFAULT_MAX_POSITION,
         targetPosition: DEFAULT_TARGET_POSITION,
@@ -61,7 +61,7 @@ export function getDifficultyForChest(chestIndex: number): DifficultyConfig {
       };
     case 4:
       return {
-        pinCount: 6,
+        tumblerCount: 6,
         minPosition: DEFAULT_MIN_POSITION,
         maxPosition: DEFAULT_MAX_POSITION,
         targetPosition: DEFAULT_TARGET_POSITION,

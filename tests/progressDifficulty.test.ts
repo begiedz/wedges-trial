@@ -8,8 +8,8 @@ describe("getDifficultyForChest", () => {
     const middle = getDifficultyForChest(8);
     const late = getDifficultyForChest(20);
 
-    expect(middle.pinCount).toBeGreaterThanOrEqual(early.pinCount);
-    expect(late.pinCount).toBeGreaterThanOrEqual(middle.pinCount);
+    expect(middle.tumblerCount).toBeGreaterThanOrEqual(early.tumblerCount);
+    expect(late.tumblerCount).toBeGreaterThanOrEqual(middle.tumblerCount);
     expect(middle.dependencyDensity).toBeGreaterThanOrEqual(
       early.dependencyDensity,
     );
@@ -18,11 +18,11 @@ describe("getDifficultyForChest", () => {
     );
   });
 
-  it("keeps pin counts within the allowed range", () => {
+  it("keeps tumbler counts within the allowed range", () => {
     for (const chestIndex of [0, 4, 10, 18, 30]) {
       const config = getDifficultyForChest(chestIndex);
-      expect(config.pinCount).toBeGreaterThanOrEqual(3);
-      expect(config.pinCount).toBeLessThanOrEqual(6);
+      expect(config.tumblerCount).toBeGreaterThanOrEqual(3);
+      expect(config.tumblerCount).toBeLessThanOrEqual(6);
     }
   });
 

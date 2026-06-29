@@ -40,7 +40,7 @@ export type RunState = {
 };
 
 export type DifficultyConfig = {
-  pinCount: number;
+  tumblerCount: number;
   minPosition: number;
   maxPosition: number;
   targetPosition: number;

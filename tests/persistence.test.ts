@@ -62,6 +62,24 @@ describe("persistence", () => {
     expect(loadRunState(storage)).toBeNull();
   });
 
+  it("rejects saved locks without any pins", () => {
+    const storage = createMemoryStorage();
+    const run = createRunState();
+
+    storage.setItem(
+      "wedges-trial.run-state",
+      JSON.stringify({
+        ...run,
+        currentLock: {
+          ...run.currentLock,
+          pins: [],
+        },
+      }),
+    );
+
+    expect(loadRunState(storage)).toBeNull();
+  });
+
   it("returns null when saved data is missing", () => {
     const storage = createMemoryStorage();
 
@@ -73,5 +91,13 @@ describe("persistence", () => {
     storage.setItem("wedges-trial.run-state", "{oops");
 
     expect(loadRunState(storage)).toBeNull();
+  });
+
+  it("clears invalid saved data after rejecting it", () => {
+    const storage = createMemoryStorage();
+    storage.setItem("wedges-trial.run-state", JSON.stringify({ bad: true }));
+
+    expect(loadRunState(storage)).toBeNull();
+    expect(storage.getItem("wedges-trial.run-state")).toBeNull();
   });
 });
