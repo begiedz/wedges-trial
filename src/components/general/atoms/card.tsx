@@ -1,11 +1,17 @@
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 interface CardProps {
   children?: ReactNode | ReactNode[];
+  className?: string;
 }
 
-export default function Card({ children }: CardProps) {
+export default function Card({ children, className }: CardProps) {
   return (
-    <div className="bg-background p-4 border border-primary">{children}</div>
+    <div
+      className={cn("bg-background p-4 border border-foreground", className)}
+    >
+      {children}
+    </div>
   );
 }
