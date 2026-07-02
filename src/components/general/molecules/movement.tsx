@@ -47,7 +47,7 @@ export default function Movement({
   const iconSize = 32;
 
   return (
-    <div className="flex flex-col items-center tracking-wide">
+    <div className="flex flex-col items-center">
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <div className="flex">

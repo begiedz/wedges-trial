@@ -11,9 +11,7 @@ interface DifficultyProps {
 export default function Difficulty({ level, size = 24 }: DifficultyProps) {
   return (
     <div className="flex gap-1">
-      <span className="font-medium text-secondary text-lg tracking-wide">
-        Difficulty:
-      </span>
+      <span className="text-secondary text-lg">Difficulty:</span>
       <div className="flex justify-center items-center">
         {Array.from({ length: 4 }, (_, index) => {
           const isFilled = index < level;
