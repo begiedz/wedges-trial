@@ -14,7 +14,7 @@ export default function Lock({
   onSelectPin,
 }: LockProps) {
   return (
-    <div className="flex w-full flex-col items-center gap-3 overflow-x-auto pb-2">
+    <div className="flex flex-col items-center w-full overflow-x-auto">
       {pins.map((pin) => (
         <Tumbler
           isSelected={pin.id === selectedPinId}

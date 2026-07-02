@@ -10,9 +10,11 @@ type TumblerProps = {
   onSelect?: (pinId: number) => void;
 };
 
-const slotSizeRem = 1.25;
-const slotGapRem = 0.375;
+const slotSizeRem = 1;
+const slotGapRem = 0.3;
 const slotStepRem = slotSizeRem + slotGapRem;
+const shellPaddingXRem = 1;
+const shellPaddingYRem = 0.5;
 
 export default function Tumbler({
   pin,
@@ -23,20 +25,22 @@ export default function Tumbler({
   const slotSpan = Math.max(slotCount - 1, 0);
   const currentIndex = pin.position - pin.min;
   const isOnTarget = pin.position === pin.target;
-  const trackWidthRem = slotCount * slotSizeRem + slotSpan * slotGapRem;
   const viewportWidthRem = slotSizeRem + slotSpan * slotStepRem * 2;
   const trackOffsetRem = ((slotCount - 1) / 2 - currentIndex) * slotStepRem;
-  const viewportStyle = {
-    minHeight: `${slotSizeRem}rem`,
-    width: `${viewportWidthRem}rem`,
+
+  const buttonStyle = {
+    minHeight: `${slotSizeRem + shellPaddingYRem * 2}rem`,
+    width: `${viewportWidthRem + shellPaddingXRem * 2}rem`,
   } satisfies CSSProperties;
+
   const trackStyle = {
     transform: `translate(-50%, -50%) translateX(${trackOffsetRem}rem)`,
-    width: `${trackWidthRem}rem`,
   } satisfies CSSProperties;
+
   const slotStyle = {
     gap: `${slotGapRem}rem`,
   } satisfies CSSProperties;
+
   const slotSizeStyle = {
     height: `${slotSizeRem}rem`,
     width: `${slotSizeRem}rem`,
@@ -47,19 +51,21 @@ export default function Tumbler({
       aria-pressed={isSelected}
       onClick={onSelect ? () => onSelect(pin.id) : undefined}
       type="button"
-      className={[
-        "block w-fit rounded-sm px-4 py-3 text-left transition-colors",
-        isSelected ? "bg-[#898c9e]" : "bg-[#AAA8A6]",
-      ].join(" ")}
+      className="block relative"
+      style={buttonStyle}
     >
       <span className="sr-only">{pin.id}</span>
       <div
-        className="relative flex items-center justify-center overflow-hidden"
-        style={viewportStyle}
+        className="top-1/2 left-1/2 absolute transition-transform duration-300 ease"
+        style={trackStyle}
       >
         <div
-          className="absolute top-1/2 left-1/2 transition-transform duration-300 ease-out"
-          style={trackStyle}
+          className={[
+            "inline-flex rounded-md px-20 py-1 transition-colors border-2 ",
+            isSelected
+              ? "bg-[#898c9e] border-gray-600"
+              : "bg-[#AAA8A6] border-stone-600",
+          ].join(" ")}
         >
           <div className="grid grid-flow-col" style={slotStyle}>
             {Array.from({ length: slotCount }, (_, index) => {
@@ -67,7 +73,7 @@ export default function Tumbler({
 
               return (
                 <div
-                  className="flex items-center justify-center rounded-full bg-background shadow-[inset_0_1px_4px_rgba(0,0,0,0.45)]"
+                  className="flex justify-center items-center bg-background shadow-[inset_0_1px_4px_rgba(0,0,0,0.45)] rounded-full"
                   key={value}
                   style={slotSizeStyle}
                 />
@@ -75,9 +81,9 @@ export default function Tumbler({
             })}
           </div>
         </div>
-        <div className="pointer-events-none relative z-10 flex items-center justify-center">
-          <Pin isOnTarget={isOnTarget} />
-        </div>
+      </div>
+      <div className="z-10 absolute inset-0 flex justify-center items-center pointer-events-none">
+        <Pin isOnTarget={isOnTarget} />
       </div>
     </button>
   );

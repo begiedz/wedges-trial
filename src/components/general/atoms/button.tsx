@@ -20,7 +20,7 @@ export default function Button({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex gap-2 hover:bg-foreground p-3 border border-foreground font-medium text-foreground hover:text-background tracking-wide transition-all",
+        "flex gap-2 hover:bg-foreground p-3 border border-foreground text-foreground hover:text-background transition-all",
         className,
       )}
     >

@@ -199,13 +199,13 @@ export default function Game() {
       <Button onClick={startNewRun} className="top-1 right-1 absolute">
         New run
       </Button>
-      <section className="flex flex-col items-center pt-8">
-        <h2 className="font-heading text-6xl">Open Chest</h2>
+      <section className="flex flex-col items-center">
+        <h2 className="font-heading text-4xl sm:text-5xl">Open Chest</h2>
         <div
-          className="bg-foreground"
+          className="bg-foreground scale-75 sm:scale-100"
           style={{
-            width: 388,
-            height: 36,
+            width: 310,
+            height: 28,
             WebkitMaskImage: `url(${Separator.src})`,
             maskImage: `url(${Separator.src})`,
             WebkitMaskRepeat: "no-repeat",
@@ -216,9 +216,12 @@ export default function Game() {
             maskPosition: "center",
           }}
         />
-      </section>
 
-      <Difficulty level={difficultyLevel} />
+        <div className="flex flex-col items-center gap-2 pt-4">
+          <Difficulty level={difficultyLevel} />
+          <p className="text-secondary sm:text-lg">Chest: #{run.chestIndex}</p>
+        </div>
+      </section>
 
       {/* Game */}
       <Lock

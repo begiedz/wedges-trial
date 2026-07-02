@@ -2,8 +2,8 @@ import {
   DEFAULT_MAX_POSITION,
   DEFAULT_MIN_POSITION,
   DEFAULT_TARGET_POSITION,
-} from "@/game/constants";
-import type { DifficultyConfig, LockDifficulty } from "@/game/types";
+} from '@/game/constants';
+import type { DifficultyConfig, LockDifficulty } from '@/game/types';
 
 export function getDifficultyBand(chestIndex: number): LockDifficulty {
   if (chestIndex >= 18) {

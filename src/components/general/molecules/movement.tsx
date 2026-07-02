@@ -31,7 +31,13 @@ function MovementButton({ alt, iconSize, onClick, src }: MovementButtonProps) {
       aria-label={alt}
       className="bg-transparent p-0 border-0 appearance-none cursor-pointer"
     >
-      <Image src={src} width={iconSize} height={iconSize} alt={alt} />
+      <Image
+        src={src}
+        width={iconSize}
+        height={iconSize}
+        alt={alt}
+        className="sm:size-8"
+      />
     </button>
   );
 }
@@ -44,10 +50,10 @@ export default function Movement({
   onSelectNextPin,
   onSelectPreviousPin,
 }: MovementProps) {
-  const iconSize = 32;
+  const iconSize = 64;
 
   return (
-    <div className="flex flex-col items-center tracking-wide">
+    <div className="flex flex-col items-center">
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <div className="flex">
