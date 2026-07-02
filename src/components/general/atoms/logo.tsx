@@ -9,9 +9,9 @@ export default function Logo() {
         alt="Gothic Remake"
         width={360}
         height={150}
-        className="drop-shadow-black drop-shadow-md w-20"
+        className="drop-shadow-black drop-shadow-md w-10"
       />
-      <h1 className="text-shadow-black text-shadow-md font-heading text-3xl">
+      <h1 className="text-shadow-black text-shadow-md font-heading text-xl">
         Wedge's Trial
       </h1>
     </div>

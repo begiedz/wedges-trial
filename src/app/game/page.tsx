@@ -199,10 +199,10 @@ export default function Game() {
       <Button onClick={startNewRun} className="top-1 right-1 absolute">
         New run
       </Button>
-      <section className="flex flex-col items-center pt-8">
-        <h2 className="font-heading text-5xl">Open Chest</h2>
+      <section className="flex flex-col items-center">
+        <h2 className="font-heading text-4xl sm:text-5xl">Open Chest</h2>
         <div
-          className="bg-foreground"
+          className="bg-foreground scale-75 sm:scale-100"
           style={{
             width: 310,
             height: 28,
@@ -216,12 +216,12 @@ export default function Game() {
             maskPosition: "center",
           }}
         />
-      </section>
 
-      <div className="flex flex-col items-center gap-2">
-        <Difficulty level={difficultyLevel} />
-        <p className="text-secondary text-lg">Chest: #{run.chestIndex}</p>
-      </div>
+        <div className="flex flex-col items-center gap-2 pt-4">
+          <Difficulty level={difficultyLevel} />
+          <p className="text-secondary sm:text-lg">Chest: #{run.chestIndex}</p>
+        </div>
+      </section>
 
       {/* Game */}
       <Lock
