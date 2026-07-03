@@ -14,6 +14,59 @@
       "play": "Graj"
     }
   },
+  "nav": {
+    "items": {
+      "language": "Język",
+      "solver": "Solver",
+      "about": "O grze",
+      "howToPlay": "Jak grać"
+    },
+    "locales": {
+      "en": "English",
+      "pl": "Polski",
+      "de": "Deutsch",
+      "ru": "Русский"
+    },
+    "actions": {
+      "signIn": "Zaloguj się",
+      "getStarted": "Zacznij"
+    },
+    "mobile": {
+      "menu": "Menu",
+      "openMenu": "Otwórz menu",
+      "closeMenu": "Zamknij menu",
+      "mainNavigation": "Główne linki nawigacyjne"
+    },
+    "pages": {
+      "about": {
+        "title": "O Próbie Klina",
+        "lead": "Próba Klina to przeglądarkowe wyzwanie z otwieraniem zamków oparte na deterministycznych zależnościach między pinami i nieskończonej progresji skrzyń.",
+        "body": "Każda otwarta skrzynia daje bryłki rudy i czasem wytrychy, a każdy kolejny zamek zwiększa presję dzięki większej liczbie pinów, gęstszym zależnościom i dłuższym wygenerowanym rozwiązaniom."
+      },
+      "howToPlay": {
+        "title": "Jak grać",
+        "lead": "Wybierz pin, a następnie przesuwaj go w lewo lub w prawo, aż wszystkie piny ustawią się na pozycjach docelowych.",
+        "steps": [
+          "Wybierz pin kliknięciem albo skrótem klawiaturowym.",
+          "Przesuwaj wybrany pin w lewo lub w prawo i obserwuj powiązane piny, które ruszają się razem z nim.",
+          "Pilnuj, aby każdy dotknięty pin pozostał w dozwolonym zakresie, żeby uniknąć nieprawidłowych ruchów.",
+          "Rozwiąż bieżący zamek, otwórz skrzynię, odbierz bryłki rudy i kontynuuj nieskończony bieg."
+        ],
+        "rules": [
+          "Wytrych łamie się dokładnie po 3 nieprawidłowych ruchach.",
+          "Nieprawidłowe ruchy nie zmieniają pozycji żadnego pinu.",
+          "Złamanie wytrychu nie resetuje bieżącego zamka.",
+          "Użyj przycisku resetu, jeśli chcesz wrócić do początkowego stanu bieżącego zamka."
+        ]
+      },
+      "solver": {
+        "title": "Solver",
+        "lead": "Generator miesza każdy zamek od stanu rozwiązanego, więc każda skrzynia pozostaje rozwiązywalna z definicji.",
+        "body": "Ten sam deterministyczny model napędza solver oraz moduł debugowania używany do sprawdzania zależności, weryfikowania rozwiązań i testowania nieprawidłowych ruchów.",
+        "debugLink": "Otwórz moduł debugowania"
+      }
+    }
+  },
   "game": {
     "title": "Otwórz skrzynię",
     "actions": {

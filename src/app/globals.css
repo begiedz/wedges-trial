@@ -4,7 +4,7 @@
   --foreground: #f9ddd0;
   --secondary: #a9a9a9;
   --background: #292729;
-  --background-secondary: #211F21;
+  --background-secondary: #211f21;
 }
 
 @theme inline {
@@ -20,7 +20,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-noto-serif), serif;
-  cursor: url('/Cursor.png'), auto;
+  cursor: url("/Cursor.png"), auto;
 }
 
 button,
@@ -28,5 +28,5 @@ a,
 input,
 textarea,
 select {
-  cursor: url('/Cursor.png'), auto;
+  cursor: url("/Cursor.png"), auto;
 }

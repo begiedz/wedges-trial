@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import LockPickIcon from "@/assets/images/icons/items/T_ItemIcon_ItKe_Lockpick.png";
 import OreNuggetIcon from "@/assets/images/icons/items/T_ItemIcon_ItMi_Orenugget.png";
 import Separator from "@/assets/images/T_TitleLine_Small.png";
-import Button from "@/components/general/atoms/button";
+import { START_NEW_RUN_EVENT } from "@/components/game/events";
 import Card from "@/components/general/atoms/card";
 import Difficulty from "@/components/general/molecules/difficulty";
 import ItemFrame from "@/components/general/molecules/item-frame";
@@ -132,6 +132,18 @@ export function GameClient() {
   }, []);
 
   useEffect(() => {
+    const handleStartNewRun = () => {
+      startNewRun();
+    };
+
+    window.addEventListener(START_NEW_RUN_EVENT, handleStartNewRun);
+
+    return () => {
+      window.removeEventListener(START_NEW_RUN_EVENT, handleStartNewRun);
+    };
+  }, [startNewRun]);
+
+  useEffect(() => {
     if (!run) {
       return;
     }
@@ -197,9 +209,6 @@ export function GameClient() {
 
   return (
     <main className="flex flex-col items-center gap-6">
-      <Button onClick={startNewRun} className="top-1 right-1 absolute">
-        {t.actions.newRun}
-      </Button>
       <section className="flex flex-col items-center">
         <h2 className="font-heading text-4xl sm:text-5xl">{t.title}</h2>
         <div

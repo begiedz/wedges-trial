@@ -14,6 +14,59 @@
       "play": "Play"
     }
   },
+  "nav": {
+    "items": {
+      "language": "Language",
+      "solver": "Solver",
+      "about": "About",
+      "howToPlay": "How to play"
+    },
+    "locales": {
+      "en": "English",
+      "pl": "Polski",
+      "de": "Deutsch",
+      "ru": "Русский"
+    },
+    "actions": {
+      "signIn": "Sign in",
+      "getStarted": "Get started"
+    },
+    "mobile": {
+      "menu": "Menu",
+      "openMenu": "Open menu",
+      "closeMenu": "Close menu",
+      "mainNavigation": "Main navigation links"
+    },
+    "pages": {
+      "about": {
+        "title": "About Wedge's Trial",
+        "lead": "Wedge's Trial is a browser lockpicking challenge built around deterministic pin dependencies and endless chest progression.",
+        "body": "Each solved chest rewards ore nuggets and sometimes lockpicks, while every next lock adds a little more pressure through extra pins, denser dependencies, and longer generated solutions."
+      },
+      "howToPlay": {
+        "title": "How to play",
+        "lead": "Select a pin, then move it left or right to line every pin up with its target position.",
+        "steps": [
+          "Choose a pin by clicking it or using the keyboard shortcuts.",
+          "Move the selected pin left or right and watch for linked pins that shift with it.",
+          "Keep every affected pin inside its allowed range to avoid invalid moves.",
+          "Solve the current lock to open the chest, claim ore nuggets, and continue the endless run."
+        ],
+        "rules": [
+          "A lockpick breaks after exactly 3 invalid moves.",
+          "Invalid moves do not change any pin positions.",
+          "Breaking a lockpick does not reset the current lock.",
+          "Use the reset button when you want to restart the current lock from its initial state."
+        ]
+      },
+      "solver": {
+        "title": "Solver",
+        "lead": "The generator mixes each lock from a solved state, so every chest stays solvable by construction.",
+        "body": "That same deterministic model powers the solver and the debug harness used to inspect dependencies, verify solutions, and test invalid-move behavior.",
+        "debugLink": "Open debug harness"
+      }
+    }
+  },
   "game": {
     "title": "Open Chest",
     "actions": {

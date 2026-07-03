@@ -14,6 +14,59 @@
       "play": "Spielen"
     }
   },
+  "nav": {
+    "items": {
+      "language": "Sprache",
+      "solver": "Löser",
+      "about": "Über das Spiel",
+      "howToPlay": "Spielanleitung"
+    },
+    "locales": {
+      "en": "English",
+      "pl": "Polski",
+      "de": "Deutsch",
+      "ru": "Русский"
+    },
+    "actions": {
+      "signIn": "Anmelden",
+      "getStarted": "Loslegen"
+    },
+    "mobile": {
+      "menu": "Menü",
+      "openMenu": "Menü öffnen",
+      "closeMenu": "Menü schließen",
+      "mainNavigation": "Hauptnavigation"
+    },
+    "pages": {
+      "about": {
+        "title": "Über Wedge's Trial",
+        "lead": "Wedge's Trial ist eine browserbasierte Dietrich-Herausforderung mit deterministischen Stift-Abhängigkeiten und endloser Truhen-Progression.",
+        "body": "Jede geöffnete Truhe belohnt dich mit Erzbrocken und manchmal Dietrichen, während jedes nächste Schloss durch zusätzliche Stifte, dichtere Abhängigkeiten und längere generierte Lösungen etwas mehr Druck aufbaut."
+      },
+      "howToPlay": {
+        "title": "Spielanleitung",
+        "lead": "Wähle einen Stift aus und bewege ihn nach links oder rechts, bis alle Stifte auf ihren Zielpositionen stehen.",
+        "steps": [
+          "Wähle einen Stift per Klick oder mit den Tastaturkürzeln aus.",
+          "Bewege den ausgewählten Stift nach links oder rechts und achte auf verbundene Stifte, die sich mitbewegen.",
+          "Halte jeden betroffenen Stift innerhalb seines erlaubten Bereichs, um ungültige Züge zu vermeiden.",
+          "Löse das aktuelle Schloss, öffne die Truhe, sammle Erzbrocken ein und setze den Endloslauf fort."
+        ],
+        "rules": [
+          "Ein Dietrich bricht nach genau 3 ungültigen Zügen.",
+          "Ungültige Züge verändern keine Stiftpositionen.",
+          "Ein gebrochener Dietrich setzt das aktuelle Schloss nicht zurück.",
+          "Nutze die Zurücksetzen-Taste, wenn du das aktuelle Schloss in seinen Ausgangszustand zurückversetzen möchtest."
+        ]
+      },
+      "solver": {
+        "title": "Löser",
+        "lead": "Der Generator mischt jedes Schloss aus einem gelösten Zustand, daher bleibt jede Truhe konstruktionsbedingt lösbar.",
+        "body": "Dasselbe deterministische Modell treibt auch den Löser und die Debug-Oberfläche an, mit denen sich Abhängigkeiten prüfen, Lösungen verifizieren und ungültige Züge testen lassen.",
+        "debugLink": "Debug-Oberfläche öffnen"
+      }
+    }
+  },
   "game": {
     "title": "Truhe öffnen",
     "actions": {
