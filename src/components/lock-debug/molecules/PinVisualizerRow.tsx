@@ -1,21 +1,19 @@
 import type { Pin } from "@/game/types";
-
-import type { TextLockCopy } from "../types";
+import { useDebugDictionary } from "@/i18n/provider";
 import { joinClasses } from "../utils";
 
 type PinVisualizerRowProps = {
-  copy: TextLockCopy;
   isSelected: boolean;
   pin: Pin;
   onSelect: (pinId: number) => void;
 };
 
 export function PinVisualizerRow({
-  copy,
   isSelected,
   pin,
   onSelect,
 }: PinVisualizerRowProps) {
+  const t = useDebugDictionary();
   const isOnTarget = pin.position === pin.target;
   const range = pin.max - pin.min;
   const positionPercent =
@@ -62,10 +60,10 @@ export function PinVisualizerRow({
       </div>
       <div className="font-mono text-xs text-zinc-600 dark:text-zinc-300 sm:text-right">
         <p>
-          {copy.labels.position}: {pin.position}
+          {t.labels.position}: {pin.position}
         </p>
         <p>
-          {copy.labels.target}: {pin.target}
+          {t.labels.target}: {pin.target}
         </p>
       </div>
     </button>

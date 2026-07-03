@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import "../globals.css";
 import Header from "@/components/general/molecules/header";
 import { getDictionary, hasLocale } from "@/i18n/dictionaries";
+import { I18nProvider } from "@/i18n/provider";
 import { locales } from "@/i18n/types";
 
 const boucherieBlock = localFont({
@@ -52,12 +53,10 @@ export default async function RootLayout({
       className={`${boucherieBlock.variable} ${notoSerif.variable} h-full antialiased`}
     >
       <body className="flex flex-col min-h-full">
-        <Header
-          homeHref={`/${lang}`}
-          logoAlt={dict.common.brand.logoAlt}
-          title={dict.common.brand.name}
-        />
-        {children}
+        <I18nProvider dictionary={dict} locale={lang}>
+          <Header />
+          {children}
+        </I18nProvider>
       </body>
     </html>
   );

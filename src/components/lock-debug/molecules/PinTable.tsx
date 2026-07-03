@@ -1,30 +1,24 @@
 import type { LockState } from "@/game/types";
-
-import type { TextLockCopy } from "../types";
+import { useDebugDictionary } from "@/i18n/provider";
 
 type PinTableProps = {
-  copy: TextLockCopy;
   lock: LockState | null;
   onSelect: (pinId: number) => void;
   selectedPinId: number | null;
 };
 
-export function PinTable({
-  copy,
-  lock,
-  onSelect,
-  selectedPinId,
-}: PinTableProps) {
+export function PinTable({ lock, onSelect, selectedPinId }: PinTableProps) {
+  const t = useDebugDictionary();
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
       <table className="min-w-full divide-y divide-zinc-200 text-left text-sm dark:divide-zinc-800">
         <thead className="bg-zinc-100 text-zinc-600 dark:bg-zinc-900/70 dark:text-zinc-400">
           <tr>
-            <th className="px-4 py-3 font-medium">{copy.labels.pin}</th>
-            <th className="px-4 py-3 font-medium">{copy.labels.position}</th>
-            <th className="px-4 py-3 font-medium">{copy.labels.target}</th>
-            <th className="px-4 py-3 font-medium">{copy.labels.range}</th>
-            <th className="px-4 py-3 font-medium">{copy.actions.selectPin}</th>
+            <th className="px-4 py-3 font-medium">{t.labels.pin}</th>
+            <th className="px-4 py-3 font-medium">{t.labels.position}</th>
+            <th className="px-4 py-3 font-medium">{t.labels.target}</th>
+            <th className="px-4 py-3 font-medium">{t.labels.range}</th>
+            <th className="px-4 py-3 font-medium">{t.actions.selectPin}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-200 bg-white/90 dark:divide-zinc-800 dark:bg-zinc-950/80">
@@ -62,7 +56,7 @@ export function PinTable({
                     onClick={() => onSelect(pin.id)}
                     type="button"
                   >
-                    {copy.actions.selectPin}
+                    {t.actions.selectPin}
                   </button>
                 </td>
               </tr>
@@ -74,7 +68,7 @@ export function PinTable({
                 className="px-4 py-6 text-zinc-500 dark:text-zinc-400"
                 colSpan={5}
               >
-                {copy.messages.idle}
+                {t.messages.idle}
               </td>
             </tr>
           ) : null}

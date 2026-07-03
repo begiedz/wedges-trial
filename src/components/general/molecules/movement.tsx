@@ -5,10 +5,9 @@ import NIcon from "@/assets/images/icons/T_Icon_PC_N.png";
 import RIcon from "@/assets/images/icons/T_Icon_PC_R.png";
 import WIcon from "@/assets/images/icons/T_Icon_PC_W.png";
 import SIcon from "@/assets/images/icons/T_Icon_PS_S.png";
-import type { GameDictionary } from "@/i18n/types";
+import { useGameDictionary } from "@/i18n/provider";
 
 type MovementProps = {
-  copy: GameDictionary["movement"];
   onContinueToNextChest: () => void;
   onMoveLeft: () => void;
   onMoveRight: () => void;
@@ -44,7 +43,6 @@ function MovementButton({ alt, iconSize, onClick, src }: MovementButtonProps) {
 }
 
 export default function Movement({
-  copy,
   onContinueToNextChest,
   onMoveLeft,
   onMoveRight,
@@ -52,6 +50,7 @@ export default function Movement({
   onSelectNextPin,
   onSelectPreviousPin,
 }: MovementProps) {
+  const t = useGameDictionary().movement;
   const iconSize = 64;
 
   return (
@@ -62,17 +61,17 @@ export default function Movement({
             <MovementButton
               src={AIcon.src}
               iconSize={iconSize}
-              alt={copy.actions.moveLeft}
+              alt={t.actions.moveLeft}
               onClick={onMoveLeft}
             />
             <MovementButton
               src={DIcon.src}
               iconSize={iconSize}
-              alt={copy.actions.moveRight}
+              alt={t.actions.moveRight}
               onClick={onMoveRight}
             />
           </div>
-          <p>{copy.labels.moveHorizontal}</p>
+          <p>{t.labels.moveHorizontal}</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -80,17 +79,17 @@ export default function Movement({
             <MovementButton
               src={WIcon.src}
               iconSize={iconSize}
-              alt={copy.actions.selectPreviousPin}
+              alt={t.actions.selectPreviousPin}
               onClick={onSelectPreviousPin}
             />
             <MovementButton
               src={SIcon.src}
               iconSize={iconSize}
-              alt={copy.actions.selectNextPin}
+              alt={t.actions.selectNextPin}
               onClick={onSelectNextPin}
             />
           </div>
-          <p>{copy.labels.moveVertical}</p>
+          <p>{t.labels.moveVertical}</p>
         </div>
 
         <div className="flex items-center gap-8">
@@ -98,19 +97,19 @@ export default function Movement({
             <MovementButton
               src={RIcon.src}
               iconSize={iconSize}
-              alt={copy.actions.reset}
+              alt={t.actions.reset}
               onClick={onReset}
             />
-            <p>{copy.labels.reset}</p>
+            <p>{t.labels.reset}</p>
           </div>
           <div className="flex items-center gap-2">
             <MovementButton
               src={NIcon.src}
               iconSize={iconSize}
-              alt={copy.actions.continueToNextChest}
+              alt={t.actions.continueToNextChest}
               onClick={onContinueToNextChest}
             />
-            <p>{copy.labels.next}</p>
+            <p>{t.labels.next}</p>
           </div>
         </div>
       </div>
