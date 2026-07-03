@@ -15,10 +15,7 @@ import { loadRunState, saveRunState } from "@/game/persistence";
 import { cloneLockState, resetCurrentLock } from "@/game/resetLock";
 import { solveLock } from "@/game/solver";
 import type { ChestReward, Direction, LockState, RunState } from "@/game/types";
-
-type TextLockTesterProps = {
-  copy: TextLockCopy;
-};
+import { useDebugDictionary } from "@/i18n/provider";
 
 const MAX_EVENT_LOG_ITEMS = 8;
 
@@ -42,59 +39,59 @@ function getNextSelectedPinId(
 }
 
 function formatRuleText(
-  copy: TextLockCopy,
+  t: TextLockCopy,
   sourcePinId: number,
   direction: Direction,
   effects: Array<{ pinId: number; delta: Direction }>,
 ): string {
-  const directionLabel = direction === 1 ? copy.labels.right : copy.labels.left;
+  const directionLabel = direction === 1 ? t.labels.right : t.labels.left;
 
   return [
-    `${copy.labels.pinPrefix} ${sourcePinId} ${directionLabel}`,
+    `${t.labels.pinPrefix} ${sourcePinId} ${directionLabel}`,
     "->",
     effects
       .map((effect) => {
         const sign = effect.delta > 0 ? "+" : "";
-        return `${copy.labels.pinPrefix} ${effect.pinId} ${sign}${effect.delta}`;
+        return `${t.labels.pinPrefix} ${effect.pinId} ${sign}${effect.delta}`;
       })
       .join(", "),
   ].join(" ");
 }
 
-function getStatusMessage(copy: TextLockCopy, run: RunState | null): string {
+function getStatusMessage(t: TextLockCopy, run: RunState | null): string {
   if (!run) {
-    return copy.messages.idle;
+    return t.messages.idle;
   }
 
   if (run.currentLock.isFailed || run.lockpicks <= 0) {
-    return copy.messages.failed;
+    return t.messages.failed;
   }
 
   if (run.currentLock.isSolved) {
-    return copy.messages.solved;
+    return t.messages.solved;
   }
 
   if (run.currentLock.invalidMovesOnCurrentPick > 0) {
-    return copy.messages.invalid;
+    return t.messages.invalid;
   }
 
-  return copy.messages.active;
+  return t.messages.active;
 }
 
-function getLockStateLabel(copy: TextLockCopy, run: RunState | null): string {
+function getLockStateLabel(t: TextLockCopy, run: RunState | null): string {
   if (!run) {
-    return copy.states.active;
+    return t.states.active;
   }
 
   if (run.currentLock.isFailed || run.lockpicks <= 0) {
-    return copy.states.failed;
+    return t.states.failed;
   }
 
   if (run.currentLock.isSolved) {
-    return copy.states.solved;
+    return t.states.solved;
   }
 
-  return copy.states.active;
+  return t.states.active;
 }
 
 function applySelectedMove(
@@ -110,38 +107,39 @@ function applySelectedMove(
 }
 
 function describeMoveOutcome(
-  copy: TextLockCopy,
+  t: TextLockCopy,
   previousRun: RunState,
   nextRun: RunState,
   pinId: number,
   direction: Direction,
 ): string {
-  const directionLabel = direction === 1 ? copy.labels.right : copy.labels.left;
-  const pinLabel = copy.labels.pinPrefix;
+  const directionLabel = direction === 1 ? t.labels.right : t.labels.left;
+  const pinLabel = t.labels.pinPrefix;
 
   if (nextRun === previousRun) {
-    return `${pinLabel} ${pinId} ${directionLabel}: ${copy.labels.ignoredEvent}`;
+    return `${pinLabel} ${pinId} ${directionLabel}: ${t.labels.ignoredEvent}`;
   }
 
   if (nextRun.currentLock.isSolved && !previousRun.currentLock.isSolved) {
-    return `${pinLabel} ${pinId} ${directionLabel}: ${copy.labels.solvedChestEvent} ${previousRun.chestIndex + 1}`;
+    return `${pinLabel} ${pinId} ${directionLabel}: ${t.labels.solvedChestEvent} ${previousRun.chestIndex + 1}`;
   }
 
   if (nextRun.lockpicks < previousRun.lockpicks) {
-    return `${pinLabel} ${pinId} ${directionLabel}: ${copy.labels.lockpickBrokeEvent}`;
+    return `${pinLabel} ${pinId} ${directionLabel}: ${t.labels.lockpickBrokeEvent}`;
   }
 
   if (
     nextRun.currentLock.invalidMovesOnCurrentPick >
     previousRun.currentLock.invalidMovesOnCurrentPick
   ) {
-    return `${pinLabel} ${pinId} ${directionLabel}: ${copy.labels.invalidMoveEvent}`;
+    return `${pinLabel} ${pinId} ${directionLabel}: ${t.labels.invalidMoveEvent}`;
   }
 
-  return `${pinLabel} ${pinId} ${directionLabel}: ${copy.labels.movedEvent}`;
+  return `${pinLabel} ${pinId} ${directionLabel}: ${t.labels.movedEvent}`;
 }
 
-export function TextLockTester({ copy }: TextLockTesterProps) {
+export function TextLockTester() {
+  const t = useDebugDictionary();
   const [run, setRun] = useState<RunState | null>(null);
   const [initialLock, setInitialLock] = useState<LockState | null>(null);
   const [savedRun, setSavedRun] = useState<RunState | null>(null);
@@ -178,7 +176,7 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
     setInitialLock(cloneLockState(nextRun.currentLock));
     setSelectedPinId(nextRun.currentLock.pins[0]?.id ?? null);
     setLastReward(null);
-    setEventLog([`${copy.labels.startedChestEvent} ${nextRun.chestIndex + 1}`]);
+    setEventLog([`${t.labels.startedChestEvent} ${nextRun.chestIndex + 1}`]);
   };
 
   const continueSavedRun = () => {
@@ -193,7 +191,7 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
     setEventLog((currentLog) =>
       pushEvent(
         currentLog,
-        `${copy.labels.continuedSavedChestEvent} ${savedRun.chestIndex + 1}`,
+        `${t.labels.continuedSavedChestEvent} ${savedRun.chestIndex + 1}`,
       ),
     );
   };
@@ -210,11 +208,11 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
       setEventLog((currentLog) =>
         pushEvent(
           currentLog,
-          describeMoveOutcome(copy, run, nextRun, pinId, direction),
+          describeMoveOutcome(t, run, nextRun, pinId, direction),
         ),
       );
     },
-    [copy, run],
+    [run, t],
   );
 
   const resetLock = useCallback(() => {
@@ -228,10 +226,10 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
     setEventLog((currentLog) =>
       pushEvent(
         currentLog,
-        `${copy.labels.resetChestEvent} ${run.chestIndex + 1} ${copy.labels.toInitialState}`,
+        `${t.labels.resetChestEvent} ${run.chestIndex + 1} ${t.labels.toInitialState}`,
       ),
     );
-  }, [copy, initialLock, run]);
+  }, [initialLock, run, t]);
 
   const continueToNextChest = () => {
     if (!run || !run.currentLock.isSolved) {
@@ -248,7 +246,7 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
     setEventLog((currentLog) =>
       pushEvent(
         currentLog,
-        `${copy.labels.openedChestEvent} ${run.chestIndex + 1}: +${nextRun.reward.oreNuggets} ${copy.labels.oreUnit}, +${nextRun.reward.lockpicks} ${copy.labels.rewardLockpicks}`,
+        `${t.labels.openedChestEvent} ${run.chestIndex + 1}: +${nextRun.reward.oreNuggets} ${t.labels.oreUnit}, +${nextRun.reward.lockpicks} ${t.labels.rewardLockpicks}`,
       ),
     );
   };
@@ -268,7 +266,7 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
           setEventLog((currentLog) =>
             pushEvent(
               currentLog,
-              `${copy.labels.selectedPinFromKeyboardEvent} ${nextPin.id}`,
+              `${t.labels.selectedPinFromKeyboardEvent} ${nextPin.id}`,
             ),
           );
           event.preventDefault();
@@ -302,7 +300,7 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
           setEventLog((currentLog) =>
             pushEvent(
               currentLog,
-              `${copy.labels.selectedPinFromKeyboardEvent} ${nextPinId}`,
+              `${t.labels.selectedPinFromKeyboardEvent} ${nextPinId}`,
             ),
           );
         }
@@ -322,7 +320,7 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
           setEventLog((currentLog) =>
             pushEvent(
               currentLog,
-              `${copy.labels.selectedPinFromKeyboardEvent} ${nextPinId}`,
+              `${t.labels.selectedPinFromKeyboardEvent} ${nextPinId}`,
             ),
           );
         }
@@ -341,11 +339,11 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [
-    copy.labels.selectedPinFromKeyboardEvent,
     movePin,
     resetLock,
     run,
     selectedPinId,
+    t.labels.selectedPinFromKeyboardEvent,
   ]);
 
   const selectedPin =
@@ -355,48 +353,48 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
     (pinId: number) => {
       setSelectedPinId(pinId);
       setEventLog((currentLog) =>
-        pushEvent(currentLog, `${copy.labels.selectedPinEvent} ${pinId}`),
+        pushEvent(currentLog, `${t.labels.selectedPinEvent} ${pinId}`),
       );
     },
-    [copy.labels.selectedPinEvent],
+    [t.labels.selectedPinEvent],
   );
 
   return (
     <main className="flex flex-col gap-6 mx-auto px-4 sm:px-6 py-8 w-full max-w-5xl min-h-screen">
       <header className="space-y-3 bg-white/95 dark:bg-zinc-950/95 shadow-[0_18px_60px_rgba(15,23,42,0.10)] dark:shadow-[0_18px_60px_rgba(0,0,0,0.45)] p-6 border border-zinc-200 dark:border-zinc-800 rounded-2xl">
         <p className="font-semibold text-amber-700 dark:text-amber-300 text-xs uppercase tracking-[0.3em]">
-          {copy.labels.debugUi}
+          {t.labels.debugUi}
         </p>
         <h1 className="font-semibold text-zinc-950 dark:text-zinc-50 text-3xl sm:text-4xl tracking-tight">
-          {copy.title}
+          {t.title}
         </h1>
         <p className="max-w-3xl text-zinc-600 dark:text-zinc-300 text-sm sm:text-base leading-7">
-          {copy.subtitle}
+          {t.subtitle}
         </p>
         <div className="flex flex-wrap gap-3">
           <ActionButton onClick={startNewRun} variant="accent">
-            {copy.actions.newRun}
+            {t.actions.newRun}
           </ActionButton>
           <ActionButton disabled={!savedRun} onClick={continueSavedRun}>
-            {copy.actions.continueRun}
+            {t.actions.continueRun}
           </ActionButton>
           <ActionButton
             disabled={!run || !initialLock || run.currentLock.isFailed}
             onClick={resetLock}
           >
-            {copy.actions.reset}
+            {t.actions.reset}
           </ActionButton>
           <ActionButton
             disabled={!run?.currentLock.isSolved}
             onClick={continueToNextChest}
             variant="success"
           >
-            {copy.actions.continueToNextChest}
+            {t.actions.continueToNextChest}
           </ActionButton>
         </div>
         {savedRun ? (
           <p className="text-zinc-500 dark:text-zinc-400 text-sm">
-            {copy.messages.saved}
+            {t.messages.saved}
           </p>
         ) : null}
       </header>
@@ -405,52 +403,51 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
         <div className="space-y-4 bg-white/90 dark:bg-zinc-950/90 p-5 border border-zinc-200 dark:border-zinc-800 rounded-2xl">
           <div className="gap-3 grid sm:grid-cols-2 xl:grid-cols-3">
             <MetricCard
-              label={copy.labels.chest}
-              value={run ? run.chestIndex + 1 : copy.labels.noValue}
+              label={t.labels.chest}
+              value={run ? run.chestIndex + 1 : t.labels.noValue}
             />
             <MetricCard
-              label={copy.labels.oreNuggets}
+              label={t.labels.oreNuggets}
               value={run?.oreNuggets ?? 0}
             />
             <MetricCard
-              label={copy.labels.lockpicks}
+              label={t.labels.lockpicks}
               value={run?.lockpicks ?? 0}
             />
             <MetricCard
-              label={copy.labels.invalidMoves}
+              label={t.labels.invalidMoves}
               value={run?.currentLock.invalidMovesOnCurrentPick ?? 0}
             />
             <MetricCard
-              label={copy.labels.maxInvalidMoves}
+              label={t.labels.maxInvalidMoves}
               value={run?.currentLock.maxInvalidMovesPerPick ?? 3}
             />
             <MetricCard
-              label={copy.labels.state}
-              value={getLockStateLabel(copy, run)}
+              label={t.labels.state}
+              value={getLockStateLabel(t, run)}
             />
           </div>
 
           <SectionCard>
             <p className="text-zinc-500 dark:text-zinc-500 text-xs uppercase tracking-[0.24em]">
-              {copy.labels.selectedPin}
+              {t.labels.selectedPin}
             </p>
             <p className="mt-2 text-zinc-900 dark:text-zinc-100 text-lg">
-              {selectedPin ? `#${selectedPin.id}` : copy.labels.noValue}
+              {selectedPin ? `#${selectedPin.id}` : t.labels.noValue}
             </p>
             <p className="mt-2 text-zinc-500 dark:text-zinc-400 text-sm">
-              {copy.labels.moveHint}
+              {t.labels.moveHint}
             </p>
           </SectionCard>
 
           <SectionCard>
             <p className="text-zinc-500 dark:text-zinc-500 text-xs uppercase tracking-[0.24em]">
-              {copy.labels.pinColumns}
+              {t.labels.pinColumns}
             </p>
             <div className="flex flex-col-reverse gap-3 mt-4">
               {run?.currentLock.pins.map((pin) => {
                 return (
                   <PinVisualizerRow
-                    copy={copy}
                     isSelected={pin.id === selectedPinId}
                     key={`visual-${pin.id}`}
                     onSelect={selectPin}
@@ -460,7 +457,7 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
               })}
               {!run ? (
                 <p className="text-zinc-500 dark:text-zinc-400 text-sm">
-                  {copy.messages.idle}
+                  {t.messages.idle}
                 </p>
               ) : null}
             </div>
@@ -470,7 +467,6 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
             {run?.currentLock.pins.map((pin) => {
               return (
                 <PinControlCard
-                  copy={copy}
                   isDisabled={run.currentLock.isFailed}
                   isSelected={pin.id === selectedPinId}
                   key={`control-${pin.id}`}
@@ -483,7 +479,6 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
           </div>
 
           <PinTable
-            copy={copy}
             lock={run?.currentLock ?? null}
             onSelect={selectPin}
             selectedPinId={selectedPinId}
@@ -492,44 +487,44 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
 
         <aside className="space-y-4 bg-white/90 dark:bg-zinc-950/90 p-5 border border-zinc-200 dark:border-zinc-800 rounded-2xl">
           <MetricCard
-            label={copy.labels.solverHint}
-            value={solverPath ? solverPath.length : copy.labels.noValue}
+            label={t.labels.solverHint}
+            value={solverPath ? solverPath.length : t.labels.noValue}
           />
 
           <SectionCard>
             <p className="text-zinc-600 dark:text-zinc-300 text-sm leading-7">
-              {getStatusMessage(copy, run)}
+              {getStatusMessage(t, run)}
             </p>
           </SectionCard>
 
           <SectionCard>
             <p className="text-zinc-500 dark:text-zinc-500 text-xs uppercase tracking-[0.24em]">
-              {copy.labels.rewardSummary}
+              {t.labels.rewardSummary}
             </p>
             <p className="mt-2 text-zinc-600 dark:text-zinc-300 text-sm leading-7">
               {lastReward
-                ? `+${lastReward.oreNuggets} ${copy.labels.oreUnit}, +${lastReward.lockpicks} ${copy.labels.rewardLockpicks}`
-                : copy.labels.noValue}
+                ? `+${lastReward.oreNuggets} ${t.labels.oreUnit}, +${lastReward.lockpicks} ${t.labels.rewardLockpicks}`
+                : t.labels.noValue}
             </p>
           </SectionCard>
 
           <SectionCard>
             <p className="text-zinc-500 dark:text-zinc-500 text-xs uppercase tracking-[0.24em]">
-              {copy.labels.keyboardHelp}
+              {t.labels.keyboardHelp}
             </p>
             <ul className="space-y-2 mt-3 text-zinc-600 dark:text-zinc-300 text-sm leading-6">
-              <li>{copy.labels.keyboardSelectPin}</li>
-              <li>{copy.labels.keyboardSelectPreviousPin}</li>
-              <li>{copy.labels.keyboardSelectNextPin}</li>
-              <li>{copy.labels.keyboardMoveLeft}</li>
-              <li>{copy.labels.keyboardMoveRight}</li>
-              <li>{copy.labels.keyboardReset}</li>
+              <li>{t.labels.keyboardSelectPin}</li>
+              <li>{t.labels.keyboardSelectPreviousPin}</li>
+              <li>{t.labels.keyboardSelectNextPin}</li>
+              <li>{t.labels.keyboardMoveLeft}</li>
+              <li>{t.labels.keyboardMoveRight}</li>
+              <li>{t.labels.keyboardReset}</li>
             </ul>
           </SectionCard>
 
           <SectionCard>
             <p className="text-zinc-500 dark:text-zinc-500 text-xs uppercase tracking-[0.24em]">
-              {copy.labels.eventLog}
+              {t.labels.eventLog}
             </p>
             <ul className="space-y-2 mt-3 font-mono text-zinc-700 dark:text-zinc-300 text-xs leading-6">
               {eventLog.length > 0 ? (
@@ -537,27 +532,27 @@ export function TextLockTester({ copy }: TextLockTesterProps) {
                   <li key={`${index}-${entry}`}>{entry}</li>
                 ))
               ) : (
-                <li>{copy.messages.noEvents}</li>
+                <li>{t.messages.noEvents}</li>
               )}
             </ul>
           </SectionCard>
 
           <SectionCard>
             <p className="text-zinc-500 dark:text-zinc-500 text-xs uppercase tracking-[0.24em]">
-              {copy.labels.rules}
+              {t.labels.rules}
             </p>
             <ul className="space-y-2 mt-3 font-mono text-zinc-700 dark:text-zinc-300 text-xs leading-6">
               {run?.currentLock.rules.map((rule) => (
                 <li key={`${rule.sourcePinId}:${rule.direction}`}>
                   {formatRuleText(
-                    copy,
+                    t,
                     rule.sourcePinId,
                     rule.direction,
                     rule.effects,
                   )}
                 </li>
               ))}
-              {!run ? <li>{copy.messages.idle}</li> : null}
+              {!run ? <li>{t.messages.idle}</li> : null}
             </ul>
           </SectionCard>
         </aside>

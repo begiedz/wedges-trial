@@ -1,0 +1,126 @@
+{
+  "common": {
+    "brand": {
+      "name": "Wedge's Trial",
+      "logoAlt": "Wedge's-Trial-Logo"
+    }
+  },
+  "metadata": {
+    "title": "Wedge's Trial",
+    "description": "Logik-Puzzlespiel, inspiriert von den Schlossknack-Mechaniken aus Gothic Remake."
+  },
+  "home": {
+    "actions": {
+      "play": "Spielen"
+    }
+  },
+  "game": {
+    "title": "Truhe öffnen",
+    "actions": {
+      "newRun": "Neuer Lauf"
+    },
+    "labels": {
+      "chest": "Truhe",
+      "difficulty": "Schwierigkeit",
+      "invalidMoves": "Ungültige Züge",
+      "lockpick": "Dietrich",
+      "oreNuggets": "Erznuggets"
+    },
+    "movement": {
+      "actions": {
+        "continueToNextChest": "Zur nächsten Truhe weiter",
+        "moveLeft": "Nach links bewegen",
+        "moveRight": "Nach rechts bewegen",
+        "reset": "Aktuelles Schloss zurücksetzen",
+        "selectNextPin": "Nächsten Stift auswählen",
+        "selectPreviousPin": "Vorherigen Stift auswählen"
+      },
+      "labels": {
+        "moveHorizontal": "Links/rechts bewegen",
+        "moveVertical": "Hoch/runter bewegen",
+        "next": "Weiter",
+        "reset": "Zurücksetzen"
+      }
+    }
+  },
+  "debug": {
+    "actions": {
+      "continueRun": "Gespeicherten Lauf fortsetzen",
+      "continueToNextChest": "Zur nächsten Truhe weiter",
+      "moveLeft": "Nach links bewegen",
+      "moveRight": "Nach rechts bewegen",
+      "newRun": "Neuen Testlauf starten",
+      "reset": "Aktuelles Schloss zurücksetzen",
+      "selectNextPin": "Nächsten Stift auswählen",
+      "selectPreviousPin": "Vorherigen Stift auswählen",
+      "selectPin": "Stift auswählen"
+    },
+    "labels": {
+      "chest": "Truhe",
+      "debugUi": "Debug-Oberfläche",
+      "eventLog": "Ereignisprotokoll",
+      "invalidMoves": "Ungültige Züge",
+      "invalidMoveEvent": "ungültiger Zug",
+      "ignoredEvent": "ignoriert",
+      "keyboardHelp": "Tastaturhilfe",
+      "keyboardMoveLeft": "`A` oder `ArrowLeft` bewegt den ausgewählten Stift nach links",
+      "keyboardMoveRight": "`D` oder `ArrowRight` bewegt den ausgewählten Stift nach rechts",
+      "keyboardReset": "`R` setzt das aktuelle Schloss zurück",
+      "keyboardSelectPreviousPin": "`W` oder `ArrowUp` wählt den vorherigen Stift aus",
+      "keyboardSelectNextPin": "`S` oder `ArrowDown` wählt den nächsten Stift aus",
+      "keyboardSelectPin": "`1-9` wählt einen Stift nach Index aus",
+      "left": "links",
+      "lockpickBrokeEvent": "Dietrich brach nach ungültigem Zug",
+      "lockpicks": "Dietriche",
+      "maxInvalidMoves": "Max. ungültige Züge pro Dietrich",
+      "moveHint": "Wähle einen Stift und bewege ihn direkt",
+      "moveHorizontal": "Links/rechts bewegen",
+      "moveVertical": "Hoch/runter bewegen",
+      "movedEvent": "bewegt",
+      "next": "Weiter",
+      "noValue": "Nicht gestartet",
+      "onTarget": "am Ziel",
+      "oreUnit": "Erz",
+      "openedChestEvent": "Truhe geöffnet",
+      "oreNuggets": "Erznuggets",
+      "pin": "Stift",
+      "pinColumns": "Stiftspalten",
+      "pinControls": "Stiftsteuerung",
+      "pinPrefix": "stift",
+      "position": "Position",
+      "range": "Bereich",
+      "resetChestEvent": "Truhe zurückgesetzt",
+      "reset": "Zurücksetzen",
+      "rewardLockpicks": "Dietriche",
+      "rewardSummary": "Letzte Truhenbelohnung",
+      "right": "rechts",
+      "rules": "Regeln",
+      "selectedPin": "Ausgewählter Stift",
+      "selectedPinEvent": "Stift ausgewählt",
+      "selectedPinFromKeyboardEvent": "Stift per Tastatur ausgewählt",
+      "solvedChestEvent": "Truhe gelöst",
+      "solverHint": "Länge des Löserpfads",
+      "startedChestEvent": "Truhe gestartet",
+      "state": "Status",
+      "target": "Ziel",
+      "toInitialState": "in den anfänglichen Schlosszustand",
+      "continuedSavedChestEvent": "gespeicherte Truhe fortgesetzt"
+    },
+    "messages": {
+      "active": "Nutze die Textsteuerung, um Abhängigkeiten zu prüfen, gültige Züge zu verifizieren und Schaden durch ungültige Züge nachzustellen.",
+      "failed": "Lauf fehlgeschlagen. Es sind keine Dietriche mehr übrig, daher ist die Schlossinteraktion blockiert, bis ein neuer Lauf startet.",
+      "idle": "Starte einen Lauf, um das generierte Schloss zu prüfen und das Zugverhalten zu testen.",
+      "invalid": "Ungültige Züge lassen alle Stifte an Ort und Stelle und beschädigen nur den aktuellen Dietrich.",
+      "noEvents": "Noch keine Spielereignisse.",
+      "saved": "Ein zuvor gespeicherter Lauf vom zuletzt geöffneten Schloss ist verfügbar.",
+      "solved": "Schloss gelöst. Gehe zur nächsten Truhe weiter, um ein schwereres Testschloss zu erzeugen und den Lauf zu speichern."
+    },
+    "states": {
+      "active": "Aktiv",
+      "failed": "Fehlgeschlagen",
+      "solved": "Gelöst"
+    },
+    "subtitle": "Textbasierter Browser-Harness zur Validierung von Schlossgenerierung, Zugregeln, Schaden durch ungültige Züge und manuellem Zurücksetzen.",
+    "title": "Wedge's Trial Schlossharness"
+  }
+}

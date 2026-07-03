@@ -1,11 +1,11 @@
 import Image from "next/image";
-import { textLockCopy } from "@/app/textLockCopy";
 import AIcon from "@/assets/images/icons/T_Icon_PC_A.png";
 import DIcon from "@/assets/images/icons/T_Icon_PC_D.png";
 import NIcon from "@/assets/images/icons/T_Icon_PC_N.png";
 import RIcon from "@/assets/images/icons/T_Icon_PC_R.png";
 import WIcon from "@/assets/images/icons/T_Icon_PC_W.png";
 import SIcon from "@/assets/images/icons/T_Icon_PS_S.png";
+import { useGameDictionary } from "@/i18n/provider";
 
 type MovementProps = {
   onContinueToNextChest: () => void;
@@ -50,6 +50,7 @@ export default function Movement({
   onSelectNextPin,
   onSelectPreviousPin,
 }: MovementProps) {
+  const t = useGameDictionary().movement;
   const iconSize = 64;
 
   return (
@@ -60,17 +61,17 @@ export default function Movement({
             <MovementButton
               src={AIcon.src}
               iconSize={iconSize}
-              alt={textLockCopy.actions.moveLeft}
+              alt={t.actions.moveLeft}
               onClick={onMoveLeft}
             />
             <MovementButton
               src={DIcon.src}
               iconSize={iconSize}
-              alt={textLockCopy.actions.moveRight}
+              alt={t.actions.moveRight}
               onClick={onMoveRight}
             />
           </div>
-          <p>{textLockCopy.labels.moveHorizontal}</p>
+          <p>{t.labels.moveHorizontal}</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -78,17 +79,17 @@ export default function Movement({
             <MovementButton
               src={WIcon.src}
               iconSize={iconSize}
-              alt={textLockCopy.actions.selectPreviousPin}
+              alt={t.actions.selectPreviousPin}
               onClick={onSelectPreviousPin}
             />
             <MovementButton
               src={SIcon.src}
               iconSize={iconSize}
-              alt={textLockCopy.actions.selectNextPin}
+              alt={t.actions.selectNextPin}
               onClick={onSelectNextPin}
             />
           </div>
-          <p>{textLockCopy.labels.moveVertical}</p>
+          <p>{t.labels.moveVertical}</p>
         </div>
 
         <div className="flex items-center gap-8">
@@ -96,19 +97,19 @@ export default function Movement({
             <MovementButton
               src={RIcon.src}
               iconSize={iconSize}
-              alt={textLockCopy.actions.reset}
+              alt={t.actions.reset}
               onClick={onReset}
             />
-            <p>{textLockCopy.labels.reset}</p>
+            <p>{t.labels.reset}</p>
           </div>
           <div className="flex items-center gap-2">
             <MovementButton
               src={NIcon.src}
               iconSize={iconSize}
-              alt={textLockCopy.actions.continueToNextChest}
+              alt={t.actions.continueToNextChest}
               onClick={onContinueToNextChest}
             />
-            <p>{textLockCopy.labels.next}</p>
+            <p>{t.labels.next}</p>
           </div>
         </div>
       </div>

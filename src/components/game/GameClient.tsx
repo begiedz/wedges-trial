@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { textLockCopy } from "@/app/textLockCopy";
 import LockPickIcon from "@/assets/images/icons/items/T_ItemIcon_ItKe_Lockpick.png";
 import OreNuggetIcon from "@/assets/images/icons/items/T_ItemIcon_ItMi_Orenugget.png";
 import Separator from "@/assets/images/T_TitleLine_Small.png";
@@ -17,6 +16,7 @@ import { loadRunState, saveRunState } from "@/game/persistence";
 import { getDifficultyBand } from "@/game/progressDifficulty";
 import { cloneLockState, resetCurrentLock } from "@/game/resetLock";
 import type { Direction, LockState, RunState } from "@/game/types";
+import { useGameDictionary } from "@/i18n/provider";
 
 function getNextPinId(
   run: RunState,
@@ -38,7 +38,8 @@ function getNextPinId(
   return run.currentLock.pins[nextIndex]?.id ?? null;
 }
 
-export default function Game() {
+export function GameClient() {
+  const t = useGameDictionary();
   const [run, setRun] = useState<RunState | null>(null);
   const [initialLock, setInitialLock] = useState<LockState | null>(null);
   const [selectedPinId, setSelectedPinId] = useState<number | null>(null);
@@ -197,10 +198,10 @@ export default function Game() {
   return (
     <main className="flex flex-col items-center gap-6">
       <Button onClick={startNewRun} className="top-1 right-1 absolute">
-        New run
+        {t.actions.newRun}
       </Button>
       <section className="flex flex-col items-center">
-        <h2 className="font-heading text-4xl sm:text-5xl">Open Chest</h2>
+        <h2 className="font-heading text-4xl sm:text-5xl">{t.title}</h2>
         <div
           className="bg-foreground scale-75 sm:scale-100"
           style={{
@@ -219,39 +220,38 @@ export default function Game() {
 
         <div className="flex flex-col items-center gap-2 pt-4">
           <Difficulty level={difficultyLevel} />
-          <p className="text-secondary sm:text-lg">Chest: #{run.chestIndex}</p>
+          <p className="text-secondary sm:text-lg">
+            {t.labels.chest}: #{run.chestIndex}
+          </p>
         </div>
       </section>
 
-      {/* Game */}
       <Lock
         onSelectPin={setSelectedPinId}
         pins={run.currentLock.pins}
         selectedPinId={selectedPinId}
       />
 
-      {/* Resources */}
       <section>
         <div className="flex flex-wrap gap-3 text-sm">
           <ItemFrame
             item={LockPickIcon.src}
-            alt="Lockpick"
+            alt={t.labels.lockpick}
             width={64}
             height={64}
             amount={run.lockpicks}
           />
           <ItemFrame
             item={OreNuggetIcon.src}
-            alt="Ore Nuggets"
+            alt={t.labels.oreNuggets}
             width={64}
             height={64}
             amount={run.oreNuggets}
           />
 
           <Card className="flex items-center">
-            {textLockCopy.labels.invalidMoves}:{" "}
-            {run.currentLock.invalidMovesOnCurrentPick}/
-            {run.currentLock.maxInvalidMovesPerPick}
+            {t.labels.invalidMoves}: {run.currentLock.invalidMovesOnCurrentPick}
+            /{run.currentLock.maxInvalidMovesPerPick}
           </Card>
         </div>
       </section>
