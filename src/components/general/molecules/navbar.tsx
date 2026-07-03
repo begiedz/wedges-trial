@@ -14,42 +14,33 @@ type NavItem = { title: string; href?: string; children?: NavChild[] };
 
 const NAV_ITEMS: NavItem[] = [
   {
-    title: "Products",
+    title: "Language",
     children: [
       {
-        title: "Analytics",
-        href: "#analytics",
-        description: "Real-time insights into your traffic and revenue.",
+        title: "EN",
+        href: "/en",
+        description: "",
       },
       {
-        title: "Automation",
-        href: "#automation",
-        description: "Ship faster with workflows that run themselves.",
+        title: "PL",
+        href: "/pl",
+        description: "",
       },
       {
-        title: "Integrations",
-        href: "#integrations",
-        description: "Connect the tools your team already relies on.",
+        title: "DE",
+        href: "/de",
+        description: "",
+      },
+      {
+        title: "RU",
+        href: "/ru",
+        description: "",
       },
     ],
   },
-  {
-    title: "Solutions",
-    children: [
-      {
-        title: "For Startups",
-        href: "#startups",
-        description: "Everything you need to launch and grow.",
-      },
-      {
-        title: "For Enterprise",
-        href: "#enterprise",
-        description: "Security, scale, and support for large teams.",
-      },
-    ],
-  },
-  { title: "Pricing", href: "#pricing" },
-  { title: "Docs", href: "#docs" },
+  { title: "Solver", href: "/solver" },
+  { title: "About", href: "/about" },
+  { title: "How to play", href: "/how-to-play" },
 ];
 
 export function Navbar() {
