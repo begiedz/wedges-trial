@@ -1,0 +1,126 @@
+{
+  "common": {
+    "brand": {
+      "name": "Próba Klina",
+      "logoAlt": "Logo Próba Klina"
+    }
+  },
+  "metadata": {
+    "title": "Próba Klina",
+    "description": "Logiczna gra-zagadka inspirowana mechaniką otwierania zamków z Gothic Remake."
+  },
+  "home": {
+    "actions": {
+      "play": "Graj"
+    }
+  },
+  "game": {
+    "title": "Otwórz skrzynię",
+    "actions": {
+      "newRun": "Nowa gra"
+    },
+    "labels": {
+      "chest": "Skrzynia",
+      "difficulty": "Poziom trudności",
+      "invalidMoves": "Nieprawidłowe ruchy",
+      "lockpick": "Wytrych",
+      "oreNuggets": "Bryłki rudy"
+    },
+    "movement": {
+      "actions": {
+        "continueToNextChest": "Przejdź do następnej skrzyni",
+        "moveLeft": "Przesuń w lewo",
+        "moveRight": "Przesuń w prawo",
+        "reset": "Zresetuj bieżący zamek",
+        "selectNextPin": "Wybierz następny pin",
+        "selectPreviousPin": "Wybierz poprzedni pin"
+      },
+      "labels": {
+        "moveHorizontal": "Ruch w lewo/prawo",
+        "moveVertical": "Ruch w górę/dół",
+        "next": "Dalej",
+        "reset": "Reset"
+      }
+    }
+  },
+  "debug": {
+    "actions": {
+      "continueRun": "Kontynuuj zapisany bieg",
+      "continueToNextChest": "Przejdź do następnej skrzyni",
+      "moveLeft": "Przesuń w lewo",
+      "moveRight": "Przesuń w prawo",
+      "newRun": "Rozpocznij nowy bieg testowy",
+      "reset": "Zresetuj bieżący zamek",
+      "selectNextPin": "Wybierz następny pin",
+      "selectPreviousPin": "Wybierz poprzedni pin",
+      "selectPin": "Wybierz pin"
+    },
+    "labels": {
+      "chest": "Skrzynia",
+      "debugUi": "Interfejs debugowania",
+      "eventLog": "Dziennik zdarzeń",
+      "invalidMoves": "Nieprawidłowe ruchy",
+      "invalidMoveEvent": "nieprawidłowy ruch",
+      "ignoredEvent": "zignorowano",
+      "keyboardHelp": "Skróty klawiaturowe",
+      "keyboardMoveLeft": "`A` lub `ArrowLeft` przesuwa wybrany pin w lewo",
+      "keyboardMoveRight": "`D` lub `ArrowRight` przesuwa wybrany pin w prawo",
+      "keyboardReset": "`R` resetuje bieżący zamek",
+      "keyboardSelectPreviousPin": "`W` lub `ArrowUp` wybiera poprzedni pin",
+      "keyboardSelectNextPin": "`S` lub `ArrowDown` wybiera następny pin",
+      "keyboardSelectPin": "`1-9` wybiera pin według indeksu",
+      "left": "lewo",
+      "lockpickBrokeEvent": "wytrych złamał się po nieprawidłowym ruchu",
+      "lockpicks": "Wytrychy",
+      "maxInvalidMoves": "Maks. nieprawidłowych ruchów na wytrych",
+      "moveHint": "Wybierz pin i przesuń go bezpośrednio",
+      "moveHorizontal": "Ruch w lewo/prawo",
+      "moveVertical": "Ruch w górę/dół",
+      "movedEvent": "przesunięto",
+      "next": "Dalej",
+      "noValue": "Nie rozpoczęto",
+      "onTarget": "na pozycji docelowej",
+      "oreUnit": "rudy",
+      "openedChestEvent": "otwarto skrzynię",
+      "oreNuggets": "Bryłki rudy",
+      "pin": "Pin",
+      "pinColumns": "Kolumny pinów",
+      "pinControls": "Sterowanie pinami",
+      "pinPrefix": "pin",
+      "position": "Pozycja",
+      "range": "Zakres",
+      "resetChestEvent": "zresetowano skrzynię",
+      "reset": "Reset",
+      "rewardLockpicks": "wytrychy",
+      "rewardSummary": "Nagroda z ostatniej skrzyni",
+      "right": "prawo",
+      "rules": "Reguły",
+      "selectedPin": "Wybrany pin",
+      "selectedPinEvent": "wybrano pin",
+      "selectedPinFromKeyboardEvent": "wybrano pin z klawiatury",
+      "solvedChestEvent": "rozwiązano skrzynię",
+      "solverHint": "Długość ścieżki rozwiązania",
+      "startedChestEvent": "uruchomiono skrzynię",
+      "state": "Stan",
+      "target": "Cel",
+      "toInitialState": "do początkowego stanu zamka",
+      "continuedSavedChestEvent": "wznowiono zapisaną skrzynię"
+    },
+    "messages": {
+      "active": "Użyj tekstowych kontrolek, aby sprawdzić zależności, zweryfikować poprawne ruchy i odtworzyć obrażenia od nieprawidłowych ruchów.",
+      "failed": "Bieg zakończony. Nie zostały żadne wytrychy, więc interakcja z zamkiem jest zablokowana do czasu rozpoczęcia nowego biegu.",
+      "idle": "Rozpocznij bieg, aby obejrzeć wygenerowany zamek i przetestować zachowanie ruchów.",
+      "invalid": "Nieprawidłowe ruchy pozostawiają wszystkie piny na miejscu i uszkadzają tylko bieżący wytrych.",
+      "noEvents": "Brak zdarzeń rozgrywki.",
+      "saved": "Dostępny jest wcześniej zapisany bieg z ostatnio otwartej skrzyni.",
+      "solved": "Zamek rozwiązany. Przejdź do następnej skrzyni, aby wygenerować trudniejszy zamek testowy i zapisać bieg."
+    },
+    "states": {
+      "active": "Aktywny",
+      "failed": "Przegrany",
+      "solved": "Rozwiązany"
+    },
+    "subtitle": "Tekstowy moduł testowy w przeglądarce do weryfikacji generowania zamków, reguł ruchu, obrażeń od nieprawidłowych ruchów i ręcznego resetu.",
+    "title": "Moduł testowy zamków Próba Klina"
+  }
+}

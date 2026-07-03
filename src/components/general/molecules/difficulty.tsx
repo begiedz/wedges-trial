@@ -4,14 +4,19 @@ import LockFillIcon from "@/assets/images/icons/T_LockDifficulty_Fill.png";
 import type { LockDifficulty } from "@/game/types";
 
 interface DifficultyProps {
+  label: string;
   level: LockDifficulty;
   size?: number;
 }
 
-export default function Difficulty({ level, size = 24 }: DifficultyProps) {
+export default function Difficulty({
+  label,
+  level,
+  size = 24,
+}: DifficultyProps) {
   return (
     <div className="flex gap-1">
-      <span className="text-secondary sm:text-lg">Difficulty:</span>
+      <span className="text-secondary sm:text-lg">{label}:</span>
       <div className="flex justify-center items-center">
         {Array.from({ length: 4 }, (_, index) => {
           const isFilled = index < level;
