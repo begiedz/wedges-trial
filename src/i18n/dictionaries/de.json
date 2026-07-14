@@ -46,7 +46,9 @@
       "eyebrow": "Aus Inspiration geschmiedet",
       "title": "Warum Wedge’s Trial entstand",
       "body": "Wedge’s Trial entstand aus dem persönlichen Wunsch, den Schlossknack-Mechanismus aus Gothic Remake in ein konzentriertes Browser-Minispiel zu verwandeln.",
-      "influence": "Beeinflusst wurde es außerdem von Fingers Challenge, einem von einem Fan entwickelten Schlossknack-Minispiel nach dem Vorbild von Gothic Classic. Dieses Projekt ist eine Hommage an beide Ideen—und an das Talent der Gothic-Community, in vertrauten Welten neue Geschichten zu entdecken."
+      "influencePrefix": "Beeinflusst wurde es außerdem von ",
+      "influenceName": "Fingers Challenge",
+      "influenceSuffix": ", einem von einem Fan entwickelten Schlossknack-Minispiel nach dem Vorbild von Gothic Classic. Dieses Projekt ist eine Hommage an beide Ideen—und an das Talent der Gothic-Community, in vertrauten Welten neue Geschichten zu entdecken."
     },
     "cta": {
       "title": "Wie weit wirst du in der Prüfung kommen?",

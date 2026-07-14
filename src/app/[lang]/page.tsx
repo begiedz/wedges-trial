@@ -140,7 +140,16 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
               {home.origin.body}
             </p>
             <p className="mt-5 leading-7 text-secondary">
-              {home.origin.influence}
+              {home.origin.influencePrefix}
+              <a
+                href="https://fingerschallenge.com"
+                target="_blank"
+                rel="noreferrer"
+                className="text-foreground underline decoration-[#d0a35e] underline-offset-4 transition-colors hover:text-[#e5bd7d]"
+              >
+                {home.origin.influenceName}
+              </a>
+              {home.origin.influenceSuffix}
             </p>
           </div>
         </div>

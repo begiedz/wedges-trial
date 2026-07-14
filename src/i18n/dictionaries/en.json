@@ -46,7 +46,9 @@
       "eyebrow": "Forged by inspiration",
       "title": "Why Wedge’s Trial exists",
       "body": "Wedge’s Trial began as a personal attempt to turn the lockpicking mechanism from Gothic Remake into a focused browser minigame.",
-      "influence": "It is also influenced by Fingers Challenge, a fan-made lockpicking minigame inspired by Gothic Classic. This project is a tribute to both ideas—and to the Gothic community’s talent for finding new stories inside familiar worlds."
+      "influencePrefix": "It is also influenced by ",
+      "influenceName": "Fingers Challenge",
+      "influenceSuffix": ", a fan-made lockpicking minigame inspired by Gothic Classic. This project is a tribute to both ideas—and to the Gothic community’s talent for finding new stories inside familiar worlds."
     },
     "cta": {
       "title": "How far into the trial will you go?",

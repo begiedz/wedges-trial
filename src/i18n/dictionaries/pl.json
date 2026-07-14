@@ -46,7 +46,9 @@
       "eyebrow": "Wykute z inspiracji",
       "title": "Dlaczego powstała Próba Klina",
       "body": "Próba Klina zaczęła się od osobistej chęci przeniesienia mechanizmu otwierania zamków z Gothic Remake do formy skupionej, przeglądarkowej minigry.",
-      "influence": "Inspiracją było także Fingers Challenge—stworzona przez fana minigra o otwieraniu zamków, czerpiąca z Gothic Classic. Ten projekt jest hołdem dla obu pomysłów oraz dla talentu społeczności Gothica do odnajdywania nowych opowieści w znajomych światach."
+      "influencePrefix": "Inspiracją było także ",
+      "influenceName": "Wyzwanie Rączki",
+      "influenceSuffix": "—stworzona przez fana minigra o otwieraniu zamków, czerpiąca z Gothic Classic. Ten projekt jest hołdem dla obu pomysłów oraz dla talentu społeczności Gothica do odnajdywania nowych opowieści w znajomych światach."
     },
     "cta": {
       "title": "Jak daleko zajdziesz w tej próbie?",
