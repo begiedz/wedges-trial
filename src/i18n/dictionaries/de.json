@@ -11,7 +11,46 @@
   },
   "home": {
     "actions": {
-      "play": "Spielen"
+      "play": "Prüfung beginnen",
+      "discover": "Die Geschichte entdecken",
+      "accept": "Herausforderung annehmen"
+    },
+    "hero": {
+      "eyebrow": "Eine endlose Schlossknacker-Prüfung",
+      "title": "Hinter jedem Schloss wartet die nächste Prüfung.",
+      "lead": "Stell dich Wedges ständig wechselnder Truhenfolge, häufe immer mehr Erzbrocken an und finde heraus, wie lange dein Mut—und deine Dietriche—durchhalten.",
+      "imageAlt": "Wedge, der Hüter der Prüfung",
+      "quote": "Ein Schloss verrät dir alles—wenn du die Geduld hast, ihm zuzuhören.",
+      "quoteAttribution": "Wedge"
+    },
+    "features": {
+      "eyebrow": "Die Herausforderung wartet",
+      "title": "Unter jedem Deckel ein neues Schloss",
+      "lead": "Kein Lauf erzählt ganz dieselbe Geschichte. Jede geöffnete Truhe führt tiefer in eine endlose Prüfung, in der raffiniertere Rätsel und ein wachsender Erzvorrat jeden Erfolg zur Einladung machen, weiterzugehen.",
+      "items": [
+        {
+          "title": "Ein Abstieg ohne Ende",
+          "body": "Die nächste Truhe wartet immer—und jede erhöht den Einsatz."
+        },
+        {
+          "title": "Schlösser, die mitdenken",
+          "body": "Verzahnte Mechanismen lassen jede Herausforderung durchdacht, nachvollziehbar und einzigartig wirken."
+        },
+        {
+          "title": "Erz, das jedes Risiko wert ist",
+          "body": "Vergrößere deine Beute Truhe für Truhe und hinterlasse einen Punktestand, der der Kolonie würdig ist."
+        }
+      ]
+    },
+    "origin": {
+      "eyebrow": "Aus Inspiration geschmiedet",
+      "title": "Warum Wedge’s Trial entstand",
+      "body": "Wedge’s Trial entstand aus dem persönlichen Wunsch, den Schlossknack-Mechanismus aus Gothic Remake in ein konzentriertes Browser-Minispiel zu verwandeln.",
+      "influence": "Beeinflusst wurde es außerdem von Fingers Challenge, einem von einem Fan entwickelten Schlossknack-Minispiel nach dem Vorbild von Gothic Classic. Dieses Projekt ist eine Hommage an beide Ideen—und an das Talent der Gothic-Community, in vertrauten Welten neue Geschichten zu entdecken."
+    },
+    "cta": {
+      "title": "Wie weit wirst du in der Prüfung kommen?",
+      "body": "Die erste Truhe ist nur der Anfang."
     }
   },
   "nav": {

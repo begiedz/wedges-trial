@@ -11,7 +11,46 @@
   },
   "home": {
     "actions": {
-      "play": "Graj"
+      "play": "Podejmij próbę",
+      "discover": "Poznaj jej historię",
+      "accept": "Przyjmij wyzwanie"
+    },
+    "hero": {
+      "eyebrow": "Niekończąca się próba włamywacza",
+      "title": "Każdy zamek skrywa kolejną próbę.",
+      "lead": "Zmierz się z nieustannie zmieniającym się szeregiem skrzyń Klina, zdobywaj coraz więcej bryłek rudy i sprawdź, na jak długo wystarczy ci odwagi—oraz wytrychów.",
+      "imageAlt": "Klin, strażnik próby",
+      "quote": "Zamek powie ci wszystko—jeśli masz cierpliwość, by go wysłuchać.",
+      "quoteAttribution": "Klin"
+    },
+    "features": {
+      "eyebrow": "Wyzwanie czeka",
+      "title": "Nowy zamek pod każdym wiekiem",
+      "lead": "Żadne dwie wyprawy nie układają się w tę samą opowieść. Każda otwarta skrzynia prowadzi dalej w głąb niekończącej się próby, gdzie sprytniejsze zagadki i rosnący zapas rudy zachęcają, by iść dalej.",
+      "items": [
+        {
+          "title": "Bez końca w głąb",
+          "body": "Zawsze czeka następna skrzynia—a każda podnosi stawkę."
+        },
+        {
+          "title": "Zamki, które odpowiadają",
+          "body": "Połączone mechanizmy sprawiają, że każde wyzwanie jest przemyślane, czytelne i wyjątkowe."
+        },
+        {
+          "title": "Ruda warta ryzyka",
+          "body": "Powiększaj swój łup skrzynia po skrzyni i zostaw wynik godny Kolonii."
+        }
+      ]
+    },
+    "origin": {
+      "eyebrow": "Wykute z inspiracji",
+      "title": "Dlaczego powstała Próba Klina",
+      "body": "Próba Klina zaczęła się od osobistej chęci przeniesienia mechanizmu otwierania zamków z Gothic Remake do formy skupionej, przeglądarkowej minigry.",
+      "influence": "Inspiracją było także Fingers Challenge—stworzona przez fana minigra o otwieraniu zamków, czerpiąca z Gothic Classic. Ten projekt jest hołdem dla obu pomysłów oraz dla talentu społeczności Gothica do odnajdywania nowych opowieści w znajomych światach."
+    },
+    "cta": {
+      "title": "Jak daleko zajdziesz w tej próbie?",
+      "body": "Pierwsza skrzynia to dopiero początek."
     }
   },
   "nav": {

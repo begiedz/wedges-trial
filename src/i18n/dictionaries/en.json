@@ -11,7 +11,46 @@
   },
   "home": {
     "actions": {
-      "play": "Play"
+      "play": "Enter the trial",
+      "discover": "Discover its story",
+      "accept": "Accept the challenge"
+    },
+    "hero": {
+      "eyebrow": "An endless lockpicking trial",
+      "title": "Every lock hides another test.",
+      "lead": "Face Wedge’s ever-changing chain of chests, chase a richer haul of ore nuggets, and see how long your nerve—and your lockpicks—hold.",
+      "imageAlt": "Wedge, the keeper of the trial",
+      "quote": "A lock tells you everything—if you have the patience to listen.",
+      "quoteAttribution": "Wedge"
+    },
+    "features": {
+      "eyebrow": "The challenge awaits",
+      "title": "A new lock behind every lid",
+      "lead": "No two runs tell quite the same story. Each opened chest leads deeper into an endless trial, where sharper puzzles and a growing ore haul turn every success into an invitation to continue.",
+      "items": [
+        {
+          "title": "An endless descent",
+          "body": "There is always another chest—and every one raises the stakes."
+        },
+        {
+          "title": "Locks that think back",
+          "body": "Interlocking mechanisms make each challenge feel deliberate, readable, and distinct."
+        },
+        {
+          "title": "Ore worth the risk",
+          "body": "Build your haul chest by chest and leave a score worthy of the Colony."
+        }
+      ]
+    },
+    "origin": {
+      "eyebrow": "Forged by inspiration",
+      "title": "Why Wedge’s Trial exists",
+      "body": "Wedge’s Trial began as a personal attempt to turn the lockpicking mechanism from Gothic Remake into a focused browser minigame.",
+      "influence": "It is also influenced by Fingers Challenge, a fan-made lockpicking minigame inspired by Gothic Classic. This project is a tribute to both ideas—and to the Gothic community’s talent for finding new stories inside familiar worlds."
+    },
+    "cta": {
+      "title": "How far into the trial will you go?",
+      "body": "The first chest is only the beginning."
     }
   },
   "nav": {
