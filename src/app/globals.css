@@ -1,32 +1,136 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  --foreground: #f9ddd0;
-  --secondary: #a9a9a9;
   --background: #292729;
   --background-secondary: #211f21;
+  --foreground: #f9ddd0;
+  --secondary: #a9a9a9;
+
+  --card: #211f21;
+  --card-foreground: #f9ddd0;
+
+  --popover: #211f21;
+  --popover-foreground: #f9ddd0;
+
+  --primary: #f9ddd0;
+  --primary-foreground: #292729;
+
+  --secondary-foreground: #292729;
+
+  --muted: #363336;
+  --muted-foreground: #a9a9a9;
+
+  --accent: #3a3639;
+  --accent-foreground: #f9ddd0;
+
+  --destructive: #dc4c4c;
+
+  --border: rgb(249 221 208 / 15%);
+  --input: rgb(249 221 208 / 20%);
+  --ring: #f9ddd0;
+
+  --chart-1: #f9ddd0;
+  --chart-2: #d5aaa0;
+  --chart-3: #a9a9a9;
+  --chart-4: #756f72;
+  --chart-5: #4c484a;
+
+  /* --radius: 0.625rem; */
+  --radius: 0rem;
+
+  --sidebar: #211f21;
+  --sidebar-foreground: #f9ddd0;
+  --sidebar-primary: #f9ddd0;
+  --sidebar-primary-foreground: #292729;
+  --sidebar-accent: #3a3639;
+  --sidebar-accent-foreground: #f9ddd0;
+  --sidebar-border: rgb(249 221 208 / 15%);
+  --sidebar-ring: #f9ddd0;
 }
 
 @theme inline {
+
   --color-background: var(--background);
   --color-background-secondary: var(--background-secondary);
   --color-foreground: var(--foreground);
   --color-secondary: var(--secondary);
+
+
   --font-sans: var(--font-noto-serif);
   --font-heading: var(--font-boucherie);
+
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Promienie shadcn */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-noto-serif), serif;
-  cursor: url("/Cursor.png"), auto;
-}
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
 
-button,
-a,
-input,
-textarea,
-select {
-  cursor: url("/Cursor.png"), auto;
+  html {
+    @apply font-sans;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-noto-serif), serif;
+    cursor: url("/Cursor.png"), auto;
+  }
+
+  button,
+  a,
+  input,
+  textarea,
+  select,
+  [role="menuitem"],
+  [data-slot="dropdown-menu-trigger"],
+  [data-slot="dropdown-menu-content"],
+  [data-slot="dropdown-menu-item"] {
+    cursor: url("/Cursor.png"), auto !important;
+  }
 }
