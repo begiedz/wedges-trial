@@ -81,23 +81,63 @@
     "pages": {
       "about": {
         "title": "About Wedge's Trial",
-        "lead": "Wedge's Trial is a browser lockpicking challenge built around deterministic pin dependencies and endless chest progression.",
-        "body": "Each solved chest rewards ore nuggets and sometimes lockpicks, while every next lock adds a little more pressure through extra pins, denser dependencies, and longer generated solutions."
+        "eyebrow": "Behind the trial",
+        "lead": "Wedge’s Trial is an endless browser lockpicking puzzle in which every opened chest leads to a tougher test.",
+        "whatItIs": {
+          "title": "What is Wedge’s Trial?",
+          "body": "Wedge challenges you with a chain of generated, always-solvable locks. Their connected mechanisms reward observation and planning rather than speed, while ore nuggets record how far your run has carried you."
+        },
+        "trial": {
+          "title": "The endless trial",
+          "body": "Each chest raises the difficulty through more tumblers, denser connections between them, and longer solutions. Your goal is simple: gather as much ore as possible before your supply of lockpicks is exhausted."
+        },
+        "inspiration": {
+          "eyebrow": "Forged by inspiration",
+          "title": "Why it exists",
+          "body": "The project began as a personal attempt to turn the lockpicking mechanism from Gothic Remake into a focused browser minigame.",
+          "influencePrefix": "It is also influenced by ",
+          "influenceName": "Fingers Challenge",
+          "influenceSuffix": ", a fan-made lockpicking minigame inspired by Gothic Classic. Wedge’s Trial is a tribute to both ideas and to the creativity of the Gothic community."
+        },
+        "howToPlayLink": "Learn how to play"
       },
       "howToPlay": {
         "title": "How to play",
-        "lead": "Select a pin, then move it left or right to line every pin up with its target position.",
+        "eyebrow": "Know the lock",
+        "lead": "Turn the tumblers until every pin—the moving point on a tumbler—reaches its marked target.",
+        "objective": {
+          "title": "Your objective",
+          "body": "Open each chest, collect its ore nuggets and occasional lockpicks, then face the next, harder lock. The run ends when no lockpicks remain."
+        },
+        "mechanism": {
+          "title": "Tumblers and pins",
+          "body": "Select a tumbler and turn it left or right. A turn moves its pin and can also move pins on connected tumblers, sometimes in the opposite direction, so watch the whole lock before committing."
+        },
+        "stepsTitle": "Opening a chest",
         "steps": [
-          "Choose a pin by clicking it or using the keyboard shortcuts.",
-          "Move the selected pin left or right and watch for linked pins that shift with it.",
-          "Keep every affected pin inside its allowed range to avoid invalid moves.",
-          "Solve the current lock to open the chest, claim ore nuggets, and continue the endless run."
+          "Select a tumbler by clicking or tapping it.",
+          "Turn it left or right with the visible controls, A/D, or the Left/Right Arrow keys.",
+          "Watch how its pin—and pins on connected tumblers—move toward or away from their targets.",
+          "Place every pin on its target to open the chest.",
+          "Claim the reward and continue to the next, harder lock."
         ],
+        "rulesTitle": "Lockpicks and invalid moves",
         "rules": [
+          "A move is invalid if it would push any affected pin outside its allowed range.",
+          "An invalid move changes no pin positions and damages the current lockpick.",
           "A lockpick breaks after exactly 3 invalid moves.",
-          "Invalid moves do not change any pin positions.",
-          "Breaking a lockpick does not reset the current lock.",
-          "Use the reset button when you want to restart the current lock from its initial state."
+          "A broken lockpick does not reset the lock or its pin positions.",
+          "Manual reset restores the current lock’s starting layout.",
+          "When the last lockpick breaks, the run ends."
+        ],
+        "controlsTitle": "Controls",
+        "controls": [
+          "Click or tap: select a tumbler",
+          "W / Up Arrow and S / Down Arrow: select the previous or next tumbler",
+          "A / Left Arrow and D / Right Arrow: turn the selected tumbler",
+          "R: reset the current lock",
+          "N: continue after opening a chest",
+          "Visible controls provide the same actions on desktop and mobile."
         ]
       },
       "solver": {

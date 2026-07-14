@@ -81,23 +81,63 @@
     "pages": {
       "about": {
         "title": "Über Wedge's Trial",
-        "lead": "Wedge's Trial ist eine browserbasierte Dietrich-Herausforderung mit deterministischen Stift-Abhängigkeiten und endloser Truhen-Progression.",
-        "body": "Jede geöffnete Truhe belohnt dich mit Erzbrocken und manchmal Dietrichen, während jedes nächste Schloss durch zusätzliche Stifte, dichtere Abhängigkeiten und längere generierte Lösungen etwas mehr Druck aufbaut."
+        "eyebrow": "Hinter der Prüfung",
+        "lead": "Wedge’s Trial ist ein endloses Schlossknack-Puzzlespiel im Browser, in dem jede geöffnete Truhe zu einer schwierigeren Prüfung führt.",
+        "whatItIs": {
+          "title": "Was ist Wedge’s Trial?",
+          "body": "Wedge fordert dich mit einer Folge generierter, stets lösbarer Schlösser heraus. Ihre verbundenen Mechanismen belohnen Beobachtung und Planung statt Schnelligkeit; die gesammelten Erzbrocken zeigen, wie weit du gekommen bist."
+        },
+        "trial": {
+          "title": "Die endlose Prüfung",
+          "body": "Mit jeder Truhe steigt die Schwierigkeit: mehr Zuhaltungen, dichtere Verbindungen und längere Lösungen. Sammle so viel Erz wie möglich, bevor dir die Dietriche ausgehen."
+        },
+        "inspiration": {
+          "eyebrow": "Aus Inspiration geschmiedet",
+          "title": "Warum es entstand",
+          "body": "Das Projekt entstand aus dem persönlichen Wunsch, den Schlossknack-Mechanismus aus Gothic Remake in ein konzentriertes Browser-Minispiel zu verwandeln.",
+          "influencePrefix": "Beeinflusst wurde es außerdem von ",
+          "influenceName": "Fingers Challenge",
+          "influenceSuffix": ", einem von einem Fan entwickelten Schlossknack-Minispiel, das von Gothic Classic inspiriert ist. Wedge’s Trial ist eine Hommage an beide Ideen und an die Kreativität der Gothic-Community."
+        },
+        "howToPlayLink": "Spielanleitung lesen"
       },
       "howToPlay": {
         "title": "Spielanleitung",
-        "lead": "Wähle einen Stift aus und bewege ihn nach links oder rechts, bis alle Stifte auf ihren Zielpositionen stehen.",
+        "eyebrow": "Verstehe das Schloss",
+        "lead": "Drehe die Zuhaltungen, bis jeder Stift—der bewegliche Punkt auf einer Zuhaltung—seine markierte Zielposition erreicht.",
+        "objective": {
+          "title": "Dein Ziel",
+          "body": "Öffne jede Truhe, sammle Erzbrocken und gelegentlich Dietriche und stelle dich dann dem nächsten, schwierigeren Schloss. Der Lauf endet, wenn keine Dietriche mehr übrig sind."
+        },
+        "mechanism": {
+          "title": "Zuhaltungen und Stifte",
+          "body": "Wähle eine Zuhaltung und drehe sie nach links oder rechts. Eine Drehung bewegt ihren Stift und kann auch Stifte auf verbundenen Zuhaltungen verschieben, manchmal in die Gegenrichtung. Behalte deshalb das ganze Schloss im Blick."
+        },
+        "stepsTitle": "Eine Truhe öffnen",
         "steps": [
-          "Wähle einen Stift per Klick oder mit den Tastaturkürzeln aus.",
-          "Bewege den ausgewählten Stift nach links oder rechts und achte auf verbundene Stifte, die sich mitbewegen.",
-          "Halte jeden betroffenen Stift innerhalb seines erlaubten Bereichs, um ungültige Züge zu vermeiden.",
-          "Löse das aktuelle Schloss, öffne die Truhe, sammle Erzbrocken ein und setze den Endloslauf fort."
+          "Wähle eine Zuhaltung per Klick oder Tippen.",
+          "Drehe sie mit den sichtbaren Tasten, A/D oder den Pfeiltasten Links/Rechts.",
+          "Beobachte, wie sich ihr Stift und die Stifte verbundener Zuhaltungen ihren Zielen nähern oder davon entfernen.",
+          "Bringe jeden Stift auf sein Ziel, um die Truhe zu öffnen.",
+          "Nimm die Belohnung und gehe zum nächsten, schwierigeren Schloss weiter."
         ],
+        "rulesTitle": "Dietriche und ungültige Züge",
         "rules": [
+          "Ein Zug ist ungültig, wenn ein betroffener Stift seinen erlaubten Bereich verlassen würde.",
+          "Ein ungültiger Zug verändert keine Stiftposition und beschädigt den aktuellen Dietrich.",
           "Ein Dietrich bricht nach genau 3 ungültigen Zügen.",
-          "Ungültige Züge verändern keine Stiftpositionen.",
-          "Ein gebrochener Dietrich setzt das aktuelle Schloss nicht zurück.",
-          "Nutze die Zurücksetzen-Taste, wenn du das aktuelle Schloss in seinen Ausgangszustand zurückversetzen möchtest."
+          "Ein gebrochener Dietrich setzt weder das Schloss noch die Stiftpositionen zurück.",
+          "Manuelles Zurücksetzen stellt die Ausgangslage des aktuellen Schlosses wieder her.",
+          "Wenn der letzte Dietrich bricht, endet der Lauf."
+        ],
+        "controlsTitle": "Steuerung",
+        "controls": [
+          "Klick oder Tippen: Zuhaltung auswählen",
+          "W / Pfeil nach oben und S / Pfeil nach unten: vorherige oder nächste Zuhaltung",
+          "A / Pfeil nach links und D / Pfeil nach rechts: ausgewählte Zuhaltung drehen",
+          "R: aktuelles Schloss zurücksetzen",
+          "N: nach dem Öffnen einer Truhe fortfahren",
+          "Die sichtbaren Tasten bieten dieselben Aktionen auf Desktop und Mobilgerät."
         ]
       },
       "solver": {

@@ -81,23 +81,63 @@
     "pages": {
       "about": {
         "title": "O Próbie Klina",
-        "lead": "Próba Klina to przeglądarkowe wyzwanie z otwieraniem zamków oparte na deterministycznych zależnościach między pinami i nieskończonej progresji skrzyń.",
-        "body": "Każda otwarta skrzynia daje bryłki rudy i czasem wytrychy, a każdy kolejny zamek zwiększa presję dzięki większej liczbie pinów, gęstszym zależnościom i dłuższym wygenerowanym rozwiązaniom."
+        "eyebrow": "Za kulisami próby",
+        "lead": "Próba Klina to niekończąca się przeglądarkowa łamigłówka z otwieraniem zamków, w której każda otwarta skrzynia prowadzi do trudniejszej próby.",
+        "whatItIs": {
+          "title": "Czym jest Próba Klina?",
+          "body": "Klin rzuca ci wyzwanie w postaci szeregu generowanych, zawsze rozwiązywalnych zamków. Połączone mechanizmy nagradzają spostrzegawczość i planowanie, nie szybkość, a zebrane bryłki rudy pokazują, jak daleko udało ci się dotrzeć."
+        },
+        "trial": {
+          "title": "Niekończąca się próba",
+          "body": "Każda skrzynia podnosi poziom trudności: pojawia się więcej zapadek, więcej zależności między nimi i dłuższe rozwiązania. Cel jest prosty: zbierz jak najwięcej rudy, zanim skończą ci się wytrychy."
+        },
+        "inspiration": {
+          "eyebrow": "Wykute z inspiracji",
+          "title": "Dlaczego powstała",
+          "body": "Projekt powstał z osobistej chęci przeniesienia mechanizmu otwierania zamków z Gothic Remake do formy skupionej, przeglądarkowej minigry.",
+          "influencePrefix": "Wpływ na niego miało także ",
+          "influenceName": "Wyzwanie Rączki",
+          "influenceSuffix": ", stworzona przez fana minigra inspirowana Gothic Classic. Próba Klina jest hołdem dla obu pomysłów i kreatywności społeczności Gothica."
+        },
+        "howToPlayLink": "Dowiedz się, jak grać"
       },
       "howToPlay": {
         "title": "Jak grać",
-        "lead": "Wybierz pin, a następnie przesuwaj go w lewo lub w prawo, aż wszystkie piny ustawią się na pozycjach docelowych.",
+        "eyebrow": "Poznaj zamek",
+        "lead": "Obracaj zapadki, aż każdy pin—ruchomy punkt na zapadce—znajdzie się na oznaczonej pozycji docelowej.",
+        "objective": {
+          "title": "Twój cel",
+          "body": "Otwieraj kolejne skrzynie, zbieraj bryłki rudy i sporadycznie wytrychy, a następnie mierz się z coraz trudniejszymi zamkami. Gra kończy się, gdy zabraknie wytrychów."
+        },
+        "mechanism": {
+          "title": "Zapadki i piny",
+          "body": "Wybierz zapadkę i obróć ją w lewo lub w prawo. Obrót przesuwa jej pin i może też przesunąć piny na powiązanych zapadkach, czasem w przeciwnym kierunku, dlatego obserwuj cały zamek."
+        },
+        "stepsTitle": "Otwieranie skrzyni",
         "steps": [
-          "Wybierz pin kliknięciem albo skrótem klawiaturowym.",
-          "Przesuwaj wybrany pin w lewo lub w prawo i obserwuj powiązane piny, które ruszają się razem z nim.",
-          "Pilnuj, aby każdy dotknięty pin pozostał w dozwolonym zakresie, żeby uniknąć nieprawidłowych ruchów.",
-          "Rozwiąż bieżący zamek, otwórz skrzynię, odbierz bryłki rudy i kontynuuj nieskończony bieg."
+          "Wybierz zapadkę kliknięciem lub dotknięciem.",
+          "Obróć ją widocznymi przyciskami, klawiszami A/D albo strzałkami w lewo/w prawo.",
+          "Obserwuj, jak jej pin oraz piny na powiązanych zapadkach zbliżają się do celów lub od nich oddalają.",
+          "Ustaw wszystkie piny na celach, aby otworzyć skrzynię.",
+          "Odbierz nagrodę i przejdź do następnego, trudniejszego zamka."
         ],
+        "rulesTitle": "Wytrychy i nieprawidłowe ruchy",
         "rules": [
+          "Ruch jest nieprawidłowy, jeśli wypchnąłby którykolwiek poruszany pin poza dozwolony zakres.",
+          "Nieprawidłowy ruch nie zmienia położenia pinów i uszkadza bieżący wytrych.",
           "Wytrych łamie się dokładnie po 3 nieprawidłowych ruchach.",
-          "Nieprawidłowe ruchy nie zmieniają pozycji żadnego pinu.",
-          "Złamanie wytrychu nie resetuje bieżącego zamka.",
-          "Użyj przycisku resetu, jeśli chcesz wrócić do początkowego stanu bieżącego zamka."
+          "Złamany wytrych nie resetuje zamka ani pozycji pinów.",
+          "Ręczny reset przywraca początkowy układ bieżącego zamka.",
+          "Gra kończy się po złamaniu ostatniego wytrycha."
+        ],
+        "controlsTitle": "Sterowanie",
+        "controls": [
+          "Kliknięcie lub dotknięcie: wybór zapadki",
+          "W / strzałka w górę i S / strzałka w dół: poprzednia lub następna zapadka",
+          "A / strzałka w lewo i D / strzałka w prawo: obrót wybranej zapadki",
+          "R: reset bieżącego zamka",
+          "N: przejście dalej po otwarciu skrzyni",
+          "Widoczne przyciski zapewniają te same działania na komputerze i urządzeniu mobilnym."
         ]
       },
       "solver": {
