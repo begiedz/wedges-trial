@@ -11,7 +11,141 @@
   },
   "home": {
     "actions": {
-      "play": "Play"
+      "play": "Enter the trial",
+      "discover": "Discover its story",
+      "accept": "Accept the challenge"
+    },
+    "hero": {
+      "eyebrow": "An endless lockpicking trial",
+      "title": "Every lock hides another test.",
+      "lead": "Face Wedge’s ever-changing chain of chests, chase a richer haul of ore nuggets, and see how long your nerve—and your lockpicks—hold.",
+      "imageAlt": "Wedge, the keeper of the trial",
+      "quote": "A lock tells you everything—if you have the patience to listen.",
+      "quoteAttribution": "Wedge"
+    },
+    "features": {
+      "eyebrow": "The challenge awaits",
+      "title": "A new lock behind every lid",
+      "lead": "No two runs tell quite the same story. Each opened chest leads deeper into an endless trial, where sharper puzzles and a growing ore haul turn every success into an invitation to continue.",
+      "items": [
+        {
+          "title": "An endless descent",
+          "body": "There is always another chest—and every one raises the stakes."
+        },
+        {
+          "title": "Locks that think back",
+          "body": "Interlocking mechanisms make each challenge feel deliberate, readable, and distinct."
+        },
+        {
+          "title": "Ore worth the risk",
+          "body": "Build your haul chest by chest and leave a score worthy of the Colony."
+        }
+      ]
+    },
+    "origin": {
+      "eyebrow": "Forged by inspiration",
+      "title": "Why Wedge’s Trial exists",
+      "body": "Wedge’s Trial began as a personal attempt to turn the lockpicking mechanism from Gothic Remake into a focused browser minigame.",
+      "influencePrefix": "It is also influenced by ",
+      "influenceName": "Fingers Challenge",
+      "influenceSuffix": ", a fan-made lockpicking minigame inspired by Gothic Classic. This project is a tribute to both ideas—and to the Gothic community’s talent for finding new stories inside familiar worlds."
+    },
+    "cta": {
+      "title": "How far into the trial will you go?",
+      "body": "The first chest is only the beginning."
+    }
+  },
+  "nav": {
+    "items": {
+      "language": "Language",
+      "solver": "Solver",
+      "about": "About",
+      "howToPlay": "How to play"
+    },
+    "locales": {
+      "en": "English",
+      "pl": "Polski",
+      "de": "Deutsch",
+      "ru": "Русский"
+    },
+    "actions": {
+      "signIn": "Sign in",
+      "getStarted": "Get started"
+    },
+    "mobile": {
+      "menu": "Menu",
+      "openMenu": "Open menu",
+      "closeMenu": "Close menu",
+      "mainNavigation": "Main navigation links"
+    },
+    "pages": {
+      "about": {
+        "title": "About Wedge's Trial",
+        "eyebrow": "Behind the trial",
+        "lead": "Wedge’s Trial is an endless browser lockpicking puzzle in which every opened chest leads to a tougher test.",
+        "whatItIs": {
+          "title": "What is Wedge’s Trial?",
+          "body": "Wedge challenges you with a chain of generated, always-solvable locks. Their connected mechanisms reward observation and planning rather than speed, while ore nuggets record how far your run has carried you."
+        },
+        "trial": {
+          "title": "The endless trial",
+          "body": "Each chest raises the difficulty through more tumblers, denser connections between them, and longer solutions. Your goal is simple: gather as much ore as possible before your supply of lockpicks is exhausted."
+        },
+        "inspiration": {
+          "eyebrow": "Forged by inspiration",
+          "title": "Why it exists",
+          "body": "The project began as a personal attempt to turn the lockpicking mechanism from Gothic Remake into a focused browser minigame.",
+          "influencePrefix": "It is also influenced by ",
+          "influenceName": "Fingers Challenge",
+          "influenceSuffix": ", a fan-made lockpicking minigame inspired by Gothic Classic. Wedge’s Trial is a tribute to both ideas and to the creativity of the Gothic community."
+        },
+        "howToPlayLink": "Learn how to play"
+      },
+      "howToPlay": {
+        "title": "How to play",
+        "eyebrow": "Know the lock",
+        "lead": "Turn the tumblers until every pin—the moving point on a tumbler—reaches its marked target.",
+        "objective": {
+          "title": "Your objective",
+          "body": "Open each chest, collect its ore nuggets and occasional lockpicks, then face the next, harder lock. The run ends when no lockpicks remain."
+        },
+        "mechanism": {
+          "title": "Tumblers and pins",
+          "body": "Select a tumbler and turn it left or right. A turn moves its pin and can also move pins on connected tumblers, sometimes in the opposite direction, so watch the whole lock before committing."
+        },
+        "stepsTitle": "Opening a chest",
+        "steps": [
+          "Select a tumbler by clicking or tapping it.",
+          "Turn it left or right with the visible controls, A/D, or the Left/Right Arrow keys.",
+          "Watch how its pin—and pins on connected tumblers—move toward or away from their targets.",
+          "Place every pin on its target to open the chest.",
+          "Claim the reward and continue to the next, harder lock."
+        ],
+        "rulesTitle": "Lockpicks and invalid moves",
+        "rules": [
+          "A move is invalid if it would push any affected pin outside its allowed range.",
+          "An invalid move changes no pin positions and damages the current lockpick.",
+          "A lockpick breaks after exactly 3 invalid moves.",
+          "A broken lockpick does not reset the lock or its pin positions.",
+          "Manual reset restores the current lock’s starting layout.",
+          "When the last lockpick breaks, the run ends."
+        ],
+        "controlsTitle": "Controls",
+        "controls": [
+          "Click or tap: select a tumbler",
+          "W / Up Arrow and S / Down Arrow: select the previous or next tumbler",
+          "A / Left Arrow and D / Right Arrow: turn the selected tumbler",
+          "R: reset the current lock",
+          "N: continue after opening a chest",
+          "Visible controls provide the same actions on desktop and mobile."
+        ]
+      },
+      "solver": {
+        "title": "Solver",
+        "lead": "The generator mixes each lock from a solved state, so every chest stays solvable by construction.",
+        "body": "That same deterministic model powers the solver and the debug harness used to inspect dependencies, verify solutions, and test invalid-move behavior.",
+        "debugLink": "Open debug harness"
+      }
     }
   },
   "game": {

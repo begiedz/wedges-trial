@@ -11,7 +11,141 @@
   },
   "home": {
     "actions": {
-      "play": "Spielen"
+      "play": "Prüfung beginnen",
+      "discover": "Die Geschichte entdecken",
+      "accept": "Herausforderung annehmen"
+    },
+    "hero": {
+      "eyebrow": "Eine endlose Schlossknacker-Prüfung",
+      "title": "Hinter jedem Schloss wartet die nächste Prüfung.",
+      "lead": "Stell dich Wedges ständig wechselnder Truhenfolge, häufe immer mehr Erzbrocken an und finde heraus, wie lange dein Mut—und deine Dietriche—durchhalten.",
+      "imageAlt": "Wedge, der Hüter der Prüfung",
+      "quote": "Ein Schloss verrät dir alles—wenn du die Geduld hast, ihm zuzuhören.",
+      "quoteAttribution": "Wedge"
+    },
+    "features": {
+      "eyebrow": "Die Herausforderung wartet",
+      "title": "Unter jedem Deckel ein neues Schloss",
+      "lead": "Kein Lauf erzählt ganz dieselbe Geschichte. Jede geöffnete Truhe führt tiefer in eine endlose Prüfung, in der raffiniertere Rätsel und ein wachsender Erzvorrat jeden Erfolg zur Einladung machen, weiterzugehen.",
+      "items": [
+        {
+          "title": "Ein Abstieg ohne Ende",
+          "body": "Die nächste Truhe wartet immer—und jede erhöht den Einsatz."
+        },
+        {
+          "title": "Schlösser, die mitdenken",
+          "body": "Verzahnte Mechanismen lassen jede Herausforderung durchdacht, nachvollziehbar und einzigartig wirken."
+        },
+        {
+          "title": "Erz, das jedes Risiko wert ist",
+          "body": "Vergrößere deine Beute Truhe für Truhe und hinterlasse einen Punktestand, der der Kolonie würdig ist."
+        }
+      ]
+    },
+    "origin": {
+      "eyebrow": "Aus Inspiration geschmiedet",
+      "title": "Warum Wedge’s Trial entstand",
+      "body": "Wedge’s Trial entstand aus dem persönlichen Wunsch, den Schlossknack-Mechanismus aus Gothic Remake in ein konzentriertes Browser-Minispiel zu verwandeln.",
+      "influencePrefix": "Beeinflusst wurde es außerdem von ",
+      "influenceName": "Fingers Challenge",
+      "influenceSuffix": ", einem von einem Fan entwickelten Schlossknack-Minispiel nach dem Vorbild von Gothic Classic. Dieses Projekt ist eine Hommage an beide Ideen—und an das Talent der Gothic-Community, in vertrauten Welten neue Geschichten zu entdecken."
+    },
+    "cta": {
+      "title": "Wie weit wirst du in der Prüfung kommen?",
+      "body": "Die erste Truhe ist nur der Anfang."
+    }
+  },
+  "nav": {
+    "items": {
+      "language": "Sprache",
+      "solver": "Löser",
+      "about": "Über das Spiel",
+      "howToPlay": "Spielanleitung"
+    },
+    "locales": {
+      "en": "English",
+      "pl": "Polski",
+      "de": "Deutsch",
+      "ru": "Русский"
+    },
+    "actions": {
+      "signIn": "Anmelden",
+      "getStarted": "Loslegen"
+    },
+    "mobile": {
+      "menu": "Menü",
+      "openMenu": "Menü öffnen",
+      "closeMenu": "Menü schließen",
+      "mainNavigation": "Hauptnavigation"
+    },
+    "pages": {
+      "about": {
+        "title": "Über Wedge's Trial",
+        "eyebrow": "Hinter der Prüfung",
+        "lead": "Wedge’s Trial ist ein endloses Schlossknack-Puzzlespiel im Browser, in dem jede geöffnete Truhe zu einer schwierigeren Prüfung führt.",
+        "whatItIs": {
+          "title": "Was ist Wedge’s Trial?",
+          "body": "Wedge fordert dich mit einer Folge generierter, stets lösbarer Schlösser heraus. Ihre verbundenen Mechanismen belohnen Beobachtung und Planung statt Schnelligkeit; die gesammelten Erzbrocken zeigen, wie weit du gekommen bist."
+        },
+        "trial": {
+          "title": "Die endlose Prüfung",
+          "body": "Mit jeder Truhe steigt die Schwierigkeit: mehr Zuhaltungen, dichtere Verbindungen und längere Lösungen. Sammle so viel Erz wie möglich, bevor dir die Dietriche ausgehen."
+        },
+        "inspiration": {
+          "eyebrow": "Aus Inspiration geschmiedet",
+          "title": "Warum es entstand",
+          "body": "Das Projekt entstand aus dem persönlichen Wunsch, den Schlossknack-Mechanismus aus Gothic Remake in ein konzentriertes Browser-Minispiel zu verwandeln.",
+          "influencePrefix": "Beeinflusst wurde es außerdem von ",
+          "influenceName": "Fingers Challenge",
+          "influenceSuffix": ", einem von einem Fan entwickelten Schlossknack-Minispiel, das von Gothic Classic inspiriert ist. Wedge’s Trial ist eine Hommage an beide Ideen und an die Kreativität der Gothic-Community."
+        },
+        "howToPlayLink": "Spielanleitung lesen"
+      },
+      "howToPlay": {
+        "title": "Spielanleitung",
+        "eyebrow": "Verstehe das Schloss",
+        "lead": "Drehe die Zuhaltungen, bis jeder Stift—der bewegliche Punkt auf einer Zuhaltung—seine markierte Zielposition erreicht.",
+        "objective": {
+          "title": "Dein Ziel",
+          "body": "Öffne jede Truhe, sammle Erzbrocken und gelegentlich Dietriche und stelle dich dann dem nächsten, schwierigeren Schloss. Der Lauf endet, wenn keine Dietriche mehr übrig sind."
+        },
+        "mechanism": {
+          "title": "Zuhaltungen und Stifte",
+          "body": "Wähle eine Zuhaltung und drehe sie nach links oder rechts. Eine Drehung bewegt ihren Stift und kann auch Stifte auf verbundenen Zuhaltungen verschieben, manchmal in die Gegenrichtung. Behalte deshalb das ganze Schloss im Blick."
+        },
+        "stepsTitle": "Eine Truhe öffnen",
+        "steps": [
+          "Wähle eine Zuhaltung per Klick oder Tippen.",
+          "Drehe sie mit den sichtbaren Tasten, A/D oder den Pfeiltasten Links/Rechts.",
+          "Beobachte, wie sich ihr Stift und die Stifte verbundener Zuhaltungen ihren Zielen nähern oder davon entfernen.",
+          "Bringe jeden Stift auf sein Ziel, um die Truhe zu öffnen.",
+          "Nimm die Belohnung und gehe zum nächsten, schwierigeren Schloss weiter."
+        ],
+        "rulesTitle": "Dietriche und ungültige Züge",
+        "rules": [
+          "Ein Zug ist ungültig, wenn ein betroffener Stift seinen erlaubten Bereich verlassen würde.",
+          "Ein ungültiger Zug verändert keine Stiftposition und beschädigt den aktuellen Dietrich.",
+          "Ein Dietrich bricht nach genau 3 ungültigen Zügen.",
+          "Ein gebrochener Dietrich setzt weder das Schloss noch die Stiftpositionen zurück.",
+          "Manuelles Zurücksetzen stellt die Ausgangslage des aktuellen Schlosses wieder her.",
+          "Wenn der letzte Dietrich bricht, endet der Lauf."
+        ],
+        "controlsTitle": "Steuerung",
+        "controls": [
+          "Klick oder Tippen: Zuhaltung auswählen",
+          "W / Pfeil nach oben und S / Pfeil nach unten: vorherige oder nächste Zuhaltung",
+          "A / Pfeil nach links und D / Pfeil nach rechts: ausgewählte Zuhaltung drehen",
+          "R: aktuelles Schloss zurücksetzen",
+          "N: nach dem Öffnen einer Truhe fortfahren",
+          "Die sichtbaren Tasten bieten dieselben Aktionen auf Desktop und Mobilgerät."
+        ]
+      },
+      "solver": {
+        "title": "Löser",
+        "lead": "Der Generator mischt jedes Schloss aus einem gelösten Zustand, daher bleibt jede Truhe konstruktionsbedingt lösbar.",
+        "body": "Dasselbe deterministische Modell treibt auch den Löser und die Debug-Oberfläche an, mit denen sich Abhängigkeiten prüfen, Lösungen verifizieren und ungültige Züge testen lassen.",
+        "debugLink": "Debug-Oberfläche öffnen"
+      }
     }
   },
   "game": {

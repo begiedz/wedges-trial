@@ -11,7 +11,7 @@ type TumblerProps = {
 };
 
 const slotSizeRem = 1;
-const slotGapRem = 0.3;
+const slotGapRem = 0.25;
 const slotStepRem = slotSizeRem + slotGapRem;
 const shellPaddingXRem = 1;
 const shellPaddingYRem = 0.5;
@@ -56,7 +56,7 @@ export default function Tumbler({
     >
       <span className="sr-only">{pin.id}</span>
       <div
-        className="top-1/2 left-1/2 absolute transition-transform duration-300 ease"
+        className="top-1/2 left-1/2 absolute transition-transform duration-300 ease-out"
         style={trackStyle}
       >
         <div

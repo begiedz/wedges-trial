@@ -11,7 +11,141 @@
   },
   "home": {
     "actions": {
-      "play": "Graj"
+      "play": "Podejmij próbę",
+      "discover": "Poznaj jej historię",
+      "accept": "Przyjmij wyzwanie"
+    },
+    "hero": {
+      "eyebrow": "Niekończąca się próba włamywacza",
+      "title": "Każdy zamek skrywa kolejną próbę.",
+      "lead": "Zmierz się z nieustannie zmieniającym się szeregiem skrzyń Klina, zdobywaj coraz więcej bryłek rudy i sprawdź, na jak długo wystarczy ci odwagi—oraz wytrychów.",
+      "imageAlt": "Klin, strażnik próby",
+      "quote": "Zamek powie ci wszystko—jeśli masz cierpliwość, by go wysłuchać.",
+      "quoteAttribution": "Klin"
+    },
+    "features": {
+      "eyebrow": "Wyzwanie czeka",
+      "title": "Nowy zamek pod każdym wiekiem",
+      "lead": "Żadne dwie wyprawy nie układają się w tę samą opowieść. Każda otwarta skrzynia prowadzi dalej w głąb niekończącej się próby, gdzie sprytniejsze zagadki i rosnący zapas rudy zachęcają, by iść dalej.",
+      "items": [
+        {
+          "title": "Bez końca w głąb",
+          "body": "Zawsze czeka następna skrzynia—a każda podnosi stawkę."
+        },
+        {
+          "title": "Zamki, które odpowiadają",
+          "body": "Połączone mechanizmy sprawiają, że każde wyzwanie jest przemyślane, czytelne i wyjątkowe."
+        },
+        {
+          "title": "Ruda warta ryzyka",
+          "body": "Powiększaj swój łup skrzynia po skrzyni i zostaw wynik godny Kolonii."
+        }
+      ]
+    },
+    "origin": {
+      "eyebrow": "Wykute z inspiracji",
+      "title": "Dlaczego powstała Próba Klina",
+      "body": "Próba Klina zaczęła się od osobistej chęci przeniesienia mechanizmu otwierania zamków z Gothic Remake do formy skupionej, przeglądarkowej minigry.",
+      "influencePrefix": "Inspiracją było także ",
+      "influenceName": "Wyzwanie Rączki",
+      "influenceSuffix": "—stworzona przez fana minigra o otwieraniu zamków, czerpiąca z Gothic Classic. Ten projekt jest hołdem dla obu pomysłów oraz dla talentu społeczności Gothica do odnajdywania nowych opowieści w znajomych światach."
+    },
+    "cta": {
+      "title": "Jak daleko zajdziesz w tej próbie?",
+      "body": "Pierwsza skrzynia to dopiero początek."
+    }
+  },
+  "nav": {
+    "items": {
+      "language": "Język",
+      "solver": "Solver",
+      "about": "O grze",
+      "howToPlay": "Jak grać"
+    },
+    "locales": {
+      "en": "English",
+      "pl": "Polski",
+      "de": "Deutsch",
+      "ru": "Русский"
+    },
+    "actions": {
+      "signIn": "Zaloguj się",
+      "getStarted": "Zacznij"
+    },
+    "mobile": {
+      "menu": "Menu",
+      "openMenu": "Otwórz menu",
+      "closeMenu": "Zamknij menu",
+      "mainNavigation": "Główne linki nawigacyjne"
+    },
+    "pages": {
+      "about": {
+        "title": "O Próbie Klina",
+        "eyebrow": "Za kulisami próby",
+        "lead": "Próba Klina to niekończąca się przeglądarkowa łamigłówka z otwieraniem zamków, w której każda otwarta skrzynia prowadzi do trudniejszej próby.",
+        "whatItIs": {
+          "title": "Czym jest Próba Klina?",
+          "body": "Klin rzuca ci wyzwanie w postaci szeregu generowanych, zawsze rozwiązywalnych zamków. Połączone mechanizmy nagradzają spostrzegawczość i planowanie, nie szybkość, a zebrane bryłki rudy pokazują, jak daleko udało ci się dotrzeć."
+        },
+        "trial": {
+          "title": "Niekończąca się próba",
+          "body": "Każda skrzynia podnosi poziom trudności: pojawia się więcej zapadek, więcej zależności między nimi i dłuższe rozwiązania. Cel jest prosty: zbierz jak najwięcej rudy, zanim skończą ci się wytrychy."
+        },
+        "inspiration": {
+          "eyebrow": "Wykute z inspiracji",
+          "title": "Dlaczego powstała",
+          "body": "Projekt powstał z osobistej chęci przeniesienia mechanizmu otwierania zamków z Gothic Remake do formy skupionej, przeglądarkowej minigry.",
+          "influencePrefix": "Wpływ na niego miało także ",
+          "influenceName": "Wyzwanie Rączki",
+          "influenceSuffix": ", stworzona przez fana minigra inspirowana Gothic Classic. Próba Klina jest hołdem dla obu pomysłów i kreatywności społeczności Gothica."
+        },
+        "howToPlayLink": "Dowiedz się, jak grać"
+      },
+      "howToPlay": {
+        "title": "Jak grać",
+        "eyebrow": "Poznaj zamek",
+        "lead": "Obracaj zapadki, aż każdy pin—ruchomy punkt na zapadce—znajdzie się na oznaczonej pozycji docelowej.",
+        "objective": {
+          "title": "Twój cel",
+          "body": "Otwieraj kolejne skrzynie, zbieraj bryłki rudy i sporadycznie wytrychy, a następnie mierz się z coraz trudniejszymi zamkami. Gra kończy się, gdy zabraknie wytrychów."
+        },
+        "mechanism": {
+          "title": "Zapadki i piny",
+          "body": "Wybierz zapadkę i obróć ją w lewo lub w prawo. Obrót przesuwa jej pin i może też przesunąć piny na powiązanych zapadkach, czasem w przeciwnym kierunku, dlatego obserwuj cały zamek."
+        },
+        "stepsTitle": "Otwieranie skrzyni",
+        "steps": [
+          "Wybierz zapadkę kliknięciem lub dotknięciem.",
+          "Obróć ją widocznymi przyciskami, klawiszami A/D albo strzałkami w lewo/w prawo.",
+          "Obserwuj, jak jej pin oraz piny na powiązanych zapadkach zbliżają się do celów lub od nich oddalają.",
+          "Ustaw wszystkie piny na celach, aby otworzyć skrzynię.",
+          "Odbierz nagrodę i przejdź do następnego, trudniejszego zamka."
+        ],
+        "rulesTitle": "Wytrychy i nieprawidłowe ruchy",
+        "rules": [
+          "Ruch jest nieprawidłowy, jeśli wypchnąłby którykolwiek poruszany pin poza dozwolony zakres.",
+          "Nieprawidłowy ruch nie zmienia położenia pinów i uszkadza bieżący wytrych.",
+          "Wytrych łamie się dokładnie po 3 nieprawidłowych ruchach.",
+          "Złamany wytrych nie resetuje zamka ani pozycji pinów.",
+          "Ręczny reset przywraca początkowy układ bieżącego zamka.",
+          "Gra kończy się po złamaniu ostatniego wytrycha."
+        ],
+        "controlsTitle": "Sterowanie",
+        "controls": [
+          "Kliknięcie lub dotknięcie: wybór zapadki",
+          "W / strzałka w górę i S / strzałka w dół: poprzednia lub następna zapadka",
+          "A / strzałka w lewo i D / strzałka w prawo: obrót wybranej zapadki",
+          "R: reset bieżącego zamka",
+          "N: przejście dalej po otwarciu skrzyni",
+          "Widoczne przyciski zapewniają te same działania na komputerze i urządzeniu mobilnym."
+        ]
+      },
+      "solver": {
+        "title": "Solver",
+        "lead": "Generator miesza każdy zamek od stanu rozwiązanego, więc każda skrzynia pozostaje rozwiązywalna z definicji.",
+        "body": "Ten sam deterministyczny model napędza solver oraz moduł debugowania używany do sprawdzania zależności, weryfikowania rozwiązań i testowania nieprawidłowych ruchów.",
+        "debugLink": "Otwórz moduł debugowania"
+      }
     }
   },
   "game": {

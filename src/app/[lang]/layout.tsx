@@ -3,7 +3,7 @@ import { Noto_Serif } from "next/font/google";
 import localFont from "next/font/local";
 import { notFound } from "next/navigation";
 import "../globals.css";
-import Header from "@/components/general/molecules/header";
+import { Navbar } from "@/components/general/molecules/navbar";
 import { getDictionary, hasLocale } from "@/i18n/dictionaries";
 import { I18nProvider } from "@/i18n/provider";
 import { locales } from "@/i18n/types";
@@ -54,7 +54,7 @@ export default async function RootLayout({
     >
       <body className="flex flex-col min-h-full">
         <I18nProvider dictionary={dict} locale={lang}>
-          <Header />
+          <Navbar />
           {children}
         </I18nProvider>
       </body>

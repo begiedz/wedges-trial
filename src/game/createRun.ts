@@ -1,7 +1,7 @@
-import { createLock } from '@/game/createLock';
-import { getDifficultyForChest } from '@/game/progressDifficulty';
-import { getChestReward } from '@/game/rewards';
-import type { ChestReward, RandomSource, RunState } from '@/game/types';
+import { createLock } from "@/game/createLock";
+import { getDifficultyForChest } from "@/game/progressDifficulty";
+import { getChestReward } from "@/game/rewards";
+import type { ChestReward, RandomSource, RunState } from "@/game/types";
 
 export function createRun(random: RandomSource = Math.random): RunState {
   return {
