@@ -55,6 +55,34 @@ describe("persistence", () => {
     expect(loadRunState(storage)).toEqual(run);
   });
 
+  it.each([0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])(
+    "rejects invalid persisted damage threshold %s",
+    (threshold) => {
+      const storage = createMemoryStorage();
+      const run = createRunState();
+      run.currentLock.maxInvalidMovesPerPick = threshold;
+      saveRunState(run, storage);
+      expect(loadRunState(storage)).toBeNull();
+    },
+  );
+
+  it.each([-1, 1.5, 3])("rejects out-of-range pick damage %s", (damage) => {
+    const storage = createMemoryStorage();
+    const run = createRunState();
+    run.currentLock.invalidMovesOnCurrentPick = damage;
+    saveRunState(run, storage);
+    expect(loadRunState(storage)).toBeNull();
+  });
+
+  it("restores a valid per-lock damage threshold", () => {
+    const storage = createMemoryStorage();
+    const run = createRunState();
+    run.currentLock.maxInvalidMovesPerPick = 4;
+    run.currentLock.invalidMovesOnCurrentPick = 3;
+    saveRunState(run, storage);
+    expect(loadRunState(storage)).toEqual(run);
+  });
+
   it("rejects invalid saved data safely", () => {
     const storage = createMemoryStorage();
     storage.setItem("wedges-trial.run-state", JSON.stringify({ bad: true }));

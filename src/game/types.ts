@@ -27,7 +27,7 @@ export type LockState = {
   pins: Pin[];
   rules: MoveRule[];
   invalidMovesOnCurrentPick: number;
-  maxInvalidMovesPerPick: 3;
+  maxInvalidMovesPerPick: number;
   isSolved: boolean;
   isFailed: boolean;
 };
@@ -46,6 +46,9 @@ export type DifficultyConfig = {
   targetPosition: number;
   dependencyDensity: number;
   guaranteedSolvableMoves: number;
+  // Desired shortest-path window; generation uses bounded retries to approach it.
+  minSolutionLength?: number;
+  maxSolutionLength?: number;
 };
 
 export type ChestReward = {

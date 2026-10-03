@@ -22,54 +22,23 @@ export function getDifficultyBand(chestIndex: number): LockDifficulty {
 }
 
 export function getDifficultyForChest(chestIndex: number): DifficultyConfig {
-  const safeIndex = Math.max(0, chestIndex);
-  const band = getDifficultyBand(safeIndex);
+  const index = Math.max(0, chestIndex);
+  // Grow beyond the final display band without rapidly increasing complexity.
+  const difficulty = Math.log2(1 + index / 4);
+  const tumblerCount = index < 4 ? 3 : index < 10 ? 4 : index < 18 ? 5 : 6;
+  const minSolutionLength = Math.max(2, Math.floor(2 + difficulty * 3));
 
-  switch (band) {
-    case 1:
-      return {
-        tumblerCount: 3,
-        minPosition: DEFAULT_MIN_POSITION,
-        maxPosition: DEFAULT_MAX_POSITION,
-        targetPosition: DEFAULT_TARGET_POSITION,
-        dependencyDensity: Math.min(0.2 + safeIndex * 0.04, 0.35),
-        guaranteedSolvableMoves: Math.min(5, 3 + safeIndex),
-      };
-    case 2:
-      return {
-        tumblerCount: 4,
-        minPosition: DEFAULT_MIN_POSITION,
-        maxPosition: DEFAULT_MAX_POSITION,
-        targetPosition: DEFAULT_TARGET_POSITION,
-        dependencyDensity: Math.min(0.35 + (safeIndex - 4) * 0.03, 0.55),
-        guaranteedSolvableMoves: Math.min(
-          8,
-          5 + Math.floor((safeIndex - 4) / 2),
-        ),
-      };
-    case 3:
-      return {
-        tumblerCount: 5,
-        minPosition: DEFAULT_MIN_POSITION,
-        maxPosition: DEFAULT_MAX_POSITION,
-        targetPosition: DEFAULT_TARGET_POSITION,
-        dependencyDensity: Math.min(0.55 + (safeIndex - 10) * 0.025, 0.75),
-        guaranteedSolvableMoves: Math.min(
-          12,
-          8 + Math.floor((safeIndex - 10) / 2),
-        ),
-      };
-    case 4:
-      return {
-        tumblerCount: 6,
-        minPosition: DEFAULT_MIN_POSITION,
-        maxPosition: DEFAULT_MAX_POSITION,
-        targetPosition: DEFAULT_TARGET_POSITION,
-        dependencyDensity: Math.min(0.72 + (safeIndex - 18) * 0.015, 0.9),
-        guaranteedSolvableMoves: Math.min(
-          16,
-          10 + Math.floor((safeIndex - 18) / 2),
-        ),
-      };
-  }
+  return {
+    tumblerCount,
+    minPosition: DEFAULT_MIN_POSITION,
+    maxPosition: DEFAULT_MAX_POSITION,
+    targetPosition: DEFAULT_TARGET_POSITION,
+    dependencyDensity: Math.min(0.88, 0.18 + difficulty * 0.18),
+    guaranteedSolvableMoves: Math.max(3, Math.round(3 + difficulty * 4)),
+    minSolutionLength,
+    maxSolutionLength: Math.max(
+      minSolutionLength,
+      Math.ceil(4 + difficulty * 3),
+    ),
+  };
 }

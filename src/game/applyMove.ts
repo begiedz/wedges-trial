@@ -1,5 +1,4 @@
 import { checkSolved } from "@/game/checkSolved";
-import { MAX_INVALID_MOVES_PER_PICK } from "@/game/constants";
 import type { Direction, LockState, MoveRule, RunState } from "@/game/types";
 
 type LockMoveResult =
@@ -97,7 +96,7 @@ export function applyMoveToLock(
 export function applyInvalidMoveToRun(run: RunState): RunState {
   const nextInvalidMoves = run.currentLock.invalidMovesOnCurrentPick + 1;
 
-  if (nextInvalidMoves < MAX_INVALID_MOVES_PER_PICK) {
+  if (nextInvalidMoves < run.currentLock.maxInvalidMovesPerPick) {
     return {
       ...run,
       currentLock: {

@@ -33,7 +33,7 @@ export function openSolvedChest(
     chestIndex: nextChestIndex,
     oreNuggets: run.oreNuggets + reward.oreNuggets,
     lockpicks: run.lockpicks + reward.lockpicks,
-    currentLock: createLock(getDifficultyForChest(nextChestIndex), random),
+    currentLock: createLock(getDifficultyForChest(nextChestIndex - 1), random),
     reward,
   };
 }

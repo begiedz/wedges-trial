@@ -60,7 +60,12 @@ function isLockState(value: unknown): value is LockState {
     Array.isArray(lock.rules) &&
     lock.rules.every(isMoveRule) &&
     typeof lock.invalidMovesOnCurrentPick === "number" &&
+    Number.isInteger(lock.invalidMovesOnCurrentPick) &&
+    lock.invalidMovesOnCurrentPick >= 0 &&
     typeof lock.maxInvalidMovesPerPick === "number" &&
+    Number.isInteger(lock.maxInvalidMovesPerPick) &&
+    lock.maxInvalidMovesPerPick > 0 &&
+    lock.invalidMovesOnCurrentPick < lock.maxInvalidMovesPerPick &&
     typeof lock.isSolved === "boolean" &&
     typeof lock.isFailed === "boolean"
   );

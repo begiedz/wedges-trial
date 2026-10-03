@@ -1,9 +1,9 @@
 import { checkSolved } from "@/game/checkSolved";
 import { MAX_INVALID_MOVES_PER_PICK } from "@/game/constants";
 import { generateRules } from "@/game/generateRules";
+import { solveLock } from "@/game/solver";
 import type {
   DifficultyConfig,
-  LockMove,
   LockState,
   MoveRule,
   Pin,
@@ -51,81 +51,42 @@ function tryApplyRule(pins: Pin[], rule: MoveRule): Pin[] | null {
   return nextPins;
 }
 
-function pickRandomRule(
-  rules: MoveRule[],
-  random: RandomSource,
-  previousMove?: LockMove,
-): MoveRule | undefined {
-  const candidates = [...rules];
-
-  while (candidates.length > 0) {
-    const index = Math.floor(random() * candidates.length);
-    const [candidate] = candidates.splice(index, 1);
-
-    if (
-      previousMove &&
-      previousMove.pinId === candidate.sourcePinId &&
-      previousMove.direction === (candidate.direction === 1 ? -1 : 1)
-    ) {
-      continue;
-    }
-
-    return candidate;
-  }
-
-  return undefined;
-}
-
-export function createLock(
+function createMixedLock(
   config: DifficultyConfig,
-  random: RandomSource = Math.random,
-): LockState {
+  mixingMoves: number,
+  maxSolutionLength: number,
+  random: RandomSource,
+): { lock: LockState; boundedLock: LockState } {
   const solvedPins = createSolvedPins(config);
   const rules = generateRules(config, random);
   let mixedPins = clonePins(solvedPins);
-  let appliedMoves = 0;
-  let attempts = 0;
-  let previousMove: LockMove | undefined;
+  let boundedPins = mixedPins;
+  const visited = new Set([mixedPins.map((pin) => pin.position).join(",")]);
 
-  while (
-    (appliedMoves < config.guaranteedSolvableMoves ||
-      checkSolved({ pins: mixedPins })) &&
-    attempts < config.guaranteedSolvableMoves * 40
-  ) {
-    const rule = pickRandomRule(rules, random, previousMove);
-
-    if (!rule) {
-      attempts += 1;
-      continue;
+  for (let move = 0; move < mixingMoves; move += 1) {
+    const candidates = rules
+      .map((rule) => tryApplyRule(mixedPins, rule))
+      .filter(
+        (pins): pins is Pin[] =>
+          pins !== null &&
+          !visited.has(pins.map((pin) => pin.position).join(",")),
+      );
+    if (candidates.length === 0) {
+      break;
     }
-
-    const nextPins = tryApplyRule(mixedPins, rule);
-    attempts += 1;
-
-    if (!nextPins) {
-      continue;
+    mixedPins = candidates[Math.floor(random() * candidates.length)];
+    if (move < maxSolutionLength) {
+      boundedPins = mixedPins;
     }
-
-    mixedPins = nextPins;
-    appliedMoves += 1;
-    previousMove = {
-      pinId: rule.sourcePinId,
-      direction: rule.direction,
-    };
+    // Avoid cancelling earlier mixing moves, not just the immediately previous one.
+    visited.add(mixedPins.map((pin) => pin.position).join(","));
   }
 
   if (checkSolved({ pins: mixedPins })) {
-    for (const rule of rules) {
-      const nextPins = tryApplyRule(mixedPins, rule);
-
-      if (nextPins && !checkSolved({ pins: nextPins })) {
-        mixedPins = nextPins;
-        break;
-      }
-    }
+    throw new RangeError("Lock configuration has no valid mixing move");
   }
 
-  return {
+  const lock: LockState = {
     pins: mixedPins,
     rules,
     invalidMovesOnCurrentPick: 0,
@@ -133,4 +94,65 @@ export function createLock(
     isSolved: false,
     isFailed: false,
   };
+  return { lock, boundedLock: { ...lock, pins: boundedPins } };
+}
+
+export function createLock(
+  config: DifficultyConfig,
+  random: RandomSource = Math.random,
+): LockState {
+  const minLength = Math.max(1, config.minSolutionLength ?? 1);
+  const maxLength = Math.max(
+    1,
+    config.maxSolutionLength ?? config.guaranteedSolvableMoves,
+  );
+  // Longer walks counter shortcuts. Keep an early snapshot whose inverse path
+  // satisfies the upper bound if the solver exhausts its search budget.
+  const mixingMoves = Math.max(1, config.guaranteedSolvableMoves) * 4;
+  const firstCandidate = createMixedLock(
+    config,
+    mixingMoves,
+    maxLength,
+    random,
+  );
+  let bestLock = firstCandidate.boundedLock;
+  let bestLength = -1;
+
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const { lock } =
+      attempt === 0
+        ? firstCandidate
+        : createMixedLock(config, mixingMoves, maxLength, random);
+    const solution = solveLock(lock);
+    if (solution && solution.length >= minLength && minLength <= maxLength) {
+      // Following a shortest path preserves shortest distance for its suffix.
+      let pins = lock.pins;
+      for (const move of solution.slice(
+        0,
+        Math.max(0, solution.length - maxLength),
+      )) {
+        const rule = lock.rules.find(
+          (rule) =>
+            rule.sourcePinId === move.pinId &&
+            rule.direction === move.direction,
+        );
+        if (rule) {
+          pins = tryApplyRule(pins, rule) ?? pins;
+        }
+      }
+      return { ...lock, pins };
+    }
+    if (
+      solution &&
+      solution.length <= maxLength &&
+      solution.length > bestLength
+    ) {
+      bestLock = lock;
+      bestLength = solution.length;
+    }
+  }
+
+  // Fixed pin ranges can make late targets unreachable. Preserve construction
+  // solvability instead of retrying forever or treating BFS exhaustion as failure.
+  return bestLock;
 }
