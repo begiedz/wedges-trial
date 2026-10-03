@@ -110,13 +110,112 @@ describe("applyMove", () => {
     });
 
     run = applyMove(run, 0, 1);
+    expect(run.lockpicks).toBe(2);
+    expect(run.currentLock.invalidMovesOnCurrentPick).toBe(1);
+
     run = applyMove(run, 0, 1);
+    expect(run.lockpicks).toBe(2);
+    expect(run.currentLock.invalidMovesOnCurrentPick).toBe(2);
+
     run = applyMove(run, 0, 1);
 
     expect(run.lockpicks).toBe(1);
     expect(run.currentLock.invalidMovesOnCurrentPick).toBe(0);
     expect(run.currentLock.pins.map((pin) => pin.position)).toEqual([2, 1]);
   });
+
+  it.each([1, 2, 4])(
+    "breaks a pick at the lock's configured threshold of %i invalid moves",
+    (maxInvalidMovesPerPick) => {
+      let run = createTestRun({
+        currentLock: {
+          ...createTestRun().currentLock,
+          maxInvalidMovesPerPick,
+          pins: [
+            { id: 0, position: 2, target: 2, min: 0, max: 2 },
+            { id: 1, position: 1, target: 0, min: 0, max: 2 },
+          ],
+        },
+      });
+
+      for (let error = 1; error < maxInvalidMovesPerPick; error += 1) {
+        run = applyMove(run, 0, 1);
+        expect(run.lockpicks).toBe(2);
+        expect(run.currentLock.invalidMovesOnCurrentPick).toBe(error);
+      }
+
+      run = applyMove(run, 0, 1);
+
+      expect(run.lockpicks).toBe(1);
+      expect(run.currentLock.invalidMovesOnCurrentPick).toBe(0);
+      expect(run.currentLock.maxInvalidMovesPerPick).toBe(
+        maxInvalidMovesPerPick,
+      );
+      expect(run.currentLock.pins.map((pin) => pin.position)).toEqual([2, 1]);
+      expect(run.currentLock.isFailed).toBe(false);
+    },
+  );
+
+  it("keeps accumulated pick damage through a valid move", () => {
+    const run = createTestRun({
+      currentLock: {
+        ...createTestRun().currentLock,
+        invalidMovesOnCurrentPick: 2,
+      },
+    });
+    const result = applyMove(run, 1, 1);
+
+    expect(result.currentLock.pins.map((pin) => pin.position)).toEqual([1, 2]);
+    expect(result.currentLock.invalidMovesOnCurrentPick).toBe(2);
+    expect(result.lockpicks).toBe(2);
+
+    const brokenPickRun = applyMove(result, 0, -1);
+
+    expect(brokenPickRun.currentLock.pins).toEqual(result.currentLock.pins);
+    expect(brokenPickRun.currentLock.invalidMovesOnCurrentPick).toBe(0);
+    expect(brokenPickRun.lockpicks).toBe(1);
+  });
+
+  it("ends the run when the final pick breaks without resetting the lock", () => {
+    const run = createTestRun({
+      lockpicks: 1,
+      currentLock: {
+        ...createTestRun().currentLock,
+        invalidMovesOnCurrentPick: 2,
+        pins: [
+          { id: 0, position: 2, target: 2, min: 0, max: 2 },
+          { id: 1, position: 1, target: 0, min: 0, max: 2 },
+        ],
+      },
+    });
+    const result = applyMove(run, 0, 1);
+
+    expect(result.lockpicks).toBe(0);
+    expect(result.currentLock.isFailed).toBe(true);
+    expect(result.currentLock.invalidMovesOnCurrentPick).toBe(0);
+    expect(result.currentLock.pins).toEqual(run.currentLock.pins);
+    expect(applyMove(result, 0, -1)).toBe(result);
+  });
+
+  it.each([1, -1] as const)(
+    "does not mutate the input run when applying direction %i",
+    (direction) => {
+      const run = createTestRun({
+        currentLock: {
+          ...createTestRun().currentLock,
+          pins: [
+            { id: 0, position: 2, target: 2, min: 0, max: 2 },
+            { id: 1, position: 1, target: 0, min: 0, max: 2 },
+          ],
+        },
+      });
+      const snapshot = structuredClone(run);
+
+      applyMove(run, 0, direction);
+
+      expect(run).toEqual(snapshot);
+    },
+  );
 
   it("ignores moves after the lock is solved", () => {
     const solvedRun = createTestRun({

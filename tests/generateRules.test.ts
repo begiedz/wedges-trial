@@ -105,4 +105,42 @@ describe("generateRules", () => {
       countSecondaryEffects(lowDensityRules),
     );
   });
+
+  it("uses fractional density rather than rounding every rule identically", () => {
+    const moreEffects = generateRules(baseConfig, () => 0.49);
+    const fewerEffects = generateRules(baseConfig, () => 0.5);
+
+    for (let pinId = 0; pinId < baseConfig.tumblerCount; pinId += 1) {
+      expect(findRule(moreEffects, pinId, 1).effects).toHaveLength(3);
+      expect(findRule(fewerEffects, pinId, 1).effects).toHaveLength(2);
+    }
+  });
+
+  it("samples secondary counts separately for each source pin", () => {
+    const rules = generateRules(
+      baseConfig,
+      createSequenceRandom([0.1, 0.8, 0.8, 0.8, 0.8, 0.8]),
+    );
+
+    expect(findRule(rules, 0, 1).effects).toHaveLength(3);
+    expect(findRule(rules, 1, 1).effects).toHaveLength(2);
+  });
+
+  it("respects empty and complete dependency densities", () => {
+    for (const density of [0, 1]) {
+      const rules = generateRules(
+        { ...baseConfig, dependencyDensity: density },
+        createSequenceRandom([0.1, 0.8, 0.3]),
+      );
+
+      for (const rule of rules) {
+        expect(rule.effects).toHaveLength(
+          density === 0 ? 1 : baseConfig.tumblerCount,
+        );
+        expect(new Set(rule.effects.map((effect) => effect.pinId)).size).toBe(
+          rule.effects.length,
+        );
+      }
+    }
+  });
 });

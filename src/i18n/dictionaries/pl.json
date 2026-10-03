@@ -9,6 +9,17 @@
     "title": "Próba Klina",
     "description": "Logiczna gra-zagadka inspirowana mechaniką otwierania zamków z Gothic Remake."
   },
+  "footer": {
+    "navigation": "Odkrywaj",
+    "home": "Strona główna",
+    "inspiration": "Inspiracja",
+    "madeBy": "Autor projektu:",
+    "disclaimer": "Ten fanowski projekt ma charakter wyłącznie niekomercyjny i został zainspirowany serią Gothic. Nie jest w żaden sposób oficjalnie powiązany z THQ Nordic ani Piranha Bytes, które posiadają prawa do marki Gothic.",
+    "fingersChallenge": "Fingers Challenge",
+    "publisher": "THQ Nordic",
+    "website": "begiedz.dev",
+    "copyright": "Wszelkie prawa zastrzeżone."
+  },
   "home": {
     "actions": {
       "play": "Podejmij próbę",

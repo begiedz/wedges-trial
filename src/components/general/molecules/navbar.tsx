@@ -79,151 +79,162 @@ export function Navbar() {
   }, []);
 
   return (
-    <header className="top-0 z-50 sticky bg-background/80 backdrop-blur mb-4 border-border border-b w-full">
-      <div className="flex justify-between items-center gap-4 mx-auto px-4 sm:px-6 max-w-6xl h-16">
+    <header className="top-0 z-50 sticky bg-background/80 backdrop-blur border-border border-b w-full">
+      <div className="relative items-center grid grid-cols-[1fr_auto_1fr] mx-auto px-4 sm:px-6 h-16">
         {/* Brand */}
-        <Link href={`/${locale}`} aria-label={nav.mobile.mainNavigation}>
+        <Link
+          href={`/${locale}`}
+          aria-label={nav.mobile.mainNavigation}
+          className="justify-self-center col-start-2"
+        >
           <Logo />
         </Link>
 
         {/* Desktop navigation */}
-        <nav
-          className="hidden relative md:flex items-center gap-1"
-          aria-label={nav.mobile.mainNavigation}
-        >
-          {NAV_ITEMS.map((item) =>
-            "children" in item ? (
-              <DropdownMenu key={item.key} modal={false}>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="group inline-flex items-center gap-2 data-[state=open]:bg-accent hover:bg-accent px-3 py-2 rounded-md font-medium text-foreground/80 data-[state=open]:text-foreground hover:text-foreground text-sm transition-colors"
-                  >
-                    <span aria-hidden="true" className="text-base leading-none">
-                      {LOCALE_FLAGS[locale]}
-                    </span>
-
-                    <span>{nav.items[item.key]}</span>
-
-                    <ChevronDown
-                      className="w-4 h-4 group-data-[state=open]:rotate-180 transition-transform duration-200"
-                      aria-hidden="true"
-                    />
-                  </button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent
-                  align="center"
-                  sideOffset={8}
-                  className="bg-popover shadow-lg p-1.5 border-border min-w-max text-popover-foreground"
-                >
-                  {item.children.map((child) => (
-                    <DropdownMenuItem key={child} asChild className="p-0">
-                      <Link
-                        href={getLocaleHref(pathname, child)}
-                        aria-current={child === locale ? "page" : undefined}
-                        className={cn(
-                          "flex items-center gap-2 hover:bg-accent focus:bg-accent px-3 py-2 rounded-sm focus:outline-none w-full font-medium text-sm whitespace-nowrap transition-colors",
-                          child === locale &&
-                            "bg-accent text-accent-foreground",
-                        )}
+        <div className="hidden lg:flex justify-end items-center gap-2 col-start-3">
+          <nav
+            className="flex items-center gap-1"
+            aria-label={nav.mobile.mainNavigation}
+          >
+            {NAV_ITEMS.map((item) =>
+              "children" in item ? (
+                <DropdownMenu key={item.key} modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="group inline-flex items-center gap-2 data-[state=open]:bg-accent hover:bg-accent px-3 py-2 rounded-md font-medium text-foreground/80 data-[state=open]:text-foreground hover:text-foreground text-sm transition-colors"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="text-base leading-none"
                       >
-                        <span
-                          aria-hidden="true"
-                          className="text-base leading-none"
+                        {LOCALE_FLAGS[locale]}
+                      </span>
+
+                      <span>{nav.items[item.key]}</span>
+
+                      <ChevronDown
+                        className="w-4 h-4 group-data-[state=open]:rotate-180 transition-transform duration-200"
+                        aria-hidden="true"
+                      />
+                    </button>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent
+                    align="center"
+                    sideOffset={8}
+                    className="bg-popover shadow-lg p-1.5 border-border min-w-max text-popover-foreground"
+                  >
+                    {item.children.map((child) => (
+                      <DropdownMenuItem key={child} asChild className="p-0">
+                        <Link
+                          href={getLocaleHref(pathname, child)}
+                          aria-current={child === locale ? "page" : undefined}
+                          className={cn(
+                            "flex items-center gap-2 hover:bg-accent focus:bg-accent px-3 py-2 rounded-sm focus:outline-none w-full font-medium text-sm whitespace-nowrap transition-colors",
+                            child === locale &&
+                              "bg-accent text-accent-foreground",
+                          )}
                         >
-                          {LOCALE_FLAGS[child]}
-                        </span>
+                          <span
+                            aria-hidden="true"
+                            className="text-base leading-none"
+                          >
+                            {LOCALE_FLAGS[child]}
+                          </span>
 
-                        <span>{nav.locales[child]}</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Link
-                key={item.key}
-                href={getLocalizedHref(locale, item.href)}
-                className="inline-flex items-center hover:bg-accent px-3 py-2 rounded-md font-medium text-foreground/80 hover:text-foreground text-sm transition-colors"
-              >
-                {nav.items[item.key]}
-              </Link>
-            ),
-          )}
-        </nav>
+                          <span>{nav.locales[child]}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link
+                  key={item.key}
+                  href={getLocalizedHref(locale, item.href)}
+                  className="inline-flex items-center hover:bg-accent px-3 py-2 rounded-md font-medium text-foreground/80 hover:text-foreground text-sm transition-colors"
+                >
+                  {nav.items[item.key]}
+                </Link>
+              ),
+            )}
+          </nav>
 
-        {/* Desktop actions */}
-        {isGamePage ? (
-          <div className="hidden md:flex items-center gap-2">
-            <Button onClick={handleStartNewRun}>
-              {dict.game.actions.newRun}
-            </Button>
-          </div>
-        ) : null}
+          {/* Desktop actions */}
+          {isGamePage ? (
+            <div className="flex items-center gap-2">
+              <Button onClick={handleStartNewRun}>
+                {dict.game.actions.newRun}
+              </Button>
+            </div>
+          ) : null}
+        </div>
 
         {/* Mobile menu */}
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <button
-              type="button"
-              className="md:hidden inline-flex justify-center items-center hover:bg-accent rounded-md w-10 h-10 text-foreground transition-colors"
-              aria-label={nav.mobile.openMenu}
+        <div className="lg:hidden flex justify-end items-center col-start-3">
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex justify-center items-center hover:bg-accent rounded-md w-10 h-10 text-foreground transition-colors"
+                aria-label={nav.mobile.openMenu}
+              >
+                <Menu className="w-5 h-5" aria-hidden="true" />
+              </button>
+            </SheetTrigger>
+
+            <SheetContent
+              side="right"
+              className="flex flex-col bg-background p-6 border-border w-full max-w-xs sm:max-w-xs"
             >
-              <Menu className="w-5 h-5" aria-hidden="true" />
-            </button>
-          </SheetTrigger>
+              <SheetHeader className="text-left">
+                <SheetTitle className="font-semibold text-base">
+                  {nav.mobile.menu}
+                </SheetTitle>
 
-          <SheetContent
-            side="right"
-            className="flex flex-col bg-background p-6 border-border w-full max-w-xs sm:max-w-xs"
-          >
-            <SheetHeader className="text-left">
-              <SheetTitle className="font-semibold text-base">
-                {nav.mobile.menu}
-              </SheetTitle>
+                <SheetDescription className="sr-only">
+                  {nav.mobile.mainNavigation}
+                </SheetDescription>
+              </SheetHeader>
 
-              <SheetDescription className="sr-only">
-                {nav.mobile.mainNavigation}
-              </SheetDescription>
-            </SheetHeader>
+              <nav
+                className="flex flex-col flex-1 gap-1 mt-6 overflow-y-auto"
+                aria-label={nav.mobile.mainNavigation}
+              >
+                {NAV_ITEMS.map((item) =>
+                  "children" in item ? (
+                    <MobileGroup
+                      key={item.key}
+                      item={item}
+                      onNavigate={() => setOpen(false)}
+                    />
+                  ) : (
+                    <Link
+                      key={item.key}
+                      href={getLocalizedHref(locale, item.href)}
+                      onClick={() => setOpen(false)}
+                      className="hover:bg-accent px-3 py-2 rounded-md font-medium text-foreground/80 hover:text-foreground text-sm transition-colors"
+                    >
+                      {nav.items[item.key]}
+                    </Link>
+                  ),
+                )}
+              </nav>
 
-            <nav
-              className="flex flex-col flex-1 gap-1 mt-6 overflow-y-auto"
-              aria-label={nav.mobile.mainNavigation}
-            >
-              {NAV_ITEMS.map((item) =>
-                "children" in item ? (
-                  <MobileGroup
-                    key={item.key}
-                    item={item}
-                    onNavigate={() => setOpen(false)}
-                  />
-                ) : (
-                  <Link
-                    key={item.key}
-                    href={getLocalizedHref(locale, item.href)}
-                    onClick={() => setOpen(false)}
-                    className="hover:bg-accent px-3 py-2 rounded-md font-medium text-foreground/80 hover:text-foreground text-sm transition-colors"
+              {isGamePage ? (
+                <div className="mt-6 pt-6 border-border border-t">
+                  <Button
+                    onClick={handleStartNewRun}
+                    className="justify-center w-full text-center"
                   >
-                    {nav.items[item.key]}
-                  </Link>
-                ),
-              )}
-            </nav>
-
-            {isGamePage ? (
-              <div className="mt-6 pt-6 border-border border-t">
-                <Button
-                  onClick={handleStartNewRun}
-                  className="justify-center w-full text-center"
-                >
-                  {dict.game.actions.newRun}
-                </Button>
-              </div>
-            ) : null}
-          </SheetContent>
-        </Sheet>
+                    {dict.game.actions.newRun}
+                  </Button>
+                </div>
+              ) : null}
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </header>
   );

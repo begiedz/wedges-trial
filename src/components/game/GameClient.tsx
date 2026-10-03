@@ -43,6 +43,7 @@ export function GameClient() {
   const [run, setRun] = useState<RunState | null>(null);
   const [initialLock, setInitialLock] = useState<LockState | null>(null);
   const [selectedPinId, setSelectedPinId] = useState<number | null>(null);
+  const [invalidMove, setInvalidMove] = useState({ pinId: -1, sequence: 0 });
 
   useEffect(() => {
     const savedRun = loadRunState();
@@ -73,7 +74,21 @@ export function GameClient() {
         return;
       }
 
-      setRun(applyMove(run, selectedPinId, direction));
+      const nextRun = applyMove(run, selectedPinId, direction);
+
+      // Pick damage resets when a pick breaks, but that move still needs feedback.
+      if (
+        nextRun.currentLock.invalidMovesOnCurrentPick !==
+          run.currentLock.invalidMovesOnCurrentPick ||
+        nextRun.lockpicks < run.lockpicks
+      ) {
+        setInvalidMove((previous) => ({
+          pinId: selectedPinId,
+          sequence: previous.sequence + 1,
+        }));
+      }
+
+      setRun(nextRun);
     },
     [run, selectedPinId],
   );
@@ -108,6 +123,7 @@ export function GameClient() {
     }
 
     setRun(resetCurrentLock(run, initialLock));
+    setInvalidMove({ pinId: -1, sequence: 0 });
   }, [initialLock, run]);
 
   const continueToNextChest = useCallback(() => {
@@ -118,6 +134,7 @@ export function GameClient() {
     const nextRun = openSolvedChest(run);
 
     saveRunState(nextRun);
+    setInvalidMove({ pinId: -1, sequence: 0 });
     setRun(nextRun);
     setInitialLock(cloneLockState(nextRun.currentLock));
     setSelectedPinId(nextRun.currentLock.pins[0]?.id ?? null);
@@ -126,6 +143,7 @@ export function GameClient() {
   const startNewRun = useCallback(() => {
     const nextRun = createRun();
 
+    setInvalidMove({ pinId: -1, sequence: 0 });
     setRun(nextRun);
     setInitialLock(cloneLockState(nextRun.currentLock));
     setSelectedPinId(nextRun.currentLock.pins[0]?.id ?? null);
@@ -208,7 +226,7 @@ export function GameClient() {
   const difficultyLevel = getDifficultyBand(run.chestIndex);
 
   return (
-    <main className="flex flex-col items-center gap-6">
+    <main className="flex flex-col items-center gap-6 my-8 min-h-[calc(100vh-8rem)]">
       <section className="flex flex-col items-center">
         <h2 className="font-heading text-4xl sm:text-5xl">{t.title}</h2>
         <div
@@ -236,6 +254,7 @@ export function GameClient() {
       </section>
 
       <Lock
+        invalidMove={invalidMove}
         onSelectPin={setSelectedPinId}
         pins={run.currentLock.pins}
         selectedPinId={selectedPinId}
@@ -259,8 +278,11 @@ export function GameClient() {
           />
 
           <Card className="flex items-center">
-            {t.labels.invalidMoves}: {run.currentLock.invalidMovesOnCurrentPick}
-            /{run.currentLock.maxInvalidMovesPerPick}
+            <span aria-live="polite" aria-atomic="true">
+              {t.labels.invalidMoves}:{" "}
+              {run.currentLock.invalidMovesOnCurrentPick}/
+              {run.currentLock.maxInvalidMovesPerPick}
+            </span>
           </Card>
         </div>
       </section>

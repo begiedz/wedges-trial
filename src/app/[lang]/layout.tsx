@@ -3,6 +3,7 @@ import { Noto_Serif } from "next/font/google";
 import localFont from "next/font/local";
 import { notFound } from "next/navigation";
 import "../globals.css";
+import Footer from "@/components/general/molecules/footer";
 import { Navbar } from "@/components/general/molecules/navbar";
 import { getDictionary, hasLocale } from "@/i18n/dictionaries";
 import { I18nProvider } from "@/i18n/provider";
@@ -56,6 +57,7 @@ export default async function RootLayout({
         <I18nProvider dictionary={dict} locale={lang}>
           <Navbar />
           {children}
+          <Footer />
         </I18nProvider>
       </body>
     </html>

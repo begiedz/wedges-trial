@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { type CSSProperties, useEffect, useRef } from "react";
 
 import type { Pin as LockPin } from "@/game/types";
 
@@ -8,6 +8,7 @@ type TumblerProps = {
   pin: LockPin;
   isSelected?: boolean;
   onSelect?: (pinId: number) => void;
+  invalidMoveSequence?: number;
 };
 
 const slotSizeRem = 1;
@@ -20,7 +21,32 @@ export default function Tumbler({
   pin,
   isSelected = false,
   onSelect,
+  invalidMoveSequence = 0,
 }: TumblerProps) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (invalidMoveSequence === 0 || !buttonRef.current) {
+      return;
+    }
+
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const animation = buttonRef.current.animate(
+      [0, -6, 6, -4, 4, 0].map((offset, index) => ({
+        transform: `translateX(${reducedMotion ? 0 : offset}px)`,
+        filter:
+          index === 0 || index === 5
+            ? "drop-shadow(0 0 0 transparent)"
+            : "drop-shadow(0 0 5px var(--destructive))",
+      })),
+      { duration: 320, easing: "ease-out" },
+    );
+
+    return () => animation.cancel();
+  }, [invalidMoveSequence]);
+
   const slotCount = pin.max - pin.min + 1;
   const slotSpan = Math.max(slotCount - 1, 0);
   const currentIndex = pin.position - pin.min;
@@ -48,6 +74,7 @@ export default function Tumbler({
 
   return (
     <button
+      ref={buttonRef}
       aria-pressed={isSelected}
       onClick={onSelect ? () => onSelect(pin.id) : undefined}
       type="button"

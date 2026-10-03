@@ -24,6 +24,17 @@ function shuffle<T>(items: T[], random: RandomSource): T[] {
   return clone;
 }
 
+function getSecondaryEffectCount(
+  tumblerCount: number,
+  density: number,
+  random: RandomSource,
+): number {
+  const expected = Math.max(0, tumblerCount - 1) * density;
+  const whole = Math.floor(expected);
+  // Stochastic rounding preserves fractional density across individual rules.
+  return whole + (random() < expected - whole ? 1 : 0);
+}
+
 export function generateRules(
   config: DifficultyConfig,
   random: RandomSource = Math.random,
@@ -33,11 +44,12 @@ export function generateRules(
     { length: config.tumblerCount },
     (_, index) => index,
   );
-  const secondaryBudget = Math.round(
-    Math.max(0, config.tumblerCount - 1) * config.dependencyDensity,
-  );
-
   for (const sourcePinId of pinIds) {
+    const secondaryBudget = getSecondaryEffectCount(
+      config.tumblerCount,
+      config.dependencyDensity,
+      random,
+    );
     const candidatePins = shuffle(
       pinIds.filter((pinId) => pinId !== sourcePinId),
       random,
