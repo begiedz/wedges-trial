@@ -80,7 +80,7 @@ export function Navbar() {
 
   return (
     <header className="top-0 z-50 sticky bg-background/80 backdrop-blur border-border border-b w-full">
-      <div className="relative items-center grid grid-cols-[1fr_auto_1fr] mx-auto px-4 sm:px-6 max-w-6xl h-16">
+      <div className="relative items-center grid grid-cols-[1fr_auto_1fr] mx-auto px-4 sm:px-6 h-16">
         {/* Brand */}
         <Link
           href={`/${locale}`}
@@ -91,7 +91,7 @@ export function Navbar() {
         </Link>
 
         {/* Desktop navigation */}
-        <div className="hidden md:flex justify-end items-center gap-2 col-start-3">
+        <div className="hidden lg:flex justify-end items-center gap-2 col-start-3">
           <nav
             className="flex items-center gap-1"
             aria-label={nav.mobile.mainNavigation}
@@ -172,7 +172,7 @@ export function Navbar() {
         </div>
 
         {/* Mobile menu */}
-        <div className="md:hidden flex justify-end items-center col-start-3">
+        <div className="lg:hidden flex justify-end items-center col-start-3">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <button

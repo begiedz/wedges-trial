@@ -35,31 +35,30 @@ export default function Footer() {
           <p className="text-secondary text-sm leading-6">
             {footer.disclaimer}
           </p>
-
-          <Link
-            href="https://begiedz.dev"
-            aria-label={footer.website}
-            className="inline-flex mb-3 text-foreground"
-          >
-            <BegiedzLogo size={20} textSize="text-base" subtextSize="text-xs" />
-          </Link>
-
-          <p className="text-secondary text-sm">
-            {footer.madeBy}{" "}
+          <div className="space-y-2">
             <a
               href="https://begiedz.dev"
               target="_blank"
               rel="noreferrer"
-              className="text-foreground hover:underline underline-offset-4 transition-colors"
+              aria-label={footer.website}
+              className="inline-flex text-foreground"
             >
-              Dariusz Begiedza
+              <BegiedzLogo
+                size={20}
+                textSize="text-base"
+                subtextSize="text-xs"
+              />
             </a>
-          </p>
 
-          <p className="text-secondary text-xs">
-            © {new Date().getFullYear()} {dictionary.common.brand.name}.{" "}
-            {footer.copyright}
-          </p>
+            <p className="text-secondary text-sm">
+              © {new Date().getFullYear()} {dictionary.common.brand.name}.{" "}
+              {footer.copyright}
+            </p>
+
+            <p className="text-secondary text-sm">
+              {footer.madeBy} Dariusz Begiedza
+            </p>
+          </div>
         </aside>
 
         <div className="gap-10 md:gap-16 lg:gap-24 grid grid-cols-1 sm:grid-cols-2">
