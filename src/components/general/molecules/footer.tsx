@@ -22,7 +22,7 @@ export default function Footer() {
 
   return (
     <footer className="bg-background-secondary mt-auto border-border border-t">
-      <div className="gap-10 grid grid-cols-1 md:grid-cols-[1fr_auto] mx-auto px-5 md:px-16 py-10 w-full">
+      <div className="gap-10 grid grid-cols-1 md:grid-cols-[1fr_auto] mx-auto px-5 md:px-8 py-10 w-full max-w-7xl">
         <aside className="space-y-5 max-w-xl">
           <Link
             href={`/${locale}`}

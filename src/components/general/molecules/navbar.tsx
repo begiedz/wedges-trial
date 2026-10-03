@@ -79,7 +79,7 @@ export function Navbar() {
   }, []);
 
   return (
-    <header className="top-0 z-50 sticky bg-background/80 backdrop-blur mb-4 border-border border-b w-full">
+    <header className="top-0 z-50 sticky bg-background/80 backdrop-blur border-border border-b w-full">
       <div className="flex justify-between items-center gap-4 mx-auto px-4 sm:px-6 max-w-6xl h-16">
         {/* Brand */}
         <Link href={`/${locale}`} aria-label={nav.mobile.mainNavigation}>
