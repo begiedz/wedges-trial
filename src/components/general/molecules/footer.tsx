@@ -36,27 +36,18 @@ export default function Footer() {
             {footer.disclaimer}
           </p>
           <div className="space-y-2">
-            <a
-              href="https://begiedz.dev"
-              target="_blank"
-              rel="noreferrer"
-              aria-label={footer.website}
-              className="inline-flex text-foreground"
-            >
-              <BegiedzLogo
-                size={20}
-                textSize="text-base"
-                subtextSize="text-xs"
-              />
-            </a>
+            <BegiedzLogo size={20} textSize="text-base" subtextSize="text-xs" />
 
             <p className="text-secondary text-sm">
-              © {new Date().getFullYear()} {dictionary.common.brand.name}.{" "}
-              {footer.copyright}
-            </p>
-
-            <p className="text-secondary text-sm">
-              {footer.madeBy} Dariusz Begiedza
+              {footer.madeBy}{" "}
+              <a
+                href="https://begiedz.dev"
+                target="_blank"
+                rel="noreferrer"
+                className="text-foreground hover:underline underline-offset-4 transition-colors"
+              >
+                Dariusz Begiedza
+              </a>
             </p>
           </div>
         </aside>
