@@ -208,7 +208,7 @@ export function GameClient() {
   const difficultyLevel = getDifficultyBand(run.chestIndex);
 
   return (
-    <main className="flex flex-col items-center gap-6">
+    <main className="flex flex-col items-center gap-6 my-8 min-h-[calc(100vh-8rem)]">
       <section className="flex flex-col items-center">
         <h2 className="font-heading text-4xl sm:text-5xl">{t.title}</h2>
         <div
