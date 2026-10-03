@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useDictionary, useLocale } from "@/i18n/provider";
+import { appVersion } from "@/lib/app-version";
 import BegiedzLogo from "../atoms/begiedz-logo";
 import Logo from "../atoms/logo";
 
@@ -35,6 +36,7 @@ export default function Footer() {
           <p className="text-secondary text-sm leading-6">
             {footer.disclaimer}
           </p>
+
           <div className="space-y-2">
             <BegiedzLogo size={20} textSize="text-base" subtextSize="text-xs" />
 
@@ -49,6 +51,7 @@ export default function Footer() {
                 Dariusz Begiedza
               </a>
             </p>
+            <p className="text-secondary">{appVersion}</p>
           </div>
         </aside>
 
