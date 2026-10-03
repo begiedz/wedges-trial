@@ -9,6 +9,17 @@
     "title": "Wedge's Trial",
     "description": "Логическая игра-головоломка, вдохновленная механикой взлома замков из Gothic Remake."
   },
+  "footer": {
+    "navigation": "Разделы",
+    "home": "Главная",
+    "inspiration": "Вдохновение",
+    "madeBy": "Автор проекта:",
+    "disclaimer": "Этот фанатский проект создан исключительно в некоммерческих целях и вдохновлён серией Gothic. Он не имеет официального отношения к THQ Nordic или Piranha Bytes, которым принадлежат права на бренд Gothic.",
+    "fingersChallenge": "Fingers Challenge",
+    "publisher": "THQ Nordic",
+    "website": "begiedz.dev",
+    "copyright": "Все права защищены."
+  },
   "home": {
     "actions": {
       "play": "Принять испытание",

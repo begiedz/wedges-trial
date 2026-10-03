@@ -9,6 +9,17 @@
     "title": "Wedge's Trial",
     "description": "Logik-Puzzlespiel, inspiriert von den Schlossknack-Mechaniken aus Gothic Remake."
   },
+  "footer": {
+    "navigation": "Entdecken",
+    "home": "Startseite",
+    "inspiration": "Inspiration",
+    "madeBy": "Erstellt von",
+    "disclaimer": "Dieses Fanprojekt wurde ausschließlich zu nicht-kommerziellen Zwecken erstellt und ist von der Gothic-Reihe inspiriert. Es steht in keiner offiziellen Verbindung zu THQ Nordic oder Piranha Bytes, den Rechteinhabern der Marke Gothic.",
+    "fingersChallenge": "Fingers Challenge",
+    "publisher": "THQ Nordic",
+    "website": "begiedz.dev",
+    "copyright": "Alle Rechte vorbehalten."
+  },
   "home": {
     "actions": {
       "play": "Prüfung beginnen",
