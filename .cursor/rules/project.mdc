@@ -1,0 +1,6 @@
+---
+description: Wedge's Trial canonical project rules and skill navigation
+alwaysApply: true
+---
+
+Read `AGENTS.md` for canonical project constraints and `docs/agent/README.md` for task-specific skills. Do not duplicate project-wide rules in Cursor-specific files. The backend architecture is a **target**, not yet implemented.
