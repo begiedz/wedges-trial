@@ -14,9 +14,9 @@ The project is preparing to move to a server-authoritative architecture:
 | --- | --- | --- |
 | Gameplay | Pure TypeScript engine executed locally | Server-validated actions through Next.js Route Handlers |
 | Persistence | Browser `localStorage` checkpoints | Neon PostgreSQL with Drizzle ORM |
-| Identity | No account or server session required | Anonymous sessions and display names |
+| Identity | No account or server session required | Anonymous sessions for runs; nickname only after a qualifying Game Over |
 | API | Documented contract and shared DTOs | Authenticated, versioned, retry-safe endpoints |
-| Ranking | Ore total displayed for the current run | Global leaderboard of verified finished runs |
+| Ranking | Ore total displayed for the current run | Arcade TOP 100 of claimed, verified finished runs |
 | Rewards | Random ore and occasional lockpicks | Deterministic rewards; balance still under discussion |
 
 **The API contract is defined; the backend and global leaderboard are not implemented.** Local scores are unverified and will not be imported into competitive rankings. See [current versus target architecture](docs/architecture/status.md) for migration details.
@@ -139,7 +139,7 @@ The solver uses a bounded search. Exhausting its budget does not prove a lock un
 
 ### Planned backend
 
-The chosen target is one Next.js application on **Vercel**, using Route Handlers over HTTPS and **Neon PostgreSQL + Drizzle** for persistence. The browser will submit action intent; the server will own state, resources, rewards, run finalization and ranking.
+The chosen target is one Next.js application on **Vercel**, using Route Handlers over HTTPS and **Neon PostgreSQL + Drizzle** for persistence. The browser will submit action intent; the server will own state, resources, rewards, run finalization and ranking. Players start anonymously without choosing a name. Following Game Over, only a server-qualified TOP 100 result prompts for a nickname; an accepted claim adds the verified run (not a permanent player profile) to the public ranking. A nickname is not authentication.
 
 The [v1 API contract](docs/architecture/api-contract.md) defines run creation and reads, moves, reset, reward claiming, abandonment, leaderboard reads, ownership, error codes, versions and duplicate-action handling. [Shared DTOs](src/api/contracts.ts) describe the wire shapes but do not provide runtime validation or server guarantees.
 
