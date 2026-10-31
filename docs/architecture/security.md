@@ -16,6 +16,8 @@ HTTPS encrypts requests in transit; WebSockets do not inherently prevent cheatin
 | Racing tabs | Row lock or atomic guarded update; conflict 409 and refetch |
 | Malformed or oversized input | Runtime schema validation and strict bounds |
 | Enumeration and scraping | Bounded leaderboard pages and rate limits |
+| Fake arcade high-score claim | Authenticate finished run ownership, validate nickname, recompute TOP 100 cutoff atomically, ensure one claim per run |
+| Nickname impersonation | Treat nickname as presentation-only; never use it as authentication or unique ownership |
 | Resource exhaustion / bots | Rate limits, compute budgets, suspicious play heuristics, monitoring |
 | Database error | Rollback, safe error, retry only if idempotent |
 | Asset copyright claims | Audit and clear rights before serving extracted media |
