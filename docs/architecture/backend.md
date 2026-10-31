@@ -18,7 +18,7 @@ Paths under `src/server` and `src/app/api` are **proposed**, not confirmed exist
 
 | Method | Path | Semantics |
 | --- | --- | --- |
-| POST | `/api/players/session` | Start/restore anonymous session (exact route TBD) |
+| POST | `/api/players/session` | Start/restore anonymous session without nickname (exact route TBD) |
 | POST | `/api/runs` | Start a new run under authenticated session |
 | GET | `/api/runs/current` | Resume active run |
 | GET | `/api/runs/:id` | Read an owned run, including a terminal result |
@@ -26,7 +26,9 @@ Paths under `src/server` and `src/app/api` are **proposed**, not confirmed exist
 | POST | `/api/runs/:id/reset` | Reset current lock positions, preserving penalties |
 | POST | `/api/runs/:id/continue` | Claim solved chest once and advance |
 | POST | `/api/runs/:id/abandon` | Explicitly end an active run without ranking credit |
-| GET | `/api/leaderboard` | Public ranked scores, paginated, capped TOP 100 |
+| GET | `/api/leaderboard` | Public claimed run scores, paginated, capped TOP 100 |
+| GET | `/api/runs/:id/leaderboard-eligibility` | Private, non-reserving eligibility check after Game Over (proposed extension) |
+| POST | `/api/runs/:id/leaderboard-entry` | Private, idempotent nickname claim with atomic TOP 100 recheck (proposed extension) |
 
 All mutating payloads use strict schemas. Move requests contain exactly `pinId`, `direction`, `actionId`, `expectedVersion` (never ore, lock state or player ID). Reset/continue/abandon contain only `actionId` and `expectedVersion`; creation contains only `actionId`. Responses contain full public run snapshots, versions and presentation outcomes. See the canonical contract for nullability, samples and status-specific reward/result fields.
 
@@ -49,3 +51,7 @@ The precise Drizzle/Neon driver and transaction style must be tested with Postgr
 - Monitor latency, Vercel function consumption and Neon compute wakeup; benchmark late-game lock generation (#28).
 - Do not run expensive solver searches on every player move if a cheaper validated state transition suffices.
 - Validate bounds, rate limit, handle timeouts and connection errors; no silent client-side fallbacks for authoritative actions.
+
+## Arcade ranking policy
+
+No first-visit nickname is required. Anonymous session tokens authorize gameplay, but do not create public profiles. Upon finished run, backend checks current TOP 100 qualification; a qualifying player may enter nickname. The claim endpoint validates nickname and ownership, rechecks cutoff under concurrency, and stores one leaderboard entry per finished run. Nickname is neither a credential nor a trusted score. This extends the existing v1 gameplay contract; update shared DTOs and API schemas during implementation (#29, #34, #46).
