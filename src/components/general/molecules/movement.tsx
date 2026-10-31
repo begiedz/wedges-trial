@@ -8,6 +8,8 @@ import SIcon from "@/assets/images/icons/T_Icon_PS_S.png";
 import { useGameDictionary } from "@/i18n/provider";
 
 type MovementProps = {
+  disabled?: boolean;
+  continueDisabled?: boolean;
   onContinueToNextChest: () => void;
   onMoveLeft: () => void;
   onMoveRight: () => void;
@@ -17,19 +19,27 @@ type MovementProps = {
 };
 
 type MovementButtonProps = {
+  disabled?: boolean;
   alt: string;
   iconSize: number;
   onClick: () => void;
   src: string;
 };
 
-function MovementButton({ alt, iconSize, onClick, src }: MovementButtonProps) {
+function MovementButton({
+  alt,
+  iconSize,
+  onClick,
+  src,
+  disabled,
+}: MovementButtonProps) {
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={onClick}
       aria-label={alt}
-      className="bg-transparent p-0 border-0 appearance-none cursor-pointer"
+      className="bg-transparent p-0 border-0 appearance-none cursor-pointer disabled:opacity-40"
     >
       <Image
         src={src}
@@ -43,6 +53,8 @@ function MovementButton({ alt, iconSize, onClick, src }: MovementButtonProps) {
 }
 
 export default function Movement({
+  disabled = false,
+  continueDisabled = false,
   onContinueToNextChest,
   onMoveLeft,
   onMoveRight,
@@ -59,12 +71,14 @@ export default function Movement({
         <div className="flex items-center gap-2">
           <div className="flex">
             <MovementButton
+              disabled={disabled}
               src={AIcon.src}
               iconSize={iconSize}
               alt={t.actions.moveLeft}
               onClick={onMoveLeft}
             />
             <MovementButton
+              disabled={disabled}
               src={DIcon.src}
               iconSize={iconSize}
               alt={t.actions.moveRight}
@@ -77,12 +91,14 @@ export default function Movement({
         <div className="flex items-center gap-2">
           <div className="flex">
             <MovementButton
+              disabled={disabled}
               src={WIcon.src}
               iconSize={iconSize}
               alt={t.actions.selectPreviousPin}
               onClick={onSelectPreviousPin}
             />
             <MovementButton
+              disabled={disabled}
               src={SIcon.src}
               iconSize={iconSize}
               alt={t.actions.selectNextPin}
@@ -95,6 +111,7 @@ export default function Movement({
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
             <MovementButton
+              disabled={disabled}
               src={RIcon.src}
               iconSize={iconSize}
               alt={t.actions.reset}
@@ -104,6 +121,7 @@ export default function Movement({
           </div>
           <div className="flex items-center gap-2">
             <MovementButton
+              disabled={continueDisabled}
               src={NIcon.src}
               iconSize={iconSize}
               alt={t.actions.continueToNextChest}

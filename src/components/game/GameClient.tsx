@@ -10,13 +10,14 @@ import Difficulty from "@/components/general/molecules/difficulty";
 import ItemFrame from "@/components/general/molecules/item-frame";
 import Movement from "@/components/general/molecules/movement";
 import Lock from "@/components/lock";
-import { applyMove } from "@/game/applyMove";
-import { createRun, openSolvedChest } from "@/game/createRun";
-import { loadRunState, saveRunState } from "@/game/persistence";
 import { getDifficultyBand } from "@/game/progressDifficulty";
-import { cloneLockState, resetCurrentLock } from "@/game/resetLock";
-import type { Direction, LockState, RunState } from "@/game/types";
+import type { Direction, RunState } from "@/game/types";
 import { useGameDictionary } from "@/i18n/provider";
+import { ChestRewardDialog } from "./ChestRewardDialog";
+import { DialogAction } from "./GameDialog";
+import { RestartRunDialog } from "./RestartRunDialog";
+import { RunFailedDialog } from "./RunFailedDialog";
+import { useGameSession } from "./useGameSession";
 
 function getNextPinId(
   run: RunState,
@@ -40,19 +41,23 @@ function getNextPinId(
 
 export function GameClient() {
   const t = useGameDictionary();
-  const [run, setRun] = useState<RunState | null>(null);
-  const [initialLock, setInitialLock] = useState<LockState | null>(null);
+  const {
+    run,
+    reward,
+    rewardOpen,
+    setRewardOpen,
+    restartOpen,
+    setRestartOpen,
+    move,
+    continueToNextChest,
+    resetLock: resetSessionLock,
+    startNewRun,
+    requestNewRun,
+  } = useGameSession();
+  const interactionBlocked =
+    !run || run.currentLock.isSolved || run.currentLock.isFailed || restartOpen;
   const [selectedPinId, setSelectedPinId] = useState<number | null>(null);
   const [invalidMove, setInvalidMove] = useState({ pinId: -1, sequence: 0 });
-
-  useEffect(() => {
-    const savedRun = loadRunState();
-    const nextRun = savedRun ?? createRun();
-
-    setRun(nextRun);
-    setInitialLock(cloneLockState(nextRun.currentLock));
-    setSelectedPinId(nextRun.currentLock.pins[0]?.id ?? null);
-  }, []);
 
   useEffect(() => {
     if (!run) {
@@ -70,11 +75,12 @@ export function GameClient() {
 
   const moveSelectedPin = useCallback(
     (direction: Direction) => {
-      if (!run || selectedPinId === null) {
+      if (!run || selectedPinId === null || interactionBlocked) {
         return;
       }
 
-      const nextRun = applyMove(run, selectedPinId, direction);
+      const nextRun = move(selectedPinId, direction);
+      if (!nextRun) return;
 
       // Pick damage resets when a pick breaks, but that move still needs feedback.
       if (
@@ -87,10 +93,8 @@ export function GameClient() {
           sequence: previous.sequence + 1,
         }));
       }
-
-      setRun(nextRun);
     },
-    [run, selectedPinId],
+    [run, selectedPinId, interactionBlocked, move],
   );
 
   const moveLeft = useCallback(() => {
@@ -102,56 +106,30 @@ export function GameClient() {
   }, [moveSelectedPin]);
 
   const selectPreviousPin = useCallback(() => {
-    if (!run) {
+    if (!run || interactionBlocked) {
       return;
     }
 
     setSelectedPinId((currentPinId) => getNextPinId(run, currentPinId, -1));
-  }, [run]);
+  }, [run, interactionBlocked]);
 
   const selectNextPin = useCallback(() => {
-    if (!run) {
+    if (!run || interactionBlocked) {
       return;
     }
 
     setSelectedPinId((currentPinId) => getNextPinId(run, currentPinId, 1));
-  }, [run]);
+  }, [run, interactionBlocked]);
 
   const resetLock = useCallback(() => {
-    if (!run || !initialLock) {
-      return;
-    }
-
-    setRun(resetCurrentLock(run, initialLock));
+    if (interactionBlocked) return;
+    resetSessionLock();
     setInvalidMove({ pinId: -1, sequence: 0 });
-  }, [initialLock, run]);
-
-  const continueToNextChest = useCallback(() => {
-    if (!run || !run.currentLock.isSolved) {
-      return;
-    }
-
-    const nextRun = openSolvedChest(run);
-
-    saveRunState(nextRun);
-    setInvalidMove({ pinId: -1, sequence: 0 });
-    setRun(nextRun);
-    setInitialLock(cloneLockState(nextRun.currentLock));
-    setSelectedPinId(nextRun.currentLock.pins[0]?.id ?? null);
-  }, [run]);
-
-  const startNewRun = useCallback(() => {
-    const nextRun = createRun();
-
-    setInvalidMove({ pinId: -1, sequence: 0 });
-    setRun(nextRun);
-    setInitialLock(cloneLockState(nextRun.currentLock));
-    setSelectedPinId(nextRun.currentLock.pins[0]?.id ?? null);
-  }, []);
+  }, [interactionBlocked, resetSessionLock]);
 
   useEffect(() => {
     const handleStartNewRun = () => {
-      startNewRun();
+      requestNewRun();
     };
 
     window.addEventListener(START_NEW_RUN_EVENT, handleStartNewRun);
@@ -159,7 +137,7 @@ export function GameClient() {
     return () => {
       window.removeEventListener(START_NEW_RUN_EVENT, handleStartNewRun);
     };
-  }, [startNewRun]);
+  }, [requestNewRun]);
 
   useEffect(() => {
     if (!run) {
@@ -167,6 +145,24 @@ export function GameClient() {
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        rewardOpen ||
+        restartOpen ||
+        run.currentLock.isFailed
+      )
+        return;
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        target.closest(
+          "input, textarea, select, [contenteditable=true], [role=dialog]",
+        )
+      )
+        return;
       const key = event.key.toLowerCase();
 
       if (key === "a" || key === "arrowleft") {
@@ -200,7 +196,7 @@ export function GameClient() {
 
       if (key === "n") {
         event.preventDefault();
-        continueToNextChest();
+        if (reward) setRewardOpen(true);
       }
     };
 
@@ -210,7 +206,10 @@ export function GameClient() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [
-    continueToNextChest,
+    reward,
+    rewardOpen,
+    restartOpen,
+    setRewardOpen,
     moveLeft,
     moveRight,
     resetLock,
@@ -255,7 +254,7 @@ export function GameClient() {
 
       <Lock
         invalidMove={invalidMove}
-        onSelectPin={setSelectedPinId}
+        onSelectPin={interactionBlocked ? undefined : setSelectedPinId}
         pins={run.currentLock.pins}
         selectedPinId={selectedPinId}
       />
@@ -287,13 +286,51 @@ export function GameClient() {
         </div>
       </section>
 
+      {reward && !rewardOpen && (
+        <DialogAction onClick={() => setRewardOpen(true)}>
+          {t.dialogs.backToReward}
+        </DialogAction>
+      )}
+
       <Movement
         onMoveLeft={moveLeft}
         onMoveRight={moveRight}
         onSelectPreviousPin={selectPreviousPin}
         onSelectNextPin={selectNextPin}
         onReset={resetLock}
-        onContinueToNextChest={continueToNextChest}
+        onContinueToNextChest={() => {
+          if (reward) setRewardOpen(true);
+        }}
+        disabled={interactionBlocked}
+        continueDisabled={!reward || restartOpen}
+      />
+      {reward && (
+        <ChestRewardDialog
+          open={rewardOpen && !restartOpen}
+          onOpenChange={setRewardOpen}
+          reward={reward}
+          totalOre={run.oreNuggets + reward.oreNuggets}
+          onContinue={() => {
+            continueToNextChest();
+            setSelectedPinId(null);
+            setInvalidMove({ pinId: -1, sequence: 0 });
+          }}
+        />
+      )}
+      <RunFailedDialog
+        open={run.currentLock.isFailed && !restartOpen}
+        oreNuggets={run.oreNuggets}
+        openedChests={Math.max(0, run.chestIndex - 1)}
+        onNewRun={requestNewRun}
+      />
+      <RestartRunDialog
+        open={restartOpen}
+        onOpenChange={setRestartOpen}
+        onConfirm={() => {
+          startNewRun();
+          setSelectedPinId(null);
+          setInvalidMove({ pinId: -1, sequence: 0 });
+        }}
       />
     </main>
   );

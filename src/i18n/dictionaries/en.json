@@ -186,6 +186,29 @@
         "next": "Next",
         "reset": "Reset"
       }
+    },
+    "dialogs": {
+      "reward": {
+        "title": "Chest",
+        "description": "The lock is open. Take your spoils and face the next trial.",
+        "takeAll": "Take all",
+        "totalOre": "Total ore"
+      },
+      "failed": {
+        "title": "Trial ended",
+        "description": "Your last lockpick has broken. Your haul marks the end of this trial.",
+        "openedChests": "Opened chests",
+        "leaderboard": "Leaderboard"
+      },
+      "restart": {
+        "title": "Start a new trial?",
+        "description": "Your current progress will be abandoned. This cannot be undone.",
+        "confirm": "Start new run",
+        "cancel": "Keep playing"
+      },
+      "close": "Close",
+      "backToReward": "View chest reward",
+      "closeKey": "Esc"
     }
   },
   "debug": {

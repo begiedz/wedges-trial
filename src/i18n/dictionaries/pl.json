@@ -186,6 +186,29 @@
         "next": "Dalej",
         "reset": "Reset"
       }
+    },
+    "dialogs": {
+      "reward": {
+        "title": "Skrzynia",
+        "description": "Zamek otwarty. Zabierz łupy i zmierz się z kolejną próbą.",
+        "takeAll": "Weź wszystko",
+        "totalOre": "Zebrana ruda"
+      },
+      "failed": {
+        "title": "Koniec próby",
+        "description": "Twój ostatni wytrych się złamał. Zebrane łupy wieńczą tę próbę.",
+        "openedChests": "Otwarte skrzynie",
+        "leaderboard": "Ranking"
+      },
+      "restart": {
+        "title": "Rozpocząć nową próbę?",
+        "description": "Utracisz bieżące postępy. Tej czynności nie można cofnąć.",
+        "confirm": "Rozpocznij nową grę",
+        "cancel": "Graj dalej"
+      },
+      "close": "Zamknij",
+      "backToReward": "Pokaż łupy ze skrzyni",
+      "closeKey": "Esc"
     }
   },
   "debug": {

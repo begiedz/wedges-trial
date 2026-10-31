@@ -186,6 +186,29 @@
         "next": "Weiter",
         "reset": "Zurücksetzen"
       }
+    },
+    "dialogs": {
+      "reward": {
+        "title": "Truhe",
+        "description": "Das Schloss ist offen. Nimm deine Beute und stelle dich der nächsten Prüfung.",
+        "takeAll": "Alles nehmen",
+        "totalOre": "Gesammeltes Erz"
+      },
+      "failed": {
+        "title": "Prüfung beendet",
+        "description": "Dein letzter Dietrich ist zerbrochen. Deine Beute steht am Ende dieser Prüfung fest.",
+        "openedChests": "Geöffnete Truhen",
+        "leaderboard": "Bestenliste"
+      },
+      "restart": {
+        "title": "Eine neue Prüfung beginnen?",
+        "description": "Dein aktueller Fortschritt geht verloren. Dies kann nicht rückgängig gemacht werden.",
+        "confirm": "Neuen Durchlauf starten",
+        "cancel": "Weiterspielen"
+      },
+      "close": "Schließen",
+      "backToReward": "Truhenbeute ansehen",
+      "closeKey": "Esc"
     }
   },
   "debug": {
