@@ -9,7 +9,7 @@
 | Game | `GameClient.tsx` calls `applyMove`, `createRun`, `openSolvedChest` locally | Server invokes pure engine via trusted service |
 | Persistence | `src/game/persistence.ts`, `localStorage` save only on chest continuation | Neon persistence after every accepted state transition |
 | Database | None configured | Neon PostgreSQL, Drizzle schema and migrations |
-| API | No authoritative gameplay API | Next.js Route Handlers over HTTPS |
+| API | No authoritative gameplay endpoints; v1 wire contract and shared DTOs defined in #29 ([contract](api-contract.md)) | Next.js Route Handlers over HTTPS |
 | Player identity | No server identity | Anonymous player + Secure HttpOnly cookie and nickname |
 | Leaderboard | No trusted public leaderboard | Best finished run per player, TOP 100 (subject to scoring decisions) |
 | Rewards | `rewards.ts` randomly awards ore and picks | Deterministic ore; pick replenishment to be decided |

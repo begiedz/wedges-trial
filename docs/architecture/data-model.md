@@ -24,9 +24,9 @@
 
 ### `run_actions`
 
-- `id`, `run_id` FK, `action_id`, `action_type`, `version_before`/`version_after`, committed response or a compact replay record, `created_at`.
-- Unique `(run_id, action_id)`, with additional guard against reusing the same key for different payloads.
-- Add pruning/retention policy after validating replay-window requirements.
+- `id`, `player_id` FK, `run_id` FK, `action_id`, `action_type`, canonical request identity, `version_before`/`version_after`, committed response or a compact replay record, `created_at`.
+- Unique `(player_id, action_id)` across all mutation endpoints, including run creation, as defined in [api-contract.md](api-contract.md). Reject reusing the same key for a different route/run/body. A committed creation action references its generated run and can be replayed without a caller-supplied run ID.
+- Keep replay identity/results while a run is available; pruning must not permit an old action to execute again. Verify the retention/tombstone policy before deletion.
 
 ## Invariants
 

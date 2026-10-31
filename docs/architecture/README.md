@@ -24,6 +24,7 @@ The domain engine remains **pure TypeScript** and is executed by the server for 
 | [decisions.md](decisions.md) | Approved decisions and open design questions |
 | [gameplay.md](gameplay.md) | Domain invariants, progression and reward design |
 | [backend.md](backend.md) | API, run lifecycle, transactions, error semantics |
+| [api-contract.md](api-contract.md) | Canonical v1 requests, DTOs, lifecycle, examples and retry rules (#29) |
 | [data-model.md](data-model.md) | Proposed PostgreSQL schema and integrity rules |
 | [security.md](security.md) | Trust boundary, sessions, abuse cases |
 | [audio-assets.md](audio-assets.md) | Audio design and asset licensing requirements |
