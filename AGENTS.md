@@ -25,10 +25,10 @@
 
 - **Server is authoritative** for game state, lock generation, moves, lockpick damage, resets, rewards, run status and leaderboard scores. The browser sends **intent/actions only** (`pinId`, direction, action ID, expected version), not trusted state or points.
 - Persist active runs and transitions in Neon. No `localStorage` / `sessionStorage` persistence of gameplay state, scores or secrets. Keep front-end state for rendering only; do not trust it on requests.
-- Use anonymous players and opaque, unguessable session credentials in **Secure, HttpOnly, SameSite cookies**. Check run ownership and CSRF/origin protection on mutations. A nickname is **not authentication**.
+- Use anonymous session credentials in **Secure, HttpOnly, SameSite cookies** to own and resume runs. No nickname or permanent public player profile is required before playing. Only a verified finished run that currently qualifies for arcade TOP 100 may submit a nickname, with server-side validation, atomic cutoff recheck and one claim per run. A nickname is **not authentication**. Check run ownership and CSRF/origin protection on mutations.
 - Every accepted state-changing action must be **atomic, versioned, retry-safe / idempotent**; simultaneous requests must not duplicate rewards or overwrite newer state. The client must recover from stale-version conflicts and network failures.
 - Do not expose DB credentials, session hashes, internal solver solutions or other server-only metadata to clients. Never accept client-submitted score.
-- Record relevant run/per-chest metrics server-side (moves, invalid moves, broken picks); preserve penalties through resets and refreshes. Confirm game over and leaderboard eligibility on the server.
+- Record relevant run/per-chest metrics server-side (moves, invalid moves, broken picks); preserve penalties through resets and refreshes. Confirm game over and leaderboard eligibility on the server. Public ranking is per claimed finished run, not best score per player; TOP 100 cutoff is dynamic, rechecked atomically on nickname submission. Non-qualifying historical runs may be cleaned up only under a safe retention policy.
 
 ## Frontend, localization and audio
 
