@@ -10,8 +10,8 @@
 | Persistence | `src/game/persistence.ts`, `localStorage` save only on chest continuation | Neon persistence after every accepted state transition |
 | Database | None configured | Neon PostgreSQL, Drizzle schema and migrations |
 | API | No authoritative gameplay endpoints; v1 wire contract and shared DTOs defined in #29 ([contract](api-contract.md)) | Next.js Route Handlers over HTTPS |
-| Player identity | No server identity | Anonymous player + Secure HttpOnly cookie and nickname |
-| Leaderboard | No trusted public leaderboard | Best finished run per player, TOP 100 (subject to scoring decisions) |
+| Player identity | No server identity | Anonymous session cookie for gameplay; nickname only for qualifying finished leaderboard entry |
+| Leaderboard | No trusted public leaderboard | Claimed finished runs, arcade TOP 100; scoring order remains under #51 |
 | Rewards | `rewards.ts` randomly awards ore and picks | Deterministic ore; pick replenishment to be decided |
 | Difficulty | `progressDifficulty.ts` grows pin count, density and solution targets | Calibrated levels, measured difficulty, consistent UI bands |
 | Reset | `resetLock.ts` restores initial lock incl. pick damage (exploit) | Reset positions without erasing durability/penalties |
