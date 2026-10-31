@@ -4,40 +4,35 @@
 
 ## Tables
 
-### `players`
-
-- `id` UUID primary key; `display_name` validated nickname; `created_at`.
-- Nickname is for presentation only; it is **not** a credential and need not be globally unique unless explicitly required.
-
 ### `sessions`
 
-- `id` UUID; `player_id` FK; `token_hash` unique; `expires_at`, `revoked_at`, timestamps.
-- Store a hash of a cryptographically random bearer secret; the original secret appears only in Secure HttpOnly cookie.
+- Anonymous session ID, hashed random bearer token, expiry/revocation and timestamps. Session ownership is internal, not a public player profile. Secure HttpOnly cookie holds the bearer secret.
+- No required `players` or `display_name` row when a user opens the game. Internal anonymous owner IDs are allowed solely for ownership and idempotency.
 
 ### `runs`
 
-- `id` UUID; `player_id` FK; `status` enum (`playing`, `chest_opened`, `finished`, `abandoned`); `version` integer.
-- Trusted counters: `chest_index`, `ore_nuggets`, `lockpicks`, `moves_on_current_chest`, `invalid_moves_on_current_chest`, `broken_picks_on_current_chest`, plus totals for finished-run analytics.
-- `current_lock` JSONB and `initial_lock` JSONB (or equivalent normalized design) with validated shape.
-- Optional trusted `optimal_solution_length`, computed by verified solver; `ruleset_version` for fair ranking after balance changes.
-- `created_at`, `updated_at`, `finished_at`; consider a partial unique index for one active run per player.
+- UUID, anonymous owner/session reference, status (`playing`, `chest_opened`, `finished`, `abandoned`), version.
+- Trusted chest, ore, pick, move/mistake counters, lock JSONB, verified solver metadata where available, ruleset version and timestamps.
+- At most one active run per anonymous owner; multiple completed runs allowed.
 
 ### `run_actions`
 
-- `id`, `player_id` FK, `run_id` FK, `action_id`, `action_type`, canonical request identity, `version_before`/`version_after`, committed response or a compact replay record, `created_at`.
-- Unique `(player_id, action_id)` across all mutation endpoints, including run creation, as defined in [api-contract.md](api-contract.md). Reject reusing the same key for a different route/run/body. A committed creation action references its generated run and can be replayed without a caller-supplied run ID.
-- Keep replay identity/results while a run is available; pruning must not permit an old action to execute again. Verify the retention/tombstone policy before deletion.
+- Mutation replay records and unique (owner, action_id) across run creation and mutations; keep enough retention/tombstones for safe idempotency.
+
+### `leaderboard_entries`
+
+- One claimed entry per qualifying finished run: unique `run_id` FK, validated `nickname`, `claimed_at`. Score is read from immutable server-owned run data, never from a client request.
+- Names are presentation-only, need not be unique and cannot authenticate or recover sessions.
 
 ## Invariants
 
-- Ore, chest number, picks, moves and penalties are never modified directly by caller-provided values.
-- Never allow negative resource counts; enforce constraints in SQL where practical.
-- One reward and one next-chest transition per solved chest, even for concurrent/retried requests.
-- A finished run is immutable for scoring; abandoned and incomplete runs do not appear in the ranking.
-- For ranking, choose each player's **best finished run** under currently proposed scoring semantics; stable tie breakers and bounded pages.
-- Index run ownership/status; add leaderboard query indexes based on actual SQL and explain plans.
-- Passwords are not required for anonymous-only MVP; do not build unused OAuth/account infrastructure.
+- Server computes score and verifies run ownership, finality, nickname and qualification at claim time.
+- Public TOP 100 contains only claimed finished runs. Rank individual runs, not one best run per player.
+- Fewer than 100 claimed entries: any valid finished run may qualify. Full ranking: the run must outrank the 100th under the agreed deterministic order (#51), rechecked atomically to avoid concurrency races.
+- One claim per run and idempotent retries. A preliminary eligible response does not reserve a place.
+- No browser storage for gameplay state; last nickname may optionally be cached for input convenience, not identity.
+- Periodically prune non-qualifying/abandoned old runs only after safe retention limits; do not prune active runs, claimed leaderboard references or still-replayable actions.
 
 ## Data flow
 
-Existing browser `localStorage` is untrusted. **Do not migrate local saves into a ranked, server-verified score**. If a legacy migration is later desired, keep migrated results outside competitive ranking unless independently validated.
+Never import unverified old local saves into competitive ranking. Drizzle schema and migrations are planned (#31), not implemented by this document.
