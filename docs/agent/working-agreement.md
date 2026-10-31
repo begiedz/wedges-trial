@@ -1,5 +1,12 @@
 # Working agreement and Definition of Done
 
+## Branch and delivery workflow
+
+- `development` is the GitHub default integration branch; feature and fix PRs should normally target it.
+- `master` is reserved for production releases. Do not interpret a push to `development` as production deployment. Verify that Vercel Production Branch is explicitly set to `master`.
+- Create feature/fix branches from up-to-date `development` when appropriate. Link PRs with `Closes #<issue>` so issues close on merge to the default branch.
+- Run CI on both `development` and `master`; changes to production should be intentional.
+
 ## Before coding
 
 - Confirm task scope, issue number, dependencies and whether behavior is **current**, **target approved** or **proposed**.

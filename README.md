@@ -103,7 +103,7 @@ The app uses `next/font/google` for Noto Serif and a local heading font. A fresh
 
 Tests cover pin dependencies, valid and invalid moves, pick damage and breakage, generated lock solvability, difficulty progression, solver behavior, persistence and reset behavior. React tests cover reward claims, duplicate inputs, dialog interactions, keyboard handling and restart flows.
 
-Run tests, type checking, lint and a production build before submitting relevant code changes. The GitHub Actions workflow currently runs `pnpm test` for pushes and pull requests targeting `master`; it does not yet run the other checks.
+Run tests, type checking, lint and a production build before submitting relevant code changes. The GitHub Actions workflow currently runs `pnpm test` for pushes and pull requests targeting `development` and `master`; it does not yet run the other checks.
 
 There are existing repository-wide Biome formatting/import errors. If a full lint run fails, distinguish those from errors introduced by your change and check the files you touched separately.
 
