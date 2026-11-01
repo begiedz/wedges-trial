@@ -1,3 +1,5 @@
+> Server gameplay setup: see [database, API, testing and migration instructions](docs/architecture/server-setup.md). Gameplay now requires PostgreSQL; no Neon or production deployment is implied.
+
 # Wedge’s Trial
 
 An endless browser lockpicking puzzle inspired by Gothic Remake’s lock mechanics and [Fingers Challenge](https://fingerschallenge.com).

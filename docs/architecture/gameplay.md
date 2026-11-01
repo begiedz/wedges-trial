@@ -1,3 +1,5 @@
+> Implementation update (2026-11-01): the production game client delegates all transitions to the server. Reset now preserves partial damage. Server-owned chest/run metrics survive refresh and reset; ore follows the explicitly approved formula in decisions.md. Existing local createRun/openSolvedChest helpers remain for development-only debug tooling and engine fixtures. Server progression preserves pick damage when continuing.
+
 # Gameplay engine and balance
 
 ## Current domain rules
@@ -9,7 +11,7 @@ The engine is pure TypeScript in `src/game`:
 - `createLock.ts`: start solved, mix with legal moves, evaluate candidates with a solver; bounded retries and solvable fallback.
 - `solver.ts`: bidirectional BFS with default 20,000-state search budget. `null` may mean budget exhaustion or no path; don't equate those.
 - `applyMove.ts`: reject out-of-bounds without changing pin positions; increment pick damage; break on 3 invalid moves; completed lock blocks further moves.
-- `resetLock.ts`: manually restores initial lock positions; **current code incorrectly clears partial damage**, see #37.
+- `resetLock.ts`: manually restores initial lock positions; preserves partial damage after the #37 migration.
 - `createRun.ts`: starts at chest 1, 0 ore, 3 picks; chest continuation grants loot and creates next lock.
 - `progressDifficulty.ts`: pin counts 3→4→5→6 and increasing density/solution target; UI band thresholds are offset relative to displayed chest numbering (#48).
 - `rewards.ts`: currently contains random ore and lockpick rewards; slated for redesign.

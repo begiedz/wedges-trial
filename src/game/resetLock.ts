@@ -15,7 +15,11 @@ export function resetCurrentLock(
   run: RunState,
   initialLock: LockState,
 ): RunState {
-  if (run.lockpicks <= 0 || run.currentLock.isFailed) {
+  if (
+    run.lockpicks <= 0 ||
+    run.currentLock.isFailed ||
+    run.currentLock.isSolved
+  ) {
     return run;
   }
 
@@ -23,6 +27,7 @@ export function resetCurrentLock(
     ...run,
     currentLock: {
       ...cloneLock(initialLock),
+      invalidMovesOnCurrentPick: run.currentLock.invalidMovesOnCurrentPick,
       isFailed: false,
     },
   };

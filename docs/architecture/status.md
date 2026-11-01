@@ -1,3 +1,11 @@
+# Implementation status — 2026-11-01
+
+The working tree now implements anonymous server sessions, Drizzle/PostgreSQL storage, authoritative create/read/move/reset/continue/abandon endpoints, atomic finalization, server metrics and an API-backed game client. Database migrations and deployment have **not** been applied to Neon or Production. See [server setup](server-setup.md) for setup, verification and remaining release work.
+
+Gameplay browser persistence has been removed. Reset preserves partial pick damage. Deterministic ore was explicitly approved for `deterministic-ore-v1`; random pick replenishment remains unchanged. Leaderboard qualification, nickname claims, public ranking, distributed rate limiting and deployment verification remain outstanding. Debug/solver routes remain local development tools blocked in production.
+
+## Historical baseline before this migration
+
 # Current state versus target state
 
 > Checked against GitHub repository `begiedz/wedges-trial` on 2026-10-30, default branch `master`. Revalidate when implementation changes. Paths below describe current code, not assumptions about completed Issues.

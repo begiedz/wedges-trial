@@ -1,6 +1,8 @@
+> Implementation update (2026-11-01): gameplay endpoints and `POST /api/players/session` are implemented in the working tree. Session bootstrap accepts exactly `{}` and returns `{ "ready": true }`, setting a Secure HttpOnly SameSite=Strict cookie when needed. Deterministic ore is approved in decisions.md. Leaderboard endpoints and rate limiting remain outstanding. No deployment is claimed.
+
 # Gameplay API contract — v1
 
-This is the implementation contract for [issue #29](https://github.com/begiedz/wedges-trial/issues/29), not a deployed API. The existing local game remains unchanged. Shared wire types live in [`src/api/contracts.ts`](../../src/api/contracts.ts); they are types, **not runtime validators**. Route implementation must strictly validate incoming JSON. Session creation, database orchestration, scoring and client migration remain in their respective issues.
+This is the implementation contract for [issue #29](https://github.com/begiedz/wedges-trial/issues/29), not a deployed API. The game client now uses the gameplay implementation. Shared wire types live in [`src/api/contracts.ts`](../../src/api/contracts.ts); they are types, **not runtime validators**. Route implementation must strictly validate incoming JSON. Session creation, database orchestration, deterministic ore and client migration are implemented locally; leaderboard work remains separate.
 
 ## Transport and identity
 

@@ -209,6 +209,11 @@
       "close": "Close",
       "backToReward": "View chest reward",
       "closeKey": "Esc"
+    },
+    "connection": {
+      "loading": "Waiting for the server…",
+      "error": "The action could not be confirmed. Retry to recover your game.",
+      "retry": "Retry"
     }
   },
   "debug": {

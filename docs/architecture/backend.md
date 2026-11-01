@@ -1,6 +1,8 @@
-# Target backend and API contract (not yet implemented)
+> Implementation update (2026-11-01): gameplay/session endpoints below are implemented in the working tree using PostgreSQL transactions. Leaderboard endpoints remain planned. No Neon migration or deployment is claimed. See [server setup](server-setup.md). Descriptions marked proposed below preserve the historical design context.
 
-The canonical v1 wire contract is [api-contract.md](api-contract.md), with shared TypeScript DTOs in [`src/api/contracts.ts`](../../src/api/contracts.ts). It defines exact requests, responses, lifecycle, errors and replay behavior for #29. Endpoints below remain unimplemented; session bootstrap is still owned by #33.
+# Backend and API contract
+
+The canonical v1 wire contract is [api-contract.md](api-contract.md), with shared TypeScript DTOs in [`src/api/contracts.ts`](../../src/api/contracts.ts). It defines exact requests, responses, lifecycle, errors and replay behavior for #29. Gameplay endpoints and session bootstrap are now implemented locally; leaderboard endpoints remain planned.
 
 ## Layers and boundaries
 
@@ -12,7 +14,7 @@ src/game/*                     -> pure engine, no I/O
 src/components/game/*          -> client UI, intent/response presentation
 ```
 
-Paths under `src/server` and `src/app/api` are **proposed**, not confirmed existing. Keep route handlers thin and avoid importing server-only DB modules into client bundles.
+Paths under `src/server` and `src/app/api` now exist for gameplay. Keep route handlers thin and avoid importing server-only DB modules into client bundles.
 
 ## Contract endpoints
 

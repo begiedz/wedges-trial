@@ -1,4 +1,4 @@
-/** Target wire contract for issue #29; no server endpoints are implemented yet. */
+/** Gameplay wire contract. Leaderboard endpoints remain planned. */
 import type { ChestReward, Direction, LockDifficulty, Pin } from "@/game/types";
 
 export type RunStatus = "playing" | "chest_opened" | "finished" | "abandoned";

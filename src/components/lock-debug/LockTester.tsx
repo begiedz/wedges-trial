@@ -11,7 +11,7 @@ import { PinVisualizerRow } from "@/components/lock-debug/molecules/PinVisualize
 import type { TextLockCopy } from "@/components/lock-debug/types";
 import { applyMove } from "@/game/applyMove";
 import { createRun, openSolvedChest } from "@/game/createRun";
-import { loadRunState, saveRunState } from "@/game/persistence";
+
 import { cloneLockState, resetCurrentLock } from "@/game/resetLock";
 import { solveLock } from "@/game/solver";
 import type { ChestReward, Direction, LockState, RunState } from "@/game/types";
@@ -148,14 +148,6 @@ export function TextLockTester() {
   const [lastReward, setLastReward] = useState<ChestReward | null>(null);
 
   useEffect(() => {
-    const persistedRun = loadRunState();
-
-    if (persistedRun) {
-      setSavedRun(persistedRun);
-    }
-  }, []);
-
-  useEffect(() => {
     if (!run) {
       setSelectedPinId(null);
       return;
@@ -237,7 +229,7 @@ export function TextLockTester() {
     }
 
     const nextRun = openSolvedChest(run);
-    saveRunState(nextRun);
+
     setRun(nextRun);
     setSavedRun(nextRun);
     setInitialLock(cloneLockState(nextRun.currentLock));

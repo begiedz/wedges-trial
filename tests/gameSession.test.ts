@@ -1,169 +1,122 @@
 // @vitest-environment jsdom
-
-import { act, cleanup, renderHook } from "@testing-library/react";
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { RunDto } from "@/api/contracts";
 import { useGameSession } from "@/components/game/useGameSession";
-import { createRun, openSolvedChest } from "@/game/createRun";
-import { clearRunState, loadRunState, saveRunState } from "@/game/persistence";
-import { getChestReward } from "@/game/rewards";
-import type { RunState } from "@/game/types";
 
-vi.mock("@/game/createRun", async (importOriginal) => {
-  const original = await importOriginal<typeof import("@/game/createRun")>();
+export function fixture(): RunDto {
   return {
-    ...original,
-    createRun: vi.fn(),
-    openSolvedChest: vi.fn(original.openSolvedChest),
-  };
-});
-
-vi.mock("@/game/rewards", () => ({ getChestReward: vi.fn() }));
-vi.mock("@/game/persistence", () => ({
-  loadRunState: vi.fn(),
-  saveRunState: vi.fn(),
-  clearRunState: vi.fn(),
-}));
-
-function fixture(): RunState {
-  return {
-    chestIndex: 4,
-    oreNuggets: 30,
-    lockpicks: 1,
+    id: "12345678-1234-4234-8234-123456789012",
+    version: 1,
+    rulesetVersion: "deterministic-ore-v1",
+    status: "playing",
+    chestIndex: 1,
+    openedChests: 0,
+    oreNuggets: 0,
+    lockpicks: 3,
+    difficulty: 1,
     currentLock: {
       pins: [{ id: 0, position: 1, target: 2, min: 0, max: 2 }],
-      rules: [
-        { sourcePinId: 0, direction: 1, effects: [{ pinId: 0, delta: 1 }] },
-        { sourcePinId: 0, direction: -1, effects: [{ pinId: 0, delta: -1 }] },
-      ],
       invalidMovesOnCurrentPick: 0,
       maxInvalidMovesPerPick: 3,
-      isSolved: false,
-      isFailed: false,
     },
+    createdAt: new Date(0).toISOString(),
+    updatedAt: new Date(0).toISOString(),
+    reward: null,
+    result: null,
   };
 }
-
+const fetchMock = vi.fn();
+const ok = (body: unknown) =>
+  new Response(JSON.stringify(body), { status: 200 });
 beforeEach(() => {
-  vi.clearAllMocks();
-  vi.mocked(createRun).mockImplementation(fixture);
-  vi.mocked(loadRunState).mockReturnValue(null);
-  vi.mocked(saveRunState).mockReturnValue(true);
-  vi.mocked(clearRunState).mockReturnValue(true);
-  vi.mocked(getChestReward).mockReturnValue({ oreNuggets: 12, lockpicks: 1 });
+  vi.stubGlobal("fetch", fetchMock);
+  fetchMock.mockReset();
+  window.history.replaceState(null, "", "/");
 });
-
-afterEach(cleanup);
-
-describe("game session reward flow", () => {
-  it("reveals one stable reward on solving and ignores repeated moves", () => {
-    const { result } = renderHook(useGameSession);
-
-    act(() => result.current.move(0, 1));
-
-    expect(result.current.run?.currentLock.isSolved).toBe(true);
-    expect(result.current.reward).toEqual({ oreNuggets: 12, lockpicks: 1 });
-    expect(result.current.rewardOpen).toBe(true);
-
-    act(() => {
-      result.current.move(0, 1);
-      result.current.move(0, -1);
-    });
-
-    expect(getChestReward).toHaveBeenCalledTimes(1);
-    expect(result.current.reward).toEqual({ oreNuggets: 12, lockpicks: 1 });
-  });
-
-  it("claims and advances exactly once even with two clicks in one render", () => {
-    const { result } = renderHook(useGameSession);
-    act(() => result.current.move(0, 1));
-
-    act(() => {
-      result.current.continueToNextChest();
-      result.current.continueToNextChest();
-    });
-
-    expect(result.current.run?.chestIndex).toBe(5);
-    expect(result.current.run?.oreNuggets).toBe(42);
-    expect(result.current.run?.lockpicks).toBe(2);
-    expect(result.current.reward).toBeNull();
-    expect(result.current.rewardOpen).toBe(false);
-    expect(openSolvedChest).toHaveBeenCalledTimes(1);
-    expect(saveRunState).toHaveBeenCalledTimes(1);
-  });
-
-  it("can dismiss and reopen reward feedback without rerolling or advancing", () => {
-    const { result } = renderHook(useGameSession);
-    act(() => result.current.move(0, 1));
-    const reward = result.current.reward;
-
-    act(() => result.current.setRewardOpen(false));
-    expect(result.current.run?.chestIndex).toBe(4);
-    act(() => result.current.setRewardOpen(true));
-
-    expect(result.current.reward).toEqual(reward);
-    expect(getChestReward).toHaveBeenCalledTimes(1);
-    expect(saveRunState).not.toHaveBeenCalled();
-  });
-
-  it("cannot reset a solved chest to obtain another reward", () => {
-    const { result } = renderHook(useGameSession);
-    act(() => result.current.move(0, 1));
-    act(() => result.current.resetLock());
-
-    expect(result.current.run?.currentLock.isSolved).toBe(true);
-    expect(getChestReward).toHaveBeenCalledTimes(1);
-  });
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
 });
-
-describe("game session failure and restart", () => {
-  it("blocks play and reset after the last pick breaks without resetting pins", () => {
-    const run = fixture();
-    run.currentLock.pins[0].position = 0;
-    run.currentLock.invalidMovesOnCurrentPick = 2;
-    vi.mocked(createRun).mockReturnValue(run);
-    const { result } = renderHook(useGameSession);
-
-    act(() => result.current.move(0, -1));
-    const failedRun = result.current.run;
-    expect(failedRun?.lockpicks).toBe(0);
-    expect(failedRun?.currentLock.isFailed).toBe(true);
-    expect(failedRun?.currentLock.pins[0].position).toBe(0);
-    expect(failedRun?.oreNuggets).toBe(30);
-
+async function mounted() {
+  fetchMock
+    .mockResolvedValueOnce(ok({ ready: true }))
+    .mockResolvedValueOnce(ok({ run: fixture() }));
+  const hook = renderHook(useGameSession);
+  await waitFor(() => expect(hook.result.current.loading).toBe(false));
+  return hook;
+}
+describe("server-backed game session", () => {
+  it("restores confirmed state and sends intent only, blocking rapid input", async () => {
+    const { result } = await mounted();
+    let resolve!: (value: Response) => void;
+    fetchMock.mockReturnValueOnce(
+      new Promise<Response>((done) => {
+        resolve = done;
+      }),
+    );
+    let work: unknown;
     act(() => {
-      result.current.move(0, 1);
-      result.current.resetLock();
-      result.current.continueToNextChest();
+      work = result.current.move(0, 1);
+      void result.current.move(0, 1);
     });
-
-    expect(result.current.run).toEqual(failedRun);
-    expect(getChestReward).not.toHaveBeenCalled();
-    expect(openSolvedChest).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    const body = JSON.parse(fetchMock.mock.calls[2][1].body);
+    expect(Object.keys(body).sort()).toEqual([
+      "actionId",
+      "direction",
+      "expectedVersion",
+      "pinId",
+    ]);
+    expect(result.current.run?.version).toBe(1);
+    await act(async () => {
+      resolve(ok({ run: { ...fixture(), version: 2 } }));
+      await work;
+    });
+    expect(result.current.run?.version).toBe(2);
   });
-
-  it("cancels a restart without changing the active run", () => {
-    const { result } = renderHook(useGameSession);
-    const originalRun = result.current.run;
-
-    act(() => result.current.requestNewRun());
-    expect(result.current.restartOpen).toBe(true);
-    act(() => result.current.setRestartOpen(false));
-
-    expect(result.current.run).toEqual(originalRun);
-    expect(createRun).toHaveBeenCalledTimes(1);
+  it("retains the exact action after an unknown commit and retries it", async () => {
+    const { result } = await mounted();
+    fetchMock.mockRejectedValueOnce(new TypeError("network"));
+    await act(async () => {
+      await result.current.move(0, -1);
+    });
+    expect(result.current.error).toBe(true);
+    const sent = fetchMock.mock.calls[2][1].body;
+    fetchMock
+      .mockResolvedValueOnce(ok({ run: { ...fixture(), version: 2 } }))
+      .mockResolvedValueOnce(ok({ run: { ...fixture(), version: 2 } }));
+    await act(async () => {
+      await result.current.retry();
+    });
+    expect(fetchMock.mock.calls[3][1].body).toBe(sent);
+    expect(result.current.run?.version).toBe(2);
+    expect(result.current.error).toBe(false);
   });
-
-  it("starts over only after confirmation and removes the abandoned save", () => {
+  it("recovers stale-version conflicts without resubmitting the move", async () => {
+    const { result } = await mounted();
+    fetchMock
+      .mockResolvedValueOnce(new Response("{}", { status: 409 }))
+      .mockResolvedValueOnce(ok({ run: { ...fixture(), version: 7 } }));
+    await act(async () => {
+      await result.current.move(0, 1);
+    });
+    expect(result.current.run?.version).toBe(7);
+    expect(fetchMock.mock.calls[3][1].method).toBe("GET");
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+  it("restores pending reward after refresh without computing it locally", async () => {
+    const opened: RunDto = {
+      ...fixture(),
+      status: "chest_opened",
+      reward: { oreNuggets: 8, lockpicks: 1 },
+      result: null,
+    };
+    fetchMock
+      .mockResolvedValueOnce(ok({ ready: true }))
+      .mockResolvedValueOnce(ok({ run: opened }));
     const { result } = renderHook(useGameSession);
-    act(() => result.current.requestNewRun());
-    const freshRun = { ...fixture(), chestIndex: 1, oreNuggets: 0 };
-    vi.mocked(createRun).mockReturnValue(freshRun);
-
-    act(() => result.current.startNewRun());
-
-    expect(result.current.run).toEqual(freshRun);
-    expect(result.current.restartOpen).toBe(false);
-    expect(result.current.reward).toBeNull();
-    expect(clearRunState).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(result.current.rewardOpen).toBe(true));
+    expect(result.current.reward).toEqual(opened.reward);
   });
 });

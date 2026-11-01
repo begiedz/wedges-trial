@@ -23,7 +23,7 @@ This is the **decision ledger**. Do not upgrade a proposal into an invariant wit
 
 ## Open (do not hardcode)
 
-1. **Exact reward function:** base ore curve, penalties per mistake and extra valid move, minimum floor, rounding. Candidate values in #47 are examples only.
+1. **Further reward tuning:** the deterministic ore formula below is approved for `deterministic-ore-v1`; excess-valid-move penalties and future recalibration remain open.
 2. **Lockpick replenishment:** predictable grant schedule vs another deterministic mechanic; total sustain/balance is unresolved.
 3. **Competitive scoring order:** run-based arcade TOP 100 is accepted, but ranking by ore / endless survival versus efficiency or separate bounded mode remains unresolved (#51). Provisional ordering is ore DESC, opened chests DESC, finished_at ASC, run ID ASC.
 4. **Difficulty tiers:** precise chest thresholds, optional milestone chests, minimum shortest-path length and acceptance criteria require calibration (#48, #50).
@@ -44,3 +44,7 @@ This is the **decision ledger**. Do not upgrade a proposal into an invariant wit
 - Game Over eligibility is a snapshot, not a reservation. On nickname submission the backend must recheck atomically; racing submissions may displace a provisional qualifier.
 - No unclaimed run appears in public results. Duplicate submissions for a run are prevented. Names do not establish identity or uniqueness.
 - Safe deletion/expiry of old, unqualified run records is allowed after preserving active sessions, claims and required replay windows. Exact TTL remains an implementation decision.
+
+## Approved implementation decision — 2026-11-01
+
+The task author approved deterministic ore: `base = 10 + 5 * (chestNumber - 1)`, `ore = floor(base * max(0.4, 1 - 0.1 * invalidMovesOnChest))`. Implementation uses integer tenths to avoid floating-point floor errors. Ruleset: `deterministic-ore-v1`. All invalid moves survive resets and pick breaks; no excess-valid-move penalty is applied. Lockpick reward probabilities remain the existing behavior pending a separate balancing decision. This approval supersedes open item 1 for this ruleset. Leaderboard ordering and release balance remain open.

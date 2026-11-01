@@ -1,3 +1,5 @@
+> Implementation update (2026-11-01): `src/server/db/schema.ts` and versioned `drizzle/` migrations implement sessions, runs and run_actions. Full trusted game state, initial lock, counters and pending rewards are stored in a typed JSONB document. Leaderboard entries remain planned. No migration has been applied to Neon.
+
 # Proposed Neon / PostgreSQL data model
 
 > This is a **schema proposal** for Drizzle migrations, not a statement that the tables already exist. Final column types and index definitions should be implemented and verified in #31.

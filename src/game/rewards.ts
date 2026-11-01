@@ -24,3 +24,12 @@ export function getChestReward(
     lockpicks,
   };
 }
+
+/** Approved 2026-11-01: integer arithmetic avoids floating-point floor errors. */
+export function getDeterministicOre(
+  chestNumber: number,
+  invalidMoves: number,
+): number {
+  const base = 10 + 5 * (chestNumber - 1);
+  return Math.floor((base * Math.max(4, 10 - invalidMoves)) / 10);
+}

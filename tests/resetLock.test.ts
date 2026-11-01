@@ -55,7 +55,7 @@ describe("resetCurrentLock", () => {
     expect(result.oreNuggets).toBe(run.oreNuggets);
     expect(result.lockpicks).toBe(run.lockpicks);
     expect(result.currentLock.pins).toEqual(initialLock.pins);
-    expect(result.currentLock.invalidMovesOnCurrentPick).toBe(0);
+    expect(result.currentLock.invalidMovesOnCurrentPick).toBe(2);
   });
 
   it("ignores reset after the run has failed", () => {

@@ -209,6 +209,11 @@
       "close": "Schließen",
       "backToReward": "Truhenbeute ansehen",
       "closeKey": "Esc"
+    },
+    "connection": {
+      "loading": "Warten auf den Server…",
+      "error": "Die Aktion konnte nicht bestätigt werden. Versuche es erneut, um das Spiel wiederherzustellen.",
+      "retry": "Erneut versuchen"
     }
   },
   "debug": {

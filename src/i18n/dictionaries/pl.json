@@ -209,6 +209,11 @@
       "close": "Zamknij",
       "backToReward": "Pokaż łupy ze skrzyni",
       "closeKey": "Esc"
+    },
+    "connection": {
+      "loading": "Oczekiwanie na serwer…",
+      "error": "Nie udało się potwierdzić akcji. Ponów, aby odzyskać stan gry.",
+      "retry": "Ponów"
     }
   },
   "debug": {

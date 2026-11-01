@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import type { RunDto } from "@/api/contracts";
 import LockPickIcon from "@/assets/images/icons/items/T_ItemIcon_ItKe_Lockpick.png";
 import OreNuggetIcon from "@/assets/images/icons/items/T_ItemIcon_ItMi_Orenugget.png";
 import Separator from "@/assets/images/T_TitleLine_Small.png";
@@ -10,8 +11,7 @@ import Difficulty from "@/components/general/molecules/difficulty";
 import ItemFrame from "@/components/general/molecules/item-frame";
 import Movement from "@/components/general/molecules/movement";
 import Lock from "@/components/lock";
-import { getDifficultyBand } from "@/game/progressDifficulty";
-import type { Direction, RunState } from "@/game/types";
+import type { Direction } from "@/game/types";
 import { useGameDictionary } from "@/i18n/provider";
 import { ChestRewardDialog } from "./ChestRewardDialog";
 import { DialogAction } from "./GameDialog";
@@ -20,7 +20,7 @@ import { RunFailedDialog } from "./RunFailedDialog";
 import { useGameSession } from "./useGameSession";
 
 function getNextPinId(
-  run: RunState,
+  run: RunDto,
   selectedPinId: number | null,
   offset: number,
 ): number | null {
@@ -42,6 +42,9 @@ function getNextPinId(
 export function GameClient() {
   const t = useGameDictionary();
   const {
+    loading,
+    error,
+    retry,
     run,
     reward,
     rewardOpen,
@@ -55,7 +58,7 @@ export function GameClient() {
     requestNewRun,
   } = useGameSession();
   const interactionBlocked =
-    !run || run.currentLock.isSolved || run.currentLock.isFailed || restartOpen;
+    !run || loading || error || run.status !== "playing" || restartOpen;
   const [selectedPinId, setSelectedPinId] = useState<number | null>(null);
   const [invalidMove, setInvalidMove] = useState({ pinId: -1, sequence: 0 });
 
@@ -74,12 +77,13 @@ export function GameClient() {
   }, [run, selectedPinId]);
 
   const moveSelectedPin = useCallback(
-    (direction: Direction) => {
+    async (direction: Direction) => {
       if (!run || selectedPinId === null || interactionBlocked) {
         return;
       }
 
-      const nextRun = move(selectedPinId, direction);
+      const reply = await move(selectedPinId, direction);
+      const nextRun = reply?.run;
       if (!nextRun) return;
 
       // Pick damage resets when a pick breaks, but that move still needs feedback.
@@ -152,7 +156,7 @@ export function GameClient() {
         event.altKey ||
         rewardOpen ||
         restartOpen ||
-        run.currentLock.isFailed
+        run.status === "finished"
       )
         return;
       const target = event.target;
@@ -219,13 +223,41 @@ export function GameClient() {
   ]);
 
   if (!run) {
-    return null;
+    return (
+      <main aria-live="polite">
+        {error ? (
+          <>
+            <p>{t.connection.error}</p>
+            <DialogAction onClick={() => void retry()}>
+              {t.connection.retry}
+            </DialogAction>
+          </>
+        ) : (
+          t.connection.loading
+        )}
+      </main>
+    );
   }
 
-  const difficultyLevel = getDifficultyBand(run.chestIndex);
+  const difficultyLevel = run.difficulty;
 
   return (
-    <main className="flex flex-col items-center gap-6 my-8 min-h-[calc(100vh-8rem)]">
+    <main
+      aria-busy={loading}
+      className="flex flex-col items-center gap-6 my-8 min-h-[calc(100vh-8rem)]"
+    >
+      <div aria-live="polite">
+        {error ? (
+          <>
+            <p>{t.connection.error}</p>
+            <DialogAction onClick={() => void retry()}>
+              {t.connection.retry}
+            </DialogAction>
+          </>
+        ) : loading ? (
+          t.connection.loading
+        ) : null}
+      </div>
       <section className="flex flex-col items-center">
         <h2 className="font-heading text-4xl sm:text-5xl">{t.title}</h2>
         <div
@@ -306,7 +338,7 @@ export function GameClient() {
       />
       {reward && (
         <ChestRewardDialog
-          open={rewardOpen && !restartOpen}
+          open={rewardOpen && !restartOpen && !error}
           onOpenChange={setRewardOpen}
           reward={reward}
           totalOre={run.oreNuggets + reward.oreNuggets}
@@ -318,13 +350,13 @@ export function GameClient() {
         />
       )}
       <RunFailedDialog
-        open={run.currentLock.isFailed && !restartOpen}
+        open={run.status === "finished" && !restartOpen && !error}
         oreNuggets={run.oreNuggets}
-        openedChests={Math.max(0, run.chestIndex - 1)}
+        openedChests={run.openedChests}
         onNewRun={requestNewRun}
       />
       <RestartRunDialog
-        open={restartOpen}
+        open={restartOpen && !error}
         onOpenChange={setRestartOpen}
         onConfirm={() => {
           startNewRun();
