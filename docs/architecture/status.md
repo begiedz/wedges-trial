@@ -1,3 +1,5 @@
+> WebSocket update (2026-11-01): the working tree adds native Vercel WebSocket gameplay, immediate visual prediction, ordered input and atomic batched move persistence. The local Vercel CLI upgrade and real PostgreSQL burst/replay were verified. Deployment verification is reported separately from local verification.
+
 # Implementation status — 2026-11-01
 
 The working tree now implements anonymous server sessions, Drizzle/PostgreSQL storage, authoritative create/read/move/reset/continue/abandon endpoints, atomic finalization, server metrics and an API-backed game client. Database migrations and deployment have **not** been applied to Neon or Production. See [server setup](server-setup.md) for setup, verification and remaining release work.

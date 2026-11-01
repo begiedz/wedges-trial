@@ -48,3 +48,7 @@ This is the **decision ledger**. Do not upgrade a proposal into an invariant wit
 ## Approved implementation decision — 2026-11-01
 
 The task author approved deterministic ore: `base = 10 + 5 * (chestNumber - 1)`, `ore = floor(base * max(0.4, 1 - 0.1 * invalidMovesOnChest))`. Implementation uses integer tenths to avoid floating-point floor errors. Ruleset: `deterministic-ore-v1`. All invalid moves survive resets and pick breaks; no excess-valid-move penalty is applied. Lockpick reward probabilities remain the existing behavior pending a separate balancing decision. This approval supersedes open item 1 for this ruleset. Leaderboard ordering and release balance remain open.
+
+## Approved transport direction — 2026-11-01
+
+The task author explicitly requested WebSockets after testing the blocking per-move HTTPS UI. Use Vercel-native WebSockets for gameplay, ordered input buffering and immediate visual prediction with authoritative reconciliation. The server remains responsible for every committed action, resource, reward and final result. Public movement mechanics may be sent to the owner to predict visuals; internal solver paths/seeds remain private. No separate WebSocket hosting service is required by the chosen implementation.

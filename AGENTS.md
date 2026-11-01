@@ -6,8 +6,8 @@
 
 - Wedge's Trial is a **noncommercial** Gothic-inspired browser lockpicking puzzle with endless chest progression, ore-nugget score and a global leaderboard.
 - Use **pnpm, Next.js 16, React 19, TypeScript (strict), Radix/shadcn UI, Tailwind CSS, Biome and Vitest**. Follow existing patterns; avoid new infrastructure and dependencies without justification.
-- The **chosen target** is **Vercel (Next.js Route Handlers) + Neon PostgreSQL + Drizzle ORM**. Ordinary **HTTPS** requests are sufficient; WebSockets and a standalone Express/Docker server are not requirements.
-- The repository is in **migration**: `src/components/game/GameClient.tsx` currently applies moves locally and `src/game/persistence.ts` uses `localStorage`. **Never describe the target backend as already deployed.** See `docs/architecture/status.md`.
+- The **chosen target** is **Vercel (Next.js Route Handlers) + Neon PostgreSQL + Drizzle ORM**. Gameplay uses **Vercel-native WebSockets** with visual prediction and authoritative reconciliation; HTTPS remains for bootstrap, lifecycle and recovery. No standalone Express/Docker server is required.
+- The repository is in **migration**: gameplay now commits on the server in Neon; the client predicts visuals only, and gameplay browser persistence has been removed. **Never describe the target backend as already deployed.** See `docs/architecture/status.md`.
 - Consult the version-matched Next.js docs at `node_modules/next/dist/docs/` before modifying framework-specific code, and follow local documentation over assumptions.
 
 ## Gameplay invariants (preserve unless explicitly changed)
@@ -27,7 +27,7 @@
 - Persist active runs and transitions in Neon. No `localStorage` / `sessionStorage` persistence of gameplay state, scores or secrets. Keep front-end state for rendering only; do not trust it on requests.
 - Use anonymous session credentials in **Secure, HttpOnly, SameSite cookies** to own and resume runs. No nickname or permanent public player profile is required before playing. Only a verified finished run that currently qualifies for arcade TOP 100 may submit a nickname, with server-side validation, atomic cutoff recheck and one claim per run. A nickname is **not authentication**. Check run ownership and CSRF/origin protection on mutations.
 - Every accepted state-changing action must be **atomic, versioned, retry-safe / idempotent**; simultaneous requests must not duplicate rewards or overwrite newer state. The client must recover from stale-version conflicts and network failures.
-- Do not expose DB credentials, session hashes, internal solver solutions or other server-only metadata to clients. Never accept client-submitted score.
+- Do not expose DB credentials, session hashes, internal solver solutions or other server-only metadata to clients. Public movement rules may be sent to the owner for visual prediction; predictions never establish score or committed state. Never accept client-submitted score.
 - Record relevant run/per-chest metrics server-side (moves, invalid moves, broken picks); preserve penalties through resets and refreshes. Confirm game over and leaderboard eligibility on the server. Public ranking is per claimed finished run, not best score per player; TOP 100 cutoff is dynamic, rechecked atomically on nickname submission. Non-qualifying historical runs may be cleaned up only under a safe retention policy.
 
 ## Frontend, localization and audio

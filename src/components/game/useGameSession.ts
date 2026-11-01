@@ -6,44 +6,16 @@ import type { Direction } from "@/game/types";
 
 type Reply = { run: RunDto | null; outcome?: string };
 type Pending = { path: string; body: Record<string, unknown> };
-class RequestError extends Error {
-  constructor(public status: number) {
-    super("REQUEST_FAILED");
-  }
-}
-async function request(
-  path: string,
-  body?: Record<string, unknown>,
-): Promise<Reply> {
-  const response = await fetch(path, {
-    method: body ? "POST" : "GET",
-    credentials: "same-origin",
-    cache: "no-store",
-    signal: AbortSignal.timeout(15000),
-    ...(body
-      ? {
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        }
-      : {}),
-  });
-  if (!response.ok) throw new RequestError(response.status);
-  const result = await response.json();
-  if (path === "/api/players/session") return { run: null };
-  if (
-    !result ||
-    !("run" in result) ||
-    (result.run !== null &&
-      (!Number.isSafeInteger(result.run.version) ||
-        typeof result.run.id !== "string" ||
-        !Array.isArray(result.run.currentLock?.pins)))
-  )
-    throw new TypeError("INVALID_RESPONSE");
-  return result;
-}
+
+import {
+  GameChannel,
+  TransportError as RequestError,
+  gameRequest as request,
+} from "@/client/game/channel";
 export function useGameSession() {
   const [run, setRun] = useState<RunDto | null>(null);
   const current = useRef<RunDto | null>(null);
+  const channel = useRef<GameChannel | null>(null);
   const busy = useRef(false);
   const pending = useRef<Pending | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,7 +31,9 @@ export function useGameSession() {
     )
       return;
     current.current = next;
-    setRun(next);
+    if (next && channel.current?.confirmed.id === next.id)
+      channel.current.replaceSnapshot(next);
+    else setRun(next);
     setRewardOpen(next?.status === "chest_opened");
   }, []);
   const submit = useCallback(
@@ -138,6 +112,7 @@ export function useGameSession() {
   );
   const restart = useCallback(async () => {
     restarting.current = true;
+    await channel.current?.idle();
     const active = current.current;
     if (
       active &&
@@ -161,6 +136,14 @@ export function useGameSession() {
   const retry = useCallback(
     () =>
       exclusive(async () => {
+        if (
+          !pending.current &&
+          channel.current &&
+          (error || channel.current.pendingCount)
+        ) {
+          channel.current.retry();
+          return;
+        }
         if (pending.current) {
           const command = pending.current;
           await submit(command);
@@ -179,7 +162,7 @@ export function useGameSession() {
           await restore();
         } else publish((await request(`/api/runs/${current.current.id}`)).run);
       }),
-    [exclusive, publish, restore, restart, submit],
+    [error, exclusive, publish, restore, restart, submit],
   );
   useEffect(() => {
     void exclusive(async () => {
@@ -193,9 +176,31 @@ export function useGameSession() {
     url.searchParams.set("run", run.id);
     window.history.replaceState(null, "", url);
   }, [run]);
+  const runId = run?.id;
+  useEffect(() => {
+    if (!runId || !current.current) return;
+    const live = new GameChannel(
+      current.current,
+      (view, confirmed) => {
+        const wasOpened = current.current?.status === "chest_opened";
+        current.current = confirmed;
+        setRun(view);
+        if (!wasOpened && confirmed.status === "chest_opened")
+          setRewardOpen(true);
+      },
+      setError,
+    );
+    channel.current = live;
+    live.connect();
+    return () => {
+      live.close();
+      if (channel.current === live) channel.current = null;
+    };
+  }, [runId]);
   const action = useCallback(
     (name: string, extra: Record<string, unknown> = {}) =>
       exclusive(async () => {
+        await channel.current?.idle();
         const active = current.current;
         if (!active || pending.current || error) return;
         return submit({
@@ -210,9 +215,12 @@ export function useGameSession() {
     [error, exclusive, submit],
   );
   const move = useCallback(
-    (pinId: number, direction: Direction) =>
-      action("move", { pinId, direction }),
-    [action],
+    async (pinId: number, direction: Direction): Promise<Reply | null> => {
+      if (error || busy.current) return null;
+      const view = channel.current?.move(pinId, direction);
+      return view ? { run: view } : null;
+    },
+    [error],
   );
   const resetLock = useCallback(() => action("reset"), [action]);
   const continueToNextChest = useCallback(() => action("continue"), [action]);

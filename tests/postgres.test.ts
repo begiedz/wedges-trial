@@ -1,7 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
+import { executeMoveBatch } from "@/server/game/moveBatch";
+import { bindGameSocket } from "@/server/game/socket";
+
+const { WebSocket, WebSocketServer } = createRequire(import.meta.url)("ws");
+
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import * as schema from "@/server/db/schema";
 import { newRun } from "@/server/game/engine";
@@ -157,6 +163,100 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
     await execute(ownerId, "abandon", run.id, {
       actionId: actionId(),
       expectedVersion: 4,
+    });
+  });
+
+  it("commits and replays a rapid burst over a real WebSocket connection", async () => {
+    const run = await seed();
+    const server = new WebSocketServer({ host: "127.0.0.1", port: 0 });
+    await new Promise<void>((resolve) => server.once("listening", resolve));
+    server.on(
+      "connection",
+      (socket: import("@/server/game/socket").GameSocket) => {
+        void bindGameSocket(
+          socket,
+          ownerId,
+          run.id,
+          new Date(Date.now() + 60000),
+        );
+      },
+    );
+    const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`);
+    const messages: Array<{
+      type: string;
+      response?: { run: { version: number } };
+    }> = [];
+    client.on("message", (data: { toString(): string }) =>
+      messages.push(JSON.parse(data.toString())),
+    );
+    try {
+      await vi.waitFor(() => expect(messages[0]?.type).toBe("ready"));
+      const frames = Array.from({ length: 20 }, (_, index) => ({
+        type: "action",
+        runId: run.id,
+        action: "move",
+        body: {
+          actionId: actionId(),
+          expectedVersion: index + 1,
+          pinId: 0,
+          direction: index % 2 === 0 ? 1 : -1,
+        },
+      }));
+      const started = performance.now();
+      for (const frame of frames) client.send(JSON.stringify(frame));
+      await vi.waitFor(
+        () =>
+          expect(messages.filter((x) => x.type === "result")).toHaveLength(20),
+        { timeout: 10000 },
+      );
+      const burstMs = performance.now() - started;
+      const state = await readRun(ownerId, run.id);
+      expect(state?.version).toBe(21);
+      expect(state?.currentLock.pins[0].position).toBe(0);
+      for (const frame of frames) client.send(JSON.stringify(frame));
+      await vi.waitFor(
+        () =>
+          expect(messages.filter((x) => x.type === "result")).toHaveLength(40),
+        { timeout: 10000 },
+      );
+      expect((await readRun(ownerId, run.id))?.version).toBe(21);
+      console.info(
+        `WebSocket burst: 20 moves committed in ${Math.round(burstMs)} ms; replay preserved version 21.`,
+      );
+      await execute(ownerId, "abandon", run.id, {
+        actionId: actionId(),
+        expectedVersion: 21,
+      });
+    } finally {
+      client.close();
+      for (const socket of server.clients) socket.terminate();
+      await new Promise<void>((resolve) => server.close(resolve));
+    }
+  });
+  it("rolls back every accepted move when a batched replay write fails", async () => {
+    const run = await seed();
+    const key = actionId();
+    const commands = [
+      { actionId: key, expectedVersion: 1, pinId: 0, direction: 1 as const },
+      {
+        actionId: actionId(),
+        expectedVersion: 2,
+        pinId: 0,
+        direction: -1 as const,
+      },
+    ];
+    await pool.query(
+      `ALTER TABLE run_actions ADD CONSTRAINT batch_failure CHECK (action_id <> '${key}'::uuid)`,
+    );
+    await expect(executeMoveBatch(ownerId, run.id, commands)).rejects.toThrow();
+    expect((await readRun(ownerId, run.id))?.version).toBe(1);
+    await pool.query("ALTER TABLE run_actions DROP CONSTRAINT batch_failure");
+    const retries = await executeMoveBatch(ownerId, run.id, commands);
+    expect(retries).toHaveLength(2);
+    expect((await readRun(ownerId, run.id))?.version).toBe(3);
+    await execute(ownerId, "abandon", run.id, {
+      actionId: actionId(),
+      expectedVersion: 3,
     });
   });
   it("rolls back state and replay record when action persistence fails", async () => {

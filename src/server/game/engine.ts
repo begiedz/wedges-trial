@@ -53,6 +53,10 @@ export function publicRun(run: StoredRun): RunDto {
       pins: state.currentLock.pins.map((pin) => ({ ...pin })),
       invalidMovesOnCurrentPick: state.currentLock.invalidMovesOnCurrentPick,
       maxInvalidMovesPerPick: 3 as const,
+      moveRules: state.currentLock.rules.map((rule) => ({
+        ...rule,
+        effects: rule.effects.map((effect) => ({ ...effect })),
+      })),
     },
     createdAt: run.createdAt.toISOString(),
     updatedAt: run.updatedAt.toISOString(),

@@ -1,5 +1,11 @@
 /** Gameplay wire contract. Leaderboard endpoints remain planned. */
-import type { ChestReward, Direction, LockDifficulty, Pin } from "@/game/types";
+import type {
+  ChestReward,
+  Direction,
+  LockDifficulty,
+  MoveRule,
+  Pin,
+} from "@/game/types";
 
 export type RunStatus = "playing" | "chest_opened" | "finished" | "abandoned";
 
@@ -21,6 +27,8 @@ export type PublicLockDto = {
   pins: Pin[];
   invalidMovesOnCurrentPick: number;
   maxInvalidMovesPerPick: 3;
+  /** Public movement mechanics for visual prediction; never a solver solution. */
+  moveRules?: MoveRule[];
 };
 
 export type RunResultDto = {

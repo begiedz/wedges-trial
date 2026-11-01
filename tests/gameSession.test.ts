@@ -32,6 +32,7 @@ const ok = (body: unknown) =>
 beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
   fetchMock.mockReset();
+  vi.stubGlobal("WebSocket", undefined);
   window.history.replaceState(null, "", "/");
 });
 afterEach(() => {
@@ -47,7 +48,7 @@ async function mounted() {
   return hook;
 }
 describe("server-backed game session", () => {
-  it("restores confirmed state and sends intent only, blocking rapid input", async () => {
+  it("restores confirmed state and sends intent only, queueing rapid input", async () => {
     const { result } = await mounted();
     let resolve!: (value: Response) => void;
     fetchMock.mockReturnValueOnce(
@@ -56,6 +57,7 @@ describe("server-backed game session", () => {
       }),
     );
     let work: unknown;
+    fetchMock.mockResolvedValueOnce(ok({ run: { ...fixture(), version: 3 } }));
     act(() => {
       work = result.current.move(0, 1);
       void result.current.move(0, 1);
@@ -73,7 +75,7 @@ describe("server-backed game session", () => {
       resolve(ok({ run: { ...fixture(), version: 2 } }));
       await work;
     });
-    expect(result.current.run?.version).toBe(2);
+    await waitFor(() => expect(result.current.run?.version).toBe(3));
   });
   it("retains the exact action after an unknown commit and retries it", async () => {
     const { result } = await mounted();
@@ -81,7 +83,7 @@ describe("server-backed game session", () => {
     await act(async () => {
       await result.current.move(0, -1);
     });
-    expect(result.current.error).toBe(true);
+    await waitFor(() => expect(result.current.error).toBe(true));
     const sent = fetchMock.mock.calls[2][1].body;
     fetchMock
       .mockResolvedValueOnce(ok({ run: { ...fixture(), version: 2 } }))
@@ -90,7 +92,7 @@ describe("server-backed game session", () => {
       await result.current.retry();
     });
     expect(fetchMock.mock.calls[3][1].body).toBe(sent);
-    expect(result.current.run?.version).toBe(2);
+    await waitFor(() => expect(result.current.run?.version).toBe(2));
     expect(result.current.error).toBe(false);
   });
   it("recovers stale-version conflicts without resubmitting the move", async () => {
@@ -101,7 +103,7 @@ describe("server-backed game session", () => {
     await act(async () => {
       await result.current.move(0, 1);
     });
-    expect(result.current.run?.version).toBe(7);
+    await waitFor(() => expect(result.current.run?.version).toBe(7));
     expect(fetchMock.mock.calls[3][1].method).toBe("GET");
     expect(fetchMock).toHaveBeenCalledTimes(4);
   });

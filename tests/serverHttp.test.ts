@@ -42,6 +42,30 @@ describe("HTTP trust boundary", () => {
       ),
     ).not.toThrow();
   });
+  it("uses the configured browser origin behind a local reverse proxy", () => {
+    vi.stubEnv("APP_ORIGIN", "http://localhost:3000");
+    try {
+      expect(() =>
+        checkOrigin(
+          new Request("http://localhost:51847/api/runs", {
+            headers: { origin: "http://localhost:3000" },
+          }),
+        ),
+      ).not.toThrow();
+      expect(() =>
+        checkOrigin(
+          new Request("http://localhost:51847/api/runs", {
+            headers: { origin: "http://evil.test" },
+          }),
+        ),
+      ).toThrow();
+      expect(() =>
+        checkOrigin(new Request("http://localhost:51847/api/runs")),
+      ).toThrow();
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
   it("requires session and prevents caching on reads", async () => {
     const response = await handle(
       new NextRequest("https://trial.test/api/runs/current"),

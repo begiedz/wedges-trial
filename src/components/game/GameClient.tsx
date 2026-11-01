@@ -254,8 +254,6 @@ export function GameClient() {
               {t.connection.retry}
             </DialogAction>
           </>
-        ) : loading ? (
-          t.connection.loading
         ) : null}
       </div>
       <section className="flex flex-col items-center">

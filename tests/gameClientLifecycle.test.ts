@@ -44,6 +44,7 @@ const fetchMock = vi.fn();
 const ok = (body: unknown) => new Response(JSON.stringify(body));
 beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("WebSocket", undefined);
   fetchMock.mockReset();
   window.history.replaceState(null, "", "/");
 });

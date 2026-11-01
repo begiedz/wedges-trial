@@ -3,14 +3,11 @@ const { loadEnvFile } = require("node:process");
 const { Pool } = require("pg");
 const { drizzle } = require("drizzle-orm/node-postgres");
 const { migrate } = require("drizzle-orm/node-postgres/migrator");
+const { getMigrationConnection } = require("./database-config.cjs");
 
 async function main() {
   if (existsSync(".env")) loadEnvFile(".env");
-  const connectionString =
-    process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
-  if (!connectionString) throw new Error("DIRECT_DATABASE_URL_REQUIRED");
-  if (new URL(connectionString).hostname.includes("-pooler"))
-    throw new Error("DIRECT_DATABASE_URL_REQUIRED");
+  const connectionString = getMigrationConnection(process.env);
   const pool = new Pool({
     connectionString,
     max: 1,
@@ -29,7 +26,11 @@ main().catch((error) => {
   console.error(
     "Migration failed:",
     code ||
-      (error.message === "DIRECT_DATABASE_URL_REQUIRED"
+      ([
+        "DIRECT_DATABASE_URL_REQUIRED",
+        "DATABASE_URL_INVALID",
+        "DATABASE_TARGET_MISMATCH",
+      ].includes(error.message)
         ? error.message
         : "DATABASE_ERROR"),
   );
