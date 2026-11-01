@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { describe, expect, it, vi } from "vitest";
+import { failureReason } from "@/server/game/diagnostics";
 import { checkOrigin, handle, validateCommand } from "@/server/game/http";
+import { bootstrap } from "@/server/game/service";
 
 vi.mock("@/server/game/service", () => ({
   bootstrap: vi.fn(),
@@ -58,5 +60,48 @@ describe("HTTP trust boundary", () => {
       "create",
     );
     expect(response.status).toBe(403);
+  });
+});
+
+describe("safe server failure diagnostics", () => {
+  it("logs a correlated cause without exposing credentials or SQL", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      vi.mocked(bootstrap).mockRejectedValueOnce(
+        new Error("SQL containing private-token", {
+          cause: { code: "42P01", detail: "private-token" },
+        }),
+      );
+      const response = await handle(
+        new NextRequest("https://trial.test/api/players/session", {
+          method: "POST",
+          headers: {
+            origin: "https://trial.test",
+            "content-type": "application/json",
+          },
+          body: "{}",
+        }),
+        "session",
+      );
+      const result = await response.json();
+      expect(response.status).toBe(503);
+      expect(JSON.parse(log.mock.calls[0][0])).toMatchObject({
+        reason: "DATABASE_TABLE_MISSING",
+        requestId: result.error.requestId,
+        operation: "session",
+      });
+      expect(JSON.stringify(log.mock.calls)).not.toContain("private-token");
+      expect(JSON.stringify(result)).not.toContain("DATABASE_TABLE_MISSING");
+    } finally {
+      log.mockRestore();
+    }
+  });
+  it("recognizes configuration failure and discards untrusted error codes", () => {
+    expect(failureReason(new Error("DATABASE_NOT_CONFIGURED"))).toBe(
+      "DATABASE_NOT_CONFIGURED",
+    );
+    expect(failureReason({ code: "private-token", message: "password" })).toBe(
+      "UNKNOWN_SERVER_FAILURE",
+    );
   });
 });

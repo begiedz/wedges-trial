@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { type NextRequest, NextResponse } from "next/server";
+import { failureReason } from "./diagnostics";
 import type { Action } from "./engine";
 import { GameError } from "./errors";
 import {
@@ -130,11 +131,24 @@ export async function handle(
   } catch (error) {
     const known = error instanceof GameError;
     const code = known ? error.code : "SERVICE_UNAVAILABLE";
+    const requestId = randomUUID();
+    if (!known)
+      console.error(
+        JSON.stringify({
+          event: "game_api_failure",
+          requestId,
+          operation,
+          reason: failureReason(error),
+          databaseConfigured: Boolean(
+            process.env.DATABASE_URL_POOLED || process.env.DATABASE_URL,
+          ),
+        }),
+      );
     return NextResponse.json(
       {
         error: {
           code,
-          requestId: randomUUID(),
+          requestId,
           ...(known && error.run
             ? {
                 runId: error.run.id,
