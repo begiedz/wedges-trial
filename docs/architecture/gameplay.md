@@ -1,51 +1,43 @@
-> Implementation update (2026-11-01): the production game client delegates all transitions to the server. Reset now preserves partial damage. Server-owned chest/run metrics survive refresh and reset; ore follows the explicitly approved formula in decisions.md. Existing local createRun/openSolvedChest helpers remain for development-only debug tooling and engine fixtures. Server progression preserves pick damage when continuing.
-
 # Gameplay engine and balance
 
-## Current domain rules
+The pure TypeScript engine lives in src/game/. Authoritative orchestration is in src/server/game/engine.ts; the browser uses public movement rules only for temporary rendering prediction.
 
-The engine is pure TypeScript in `src/game`:
+## Implemented rules
 
-- `types.ts`: `RunState`, `LockState`, `Pin`, `MoveRule`, `DifficultyConfig`.
-- `generateRules.ts`: a pin always affects itself and may affect others; for each +1 move, generate an inverse -1 move.
-- `createLock.ts`: start solved, mix with legal moves, evaluate candidates with a solver; bounded retries and solvable fallback.
-- `solver.ts`: bidirectional BFS with default 20,000-state search budget. `null` may mean budget exhaustion or no path; don't equate those.
-- `applyMove.ts`: reject out-of-bounds without changing pin positions; increment pick damage; break on 3 invalid moves; completed lock blocks further moves.
-- `resetLock.ts`: manually restores initial lock positions; preserves partial damage after the #37 migration.
-- `createRun.ts`: starts at chest 1, 0 ore, 3 picks; chest continuation grants loot and creates next lock.
-- `progressDifficulty.ts`: pin counts 3→4→5→6 and increasing density/solution target; UI band thresholds are offset relative to displayed chest numbering (#48).
-- `rewards.ts`: currently contains random ore and lockpick rewards; slated for redesign.
+- New runs start at chest 1 with 0 ore and 3 lockpicks. Locks are randomly generated from solved layouts through legal moves, with increasing progression settings.
+- Each bounded integer pin has a target; fixed dependencies apply inverse effects for opposite directions. An out-of-bounds move changes no pin positions.
+- Exactly three invalid moves on one pick break it. Valid moves do not heal damage; a broken pick does not reset positions. The last pick breaking atomically finishes the run.
+- Manual reset restores initial pin positions, preserving partial damage, spent picks, ore and accumulated chest/run metrics. Continuing to another chest also preserves partial pick damage.
+- Server metrics record moves, invalid moves and broken picks per chest and for the run. Reset does not clear them. Continue begins new chest metrics while retaining run totals.
+- Solving records a stable pending reward and increments openedChests. Continue credits that reward exactly once and generates the next lock in one transaction. Abandoning an opened chest discards its pending reward.
+- Difficulty display uses the same zero-based progression input as generation. Further calibration remains open.
 
-## Target lifecycle
+## Approved ore formula
 
-```text
-Create session -> Start run -> Generate solvable lock -> Playing
-Playing --valid move--> Playing or Chest opened
-Playing --invalid move--> Pick damage / break -> Playing or Run finished
-Playing --reset--> Initial pin positions (damage and penalties retained)
-Chest opened --continue--> Server awards once and generates next chest
-Run finished --> Server finalizes score; new run requires explicit action
-```
+For deterministic-ore-v1, with 1-based chestNumber:
 
-All transitions and rewards are computed on the server, never by the client.
+~~~text
+base = 10 + 5 * (chestNumber - 1)
+ore = floor(base * max(4, 10 - invalidMovesOnChest) / 10)
+~~~
 
-## Scoring direction, not finalized numbers
+Each invalid move removes 10 percentage points of the base reward, down to a 40% floor. All invalid moves count across resets and pick breaks. Integer arithmetic avoids floating-point rounding errors. There is no excess-valid-move or unverified-optimum penalty.
 
-- Ruda is based on chest index and performance rather than random ore rolls.
-- Track **per-chest cumulative** accepted moves, invalid moves, broken picks and run totals. Counter values **must survive resets**.
-- Evaluate extra successful moves against a **verified** shortest path; if unverified, do not silently invent an optimum or unfairly penalize.
-- Server calculates the award once after the lock is solved; repeated continue cannot yield multiple grants.
-- Difficulty should be measured empirically over many seeded locks; do not equate high density with universal human difficulty.
-- Preserve endless as primary game; a bounded competitive variant is a proposal, not a requirement.
+Lockpick replenishment retains the previous random roll: 2 picks above 0.92, 1 above 0.58, otherwise 0. A deterministic replacement and overall sustain balance remain undecided. The legacy random-ore helper remains for debug tooling/fixtures; the authoritative game uses the approved formula.
 
-## Gameplay invariants to test
+## Lifecycle and prediction
 
-- All pins stay in bounds and move according to effects; invalid moves change no positions.
-- Three invalid moves on the same pick break it; intervening valid moves do not heal damage.
-- Reset never restores broken picks or partially damaged picks; never erases cumulative scoring penalties.
-- Solved and failed states reject further gameplay mutations.
-- Reward is monotonic in chest number **at base value** and nonincreasing in mistakes / wasted moves.
-- Generated locks can be solved through actual legal moves; verify solver path replay.
-- UI shows the same chest index/difficulty band as the generated puzzle (beware 0-based vs 1-based indexing).
+~~~text
+Session -> Create -> Playing
+Playing -> Solve -> Chest opened -> Continue -> Playing
+Playing -> Last pick breaks -> Finished
+Playing / Chest opened -> Abandon -> Abandoned
+~~~
 
-Related: #28, #36–#39, #47–#51.
+Pins/damage render immediately through client prediction; score, rewards, resources and terminal dialogs wait for server confirmation. Moves are buffered without blocking each input on a round trip. Refresh restores committed server state, including damage and penalties.
+
+## Solver and remaining balance work
+
+The solver uses a bounded search. A null result can mean budget exhaustion and does not prove unsolvability or an optimum. Generated locks retain solvability by construction; test actual legal solution replay. Do not penalize players against an unverified shortest path.
+
+Measure early, threshold and high-chest generation, fallbacks and difficulty before setting new tiers or efficiency penalties. Endless remains primary; competitive mode/order remains open. See [decisions](decisions.md), #28 and #47–#51.

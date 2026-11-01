@@ -2,6 +2,12 @@
 
 Repository: https://github.com/begiedz/wedges-trial
 
+## Progress after server transition — 2026-11-01
+
+Implemented: anonymous sessions, gameplay schema/transactions, authoritative run lifecycle, deterministic ore, persisted metrics, browser persistence removal, WebSocket transport and visual prediction. This does not complete the entire leaderboard milestone or every issue touching those layers. See [status](status.md).
+
+Next: ranking storage/query, finished-run qualification and atomic nickname claims, ranking UI, distributed security controls and production verification. Balance/solver calibration and asset rights remain separate work. The issue list below describes workstreams, not an assertion that every item is still unimplemented.
+
 ## Milestone: v1.1.0 - Leaderboard
 
 1. **Project contract and feasibility:** #27 (instructions), #28 (generator benchmark), #29 (API contract).
@@ -24,7 +30,7 @@ Repository: https://github.com/begiedz/wedges-trial
 - Do not prompt nickname on first visit; claim leaderboard placement after a qualifying server-verified Game Over only.
 - Rank claimed runs, not one best score per persistent player. Recheck dynamic TOP 100 cutoff atomically at claim time.
 - Finalize scoring semantics and verified solver metadata before freezing competitive score formula.
-- Implement server persistence and action endpoints before deleting legacy local save.
+- Keep server persistence as the source of truth; the legacy local save has been removed.
 - Do not publish Gothic Remake recordings while clearance is unresolved; the audio player can be built against licensed placeholders.
 
 A milestone tracks deliverables, not automatically a release date. Validate actual issue status in GitHub; this file is a navigation snapshot.

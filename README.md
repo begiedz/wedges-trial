@@ -1,5 +1,3 @@
-> Server gameplay setup: see [database, API, testing and migration instructions](docs/architecture/server-setup.md). Gameplay now requires PostgreSQL; no Neon or production deployment is implied.
-
 # Wedge’s Trial
 
 An endless browser lockpicking puzzle inspired by Gothic Remake’s lock mechanics and [Fingers Challenge](https://fingerschallenge.com).
@@ -8,20 +6,9 @@ Open a chest, collect its ore, and face a harder lock. Connected tumblers turn e
 
 ## Project status
 
-The playable version runs entirely in the browser. It includes generated solvable locks, endless progression, chest rewards, Game Over and restart dialogs, local checkpoints, keyboard and touch controls, and four languages.
+Gameplay now runs on an authoritative server with Neon PostgreSQL persistence. Anonymous sessions resume committed moves, damage and resources. Vercel-native WebSockets provide ordered input with immediate visual prediction; the server confirms rewards and results. Browser gameplay saves have been removed.
 
-The project is preparing to move to a server-authoritative architecture:
-
-| Area | Available now | Planned |
-| --- | --- | --- |
-| Gameplay | Pure TypeScript engine executed locally | Server-validated actions through Next.js Route Handlers |
-| Persistence | Browser `localStorage` checkpoints | Neon PostgreSQL with Drizzle ORM |
-| Identity | No account or server session required | Anonymous sessions for runs; nickname only after a qualifying Game Over |
-| API | Documented contract and shared DTOs | Authenticated, versioned, retry-safe endpoints |
-| Ranking | Ore total displayed for the current run | Arcade TOP 100 of claimed, verified finished runs |
-| Rewards | Random ore and occasional lockpicks | Deterministic rewards; balance still under discussion |
-
-**The API contract is defined; the backend and global leaderboard are not implemented.** Local scores are unverified and will not be imported into competitive rankings. See [current versus target architecture](docs/architecture/status.md) for migration details.
+The global leaderboard, TOP 100 qualification and nickname claims remain planned. Development database/HTTPS flows and local native WebSockets have been verified; this does not establish production readiness. See [implementation status](docs/architecture/status.md) and [server setup](docs/architecture/server-setup.md).
 
 ## How to play
 
@@ -51,11 +38,9 @@ Manual reset restores the current lock’s starting layout. Starting a new run d
 
 Visible buttons provide the same gameplay actions on desktop and mobile. Gameplay shortcuts are blocked while a dialog is open.
 
-### Local saves
+### Server persistence
 
-Claiming a chest reward saves a checkpoint containing the next chest and updated resources. Opening the game again resumes that checkpoint automatically. Individual pin moves are not saved, so refreshing during a chest returns to the checkpoint rather than the last move. Starting over or losing the run clears the saved checkpoint.
-
-Saves belong to the current browser and origin; they do not sync between devices. This local flow remains available until server persistence replaces it.
+Every accepted move and lifecycle action is persisted atomically. Refresh restores the last committed state, including partial pick damage and scoring penalties. Reset preserves damage and spent resources. The anonymous HttpOnly cookie owns the run; clearing it or letting it expire loses access. No old local save is imported.
 
 ## Run locally
 
@@ -65,12 +50,16 @@ Use **Node.js 22** (the version used by CI) and **pnpm 10.18.3** (pinned in `pac
 git clone https://github.com/begiedz/wedges-trial.git
 cd wedges-trial
 pnpm install --frozen-lockfile
-pnpm dev
+cp .env.example .env
+# Configure development database URLs, then:
+pnpm db:migrate
+# Set APP_ORIGIN=http://localhost:3000 in .env.local
+pnpm dev:ws
 ```
 
 Open [localhost:3000/en/game](http://localhost:3000/en/game) to play, or [localhost:3000/en](http://localhost:3000/en) for the home page.
 
-The current local game needs no database, account, or environment secrets. `.env.example` contains database placeholders for the planned backend; adding connection strings alone does not enable server persistence. Keep credentials out of source control and client-exposed variables.
+Gameplay requires PostgreSQL. Direct and pooled URLs must reference the same development Neon branch/database. No Docker service is needed. The [setup guide](docs/architecture/server-setup.md) explains environment precedence, migrations, Vercel CLI linking and troubleshooting. Plain pnpm dev supports HTTP fallback; native WebSocket testing requires pnpm dev:ws.
 
 ### Languages and routes
 
@@ -91,7 +80,10 @@ Unprefixed page requests use browser language negotiation with English as the de
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm dev` | Start the development server |
+| `pnpm dev` | Start Next.js with HTTP gameplay fallback |
+| `pnpm dev:ws` | Start Vercel CLI for native WebSocket development |
+| `pnpm db:generate` | Generate reviewable Drizzle migrations after schema changes |
+| `pnpm db:migrate` | Apply committed migrations to the configured database |
 | `pnpm test` | Run the Vitest suite |
 | `pnpm exec tsc --noEmit` | Check TypeScript types |
 | `pnpm lint` | Check formatting, imports and lint rules with Biome |
@@ -103,7 +95,7 @@ The app uses `next/font/google` for Noto Serif and a local heading font. A fresh
 
 ### Tests and quality checks
 
-Tests cover pin dependencies, valid and invalid moves, pick damage and breakage, generated lock solvability, difficulty progression, solver behavior, persistence and reset behavior. React tests cover reward claims, duplicate inputs, dialog interactions, keyboard handling and restart flows.
+Tests cover pin dependencies, valid and invalid moves, pick damage and breakage, generated lock solvability, difficulty progression, solver behavior, server persistence, authorization, idempotency, concurrency, rollback and reset behavior. WebSocket tests cover burst input, prediction and reconnect/replay. Set TEST_DATABASE_URL explicitly to enable the isolated-schema PostgreSQL suite; otherwise it is skipped. React tests cover reward claims, duplicate inputs, dialog interactions, keyboard handling and restart flows.
 
 Run tests, type checking, lint and a production build before submitting relevant code changes. The GitHub Actions workflow currently runs `pnpm test` for pushes and pull requests targeting `development` and `master`; it does not yet run the other checks.
 
@@ -122,8 +114,11 @@ src/
   components/general/   Reusable UI and site navigation
   components/ui/        shadcn/Radix primitives
   components/lock-debug/ Development inspection tools
-  game/                 Pure puzzle engine, progression and local persistence
-  api/contracts.ts      Target API request/response types (no endpoints)
+  game/                 Pure puzzle engine, progression and reward functions
+  api/                  HTTP and WebSocket wire types
+  app/api/              Gameplay HTTP handlers and socket upgrade
+  client/game/          Ordered transport, prediction and reconciliation
+  server/               Validation, authoritative service and Drizzle persistence
   i18n/                 Dictionaries, locale types and React provider
   assets/               Fonts and images
   proxy.ts              Locale routing
@@ -139,19 +134,13 @@ Locks start from a solved configuration. The generator creates symmetric move ru
 
 The solver uses a bounded search. Exhausting its budget does not prove a lock unsolvable or establish an optimal solution. Difficulty calibration and scoring against verified solutions remain active work.
 
-### Planned backend
+### Server architecture and remaining work
 
-The chosen target is one Next.js application on **Vercel**, using Route Handlers over HTTPS and **Neon PostgreSQL + Drizzle** for persistence. The browser will submit action intent; the server will own state, resources, rewards, run finalization and ranking. Players start anonymously without choosing a name. Following Game Over, only a server-qualified TOP 100 result prompts for a nickname; an accepted claim adds the verified run (not a permanent player profile) to the public ranking. A nickname is not authentication.
+One Next.js application on Vercel owns run transitions through Route Handlers and native WebSockets, backed by Neon PostgreSQL and Drizzle. Anonymous cookies authorize actions; the client sends intent with action IDs and expected versions. Transactions persist state and replay responses together. Public movement rules support rendering prediction; resources and final outcomes remain server-confirmed.
 
-The [v1 API contract](docs/architecture/api-contract.md) defines run creation and reads, moves, reset, reward claiming, abandonment, leaderboard reads, ownership, error codes, versions and duplicate-action handling. [Shared DTOs](src/api/contracts.ts) describe the wire shapes but do not provide runtime validation or server guarantees.
+Ore follows the approved deterministic formula: base 10, +5 per later chest, minus 10 percentage points per invalid move, with a 40% floor. Pick replenishment retains its previous random behavior pending a separate balance decision. See [gameplay](docs/architecture/gameplay.md) and the [decision ledger](docs/architecture/decisions.md).
 
-## Roadmap and known limitations
-
-The next major workstream is the [v1.1.0 leaderboard roadmap](docs/architecture/roadmap.md): database and session foundations, authoritative gameplay, client migration, verified ranking and deployment checks. Reward formulas, lockpick replenishment and some competitive scoring decisions remain open; see the [decision ledger](docs/architecture/decisions.md).
-
-Known gameplay gaps include manual reset clearing partial pick damage and an offset between difficulty display bands and generator indexing. These are tracked in the [gameplay architecture notes](docs/architecture/gameplay.md). The current local implementation should not be treated as a competitive scoring system.
-
-Audio playback and separate music/SFX controls are planned, not implemented.
+The [v1.1.0 roadmap](docs/architecture/roadmap.md) tracks remaining ranking storage/APIs/UI, distributed rate limits, deployment checks, difficulty calibration and solver evidence. Only qualifying verified finished runs will be allowed to claim a nickname for the planned arcade TOP 100. Audio playback and independent music/SFX controls remain planned; asset licensing requires an audit.
 
 ## Contributing
 

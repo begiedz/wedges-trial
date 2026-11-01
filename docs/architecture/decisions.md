@@ -6,7 +6,7 @@ This is the **decision ledger**. Do not upgrade a proposal into an invariant wit
 
 | Decision | Meaning | Related issues |
 | --- | --- | --- |
-| Next.js + Vercel | One project, Route Handlers; no required WebSockets or dedicated Docker backend | #27–#30 |
+| Next.js + Vercel | One project, Route Handlers and Vercel-native WebSockets; no dedicated Docker backend | #27–#30 |
 | Neon + Drizzle | PostgreSQL for anonymous sessions, authoritative runs and claimed ranking entries | #30–#32 |
 | Server authority | Browser sends actions only; server computes transitions and score | #35–#42 |
 | No client save | Remove gameplay `localStorage`; restore from server session | #40, #41 |
@@ -17,7 +17,7 @@ This is the **decision ledger**. Do not upgrade a proposal into an invariant wit
 | Game resources | Ore nuggets and lockpicks only; ore is rank score | #24, #47 |
 | Three invalid moves | A pick breaks on exactly three out-of-bounds attempts | #36, #37 |
 | Reset fairness | Reset cannot refund spent picks or erase damage/penalties | #37, #49 |
-| Deterministic ore direction | Remove random ore bonuses; base rises by chest, efficiency matters | #47, #49 |
+| Deterministic ore (approved and implemented) | deterministic-ore-v1 formula below; chest progression and cumulative invalid moves determine ore | #47, #49 |
 | Audio opt-in | Independent music/SFX toggles and volume; no surprise autoplay | #53, #54 |
 | Third-party asset rights | Obtain and document sufficient rights before distribution | #52 |
 

@@ -1,59 +1,44 @@
-> Implementation update (2026-11-01): gameplay/session endpoints below are implemented in the working tree using PostgreSQL transactions. Leaderboard endpoints remain planned. No Neon migration or deployment is claimed. See [server setup](server-setup.md). Descriptions marked proposed below preserve the historical design context.
+# Backend and transport
 
-# Backend and API contract
+Gameplay is implemented in one Next.js application on Vercel, using Neon PostgreSQL, Drizzle and the pg driver. [Deployment evidence](status.md) is tracked separately from implementation. The [API contract](api-contract.md) defines wire shapes and retry rules; leaderboard endpoints remain planned.
 
-The canonical v1 wire contract is [api-contract.md](api-contract.md), with shared TypeScript DTOs in [`src/api/contracts.ts`](../../src/api/contracts.ts). It defines exact requests, responses, lifecycle, errors and replay behavior for #29. Gameplay endpoints and session bootstrap are now implemented locally; leaderboard endpoints remain planned.
+## Layers
 
-## Layers and boundaries
+| Layer | Responsibility |
+| --- | --- |
+| src/app/api/ | Thin HTTP handlers and authenticated WebSocket upgrade |
+| src/server/game/ | Validation, ownership, transitions, batching, transactions and safe diagnostics |
+| src/server/db/ | Drizzle schema, pg pool and Vercel pool lifecycle integration |
+| src/game/ | Pure puzzle rules, generation and reward calculations |
+| src/client/game/channel.ts | Ordered input, transient prediction and authoritative reconciliation |
+| src/components/game/ | Controls, session hook and dialogs |
 
-```text
-src/app/api/.../route.ts       -> validation, session, HTTP response
-src/server/game/*              -> authorization, run orchestration, transactions
-src/server/db/*                -> Drizzle schema and repository queries
-src/game/*                     -> pure engine, no I/O
-src/components/game/*          -> client UI, intent/response presentation
-```
+## Implemented endpoints
 
-Paths under `src/server` and `src/app/api` now exist for gameplay. Keep route handlers thin and avoid importing server-only DB modules into client bundles.
-
-## Contract endpoints
-
-| Method | Path | Semantics |
+| Method | Path | Purpose |
 | --- | --- | --- |
-| POST | `/api/players/session` | Start/restore anonymous session without nickname (exact route TBD) |
-| POST | `/api/runs` | Start a new run under authenticated session |
-| GET | `/api/runs/current` | Resume active run |
-| GET | `/api/runs/:id` | Read an owned run, including a terminal result |
-| POST | `/api/runs/:id/move` | Apply one pin movement |
-| POST | `/api/runs/:id/reset` | Reset current lock positions, preserving penalties |
-| POST | `/api/runs/:id/continue` | Claim solved chest once and advance |
-| POST | `/api/runs/:id/abandon` | Explicitly end an active run without ranking credit |
-| GET | `/api/leaderboard` | Public claimed run scores, paginated, capped TOP 100 |
-| GET | `/api/runs/:id/leaderboard-eligibility` | Private, non-reserving eligibility check after Game Over (proposed extension) |
-| POST | `/api/runs/:id/leaderboard-entry` | Private, idempotent nickname claim with atomic TOP 100 recheck (proposed extension) |
+| POST | /api/players/session | Bootstrap/restore anonymous session; exact body {} |
+| POST | /api/runs | Create run; body contains actionId |
+| GET | /api/runs/current | Active owned run or null |
+| GET | /api/runs/:id | Owned run, including terminal result |
+| POST | /api/runs/:id/move | actionId, expectedVersion, pinId, direction |
+| POST | /api/runs/:id/reset | Restore positions, preserve damage and penalties |
+| POST | /api/runs/:id/continue | Credit pending reward once and generate next chest |
+| POST | /api/runs/:id/abandon | End active run, discard pending reward |
+| GET (upgrade) | /api/game/socket?run=:id | Authenticated same-origin WebSocket bound to one owned run |
 
-All mutating payloads use strict schemas. Move requests contain exactly `pinId`, `direction`, `actionId`, `expectedVersion` (never ore, lock state or player ID). Reset/continue/abandon contain only `actionId` and `expectedVersion`; creation contains only `actionId`. Responses contain full public run snapshots, versions and presentation outcomes. See the canonical contract for nullability, samples and status-specific reward/result fields.
+Reset/continue/abandon bodies contain only actionId and expectedVersion. Strict schemas reject client state and scores. All private responses use no-store. Session bootstrap, lifecycle and recovery use HTTP; the client sends rapid moves over WebSocket, with queued HTTP fallback when upgrade is unavailable. Lifecycle controls wait for pending moves to settle.
 
-## Transition template
+## Atomic actions
 
-1. Validate schema, authentication, CSRF/origin and ownership.
-2. Use a DB transaction with a guarded row update / appropriate lock or compare-and-swap, backed by a version field.
-3. Check duplicate `actionId` to return the prior committed response for exact retries, before testing version or run status. Reject changed payloads under the same key.
-4. Check expected version and legal run status, then run the pure domain transition and calculate any reward server-side.
-5. Persist run, counters and action result atomically. Commit and return **confirmed** state.
-6. If version is stale, return HTTP `409` with a recoverable conflict response; client refetches before continuing.
+Each mutation uses a PostgreSQL transaction and locks the session row with FOR UPDATE. After ownership/expiry checks, an exact replay is returned before checking the current version/status. Reusing an action ID with a different fingerprint fails. Accepted actions update state, metrics, version and original replay response atomically; errors roll back.
 
-The precise Drizzle/Neon driver and transaction style must be tested with PostgreSQL integration tests, especially on Vercel; do not assume all serverless transport modes have identical transaction behavior (#32).
+WebSocket input is ordered and adjacent moves can be coalesced (up to 32) into one transaction. Each accepted move still increments version and metrics once and has its own replay record/result. The final run is written once per batch; replies follow commit. Unexpected persistence failure rolls back the whole batch. Database state, rather than a socket-local map, coordinates tabs and function instances.
 
-## Operational concerns
+The client predicts pin movement and damage immediately. Resources, rewards, terminal status and dialogs follow committed snapshots. Reconnect retries unknown actions with their original IDs/versions; stale-version conflicts clear queued predictions and refetch the owned run. Prediction never supplies trusted state.
 
-- Node.js function environment; no assumption of a persistent in-memory session map.
-- Environment variables only on server; never prefix secret values with `NEXT_PUBLIC_`.
-- Preview and Production must have isolated databases; migrations controlled explicitly.
-- Monitor latency, Vercel function consumption and Neon compute wakeup; benchmark late-game lock generation (#28).
-- Do not run expensive solver searches on every player move if a cheaper validated state transition suffices.
-- Validate bounds, rate limit, handle timeouts and connection errors; no silent client-side fallbacks for authoritative actions.
+## Planned ranking
 
-## Arcade ranking policy
+/api/leaderboard and the eligibility/name-claim endpoints are not implemented. The approved target is arcade TOP 100 of claimed finished runs, with ownership validation, one claim per run and an atomic cutoff recheck. Nicknames are presentation only. Final ordering remains a product decision under #51.
 
-No first-visit nickname is required. Anonymous session tokens authorize gameplay, but do not create public profiles. Upon finished run, backend checks current TOP 100 qualification; a qualifying player may enter nickname. The claim endpoint validates nickname and ownership, rechecks cutoff under concurrency, and stores one leaderboard entry per finished run. Nickname is neither a credential nor a trusted score. This extends the existing v1 gameplay contract; update shared DTOs and API schemas during implementation (#29, #34, #46).
+For environments, migrations, local WebSocket testing and diagnostics, see [server setup](server-setup.md). Distributed rate limits, production monitoring and late-game compute budgets remain release work.

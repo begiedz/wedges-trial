@@ -1,13 +1,11 @@
-> Implementation update (2026-11-01): gameplay endpoints and `POST /api/players/session` are implemented in the working tree. Session bootstrap accepts exactly `{}` and returns `{ "ready": true }`, setting a Secure HttpOnly SameSite=Strict cookie when needed. Deterministic ore is approved in decisions.md. Leaderboard endpoints and rate limiting remain outstanding. No deployment is claimed.
-
 # Gameplay API contract — v1
 
-This is the implementation contract for [issue #29](https://github.com/begiedz/wedges-trial/issues/29), not a deployed API. The game client now uses the gameplay implementation. Shared wire types live in [`src/api/contracts.ts`](../../src/api/contracts.ts); they are types, **not runtime validators**. Route implementation must strictly validate incoming JSON. Session creation, database orchestration, deterministic ore and client migration are implemented locally; leaderboard work remains separate.
+This is the v1 gameplay contract. Session/gameplay HTTP endpoints and WebSockets are implemented; leaderboard sections are approved target contracts, not available endpoints. See [status](status.md) for verification boundaries. Shared wire types live in [contracts.ts](../../src/api/contracts.ts) and [realtime.ts](../../src/api/realtime.ts); runtime validation lives in src/server/game/validation.ts.
 
 ## Transport and identity
 
 - Same-origin HTTPS JSON under `/api`, outside the localized `/{lang}` page tree. Requests with bodies use `Content-Type: application/json`; responses use `application/json`.
-- All run endpoints require a valid anonymous session cookie. Session bootstrap belongs to #33; nickname is requested only after a qualifying Game Over (#34). No gameplay endpoint implicitly creates a session. Secure, HttpOnly, SameSite cookie configuration belongs to that implementation.
+- All run endpoints require a valid anonymous session cookie. POST /api/players/session accepts exactly {} and returns { "ready": true }, setting a Secure, HttpOnly, SameSite=Strict cookie when needed. The session has a fixed 30-day expiry; only the token hash is stored. No gameplay endpoint implicitly creates a session. Nickname claims remain planned (#34).
 - Every mutation requires an allowed same-origin `Origin`; missing or disallowed origins return `403 ORIGIN_FORBIDDEN`. Non-browser callers must supply the same origin and valid session. All private reads and mutations check ownership.
 - Missing, expired or revoked sessions return `401 SESSION_REQUIRED`. An unknown run and a run belonging to someone else both return `404 RUN_NOT_FOUND`, without disclosing its status, version or owner. UUIDs are identifiers, not authorization.
 - Run responses and errors use `Cache-Control: no-store`. Public leaderboard reads do not require a session and also use `no-store` in v1.
@@ -20,6 +18,7 @@ The path `:id` is a run UUID. `RunActionRequest` means **exactly** `{ actionId, 
 
 | Method | Path | Request | Success |
 | --- | --- | --- | --- |
+| POST | `/api/players/session` | Exactly `{}` | `200 { "ready": true }` |
 | POST | `/api/runs` | `StartRunRequest` | `201 StartRunResponse` |
 | GET | `/api/runs/current` | No body or query | `200 CurrentRunResponse` |
 | GET | `/api/runs/:id` | No body or query | `200 RunResponse` |
@@ -27,7 +26,7 @@ The path `:id` is a run UUID. `RunActionRequest` means **exactly** `{ actionId, 
 | POST | `/api/runs/:id/reset` | `RunActionRequest` | `200 ResetRunResponse` |
 | POST | `/api/runs/:id/continue` | `RunActionRequest` | `200 ContinueRunResponse` |
 | POST | `/api/runs/:id/abandon` | `RunActionRequest` | `200 AbandonRunResponse` |
-| GET | `/api/leaderboard` | `limit`, `cursor` query parameters | `200 LeaderboardResponse` |
+| GET (planned) | `/api/leaderboard` | `limit`, `cursor` query parameters | `200 LeaderboardResponse` |
 
 The by-ID read and abandon mutation complete the requested lifecycle: `/current` cannot reload a finished result, and starting a run must not silently abandon another one.
 
@@ -55,7 +54,7 @@ Every run response includes the entire confirmed public snapshot, not a patch:
 | `result` | Non-null only in `finished`: immutable final ore, solved-chest count, finish time and `reason: "lockpicks_exhausted"` |
 | `createdAt`, `updatedAt` | Server timestamps; `updatedAt` changes with committed mutations |
 
-Use `status` instead of redundant `isSolved`/`isFailed` flags. Dependency rules, generation seed, initial lock, solver path/optimum and session/player credentials are never serialized. Changed pin highlights can be derived by comparing public snapshots. Terminal snapshots retain the last visible lock for display. Scores from old local saves are never imported into this API.
+Use `status` instead of redundant `isSolved`/`isFailed` flags. Optional currentLock.moveRules exposes public movement mechanics to the owner for visual prediction. Generation seed, initial lock, solver path/optimum and session/player credentials are never serialized. Changed pin highlights can be derived by comparing public snapshots. Terminal snapshots retain the last visible lock for display. Scores from old local saves are never imported into this API.
 
 `playing` requires at least one pick and an unsolved lock. `chest_opened` requires all pins on target and at least one pick. `finished` requires zero picks and matching run/result totals. `openedChests === chestIndex - 1` while playing/finished; it equals `chestIndex` in `chest_opened`. An abandoned run preserves its last chest/solved count, including a solved-but-unclaimed chest. All pin positions and targets remain within their declared bounds.
 
@@ -65,7 +64,7 @@ Use `status` instead of redundant `isSolved`/`isFailed` flags. Dependency rules,
 
 An out-of-bounds move is a **successful gameplay action**, `200` with `outcome: "invalid_move"`, rather than an HTTP validation error. It preserves all pin positions, adds damage and increments the version. The third invalid move consumes exactly one pick and resets current-pick damage to 0. Return `pick_broken` if picks remain, or `run_finished` if none remain. No pin reset occurs. Valid moves return `moved`, or `chest_opened` when all targets are reached. Outcome precedence is therefore `run_finished` over `pick_broken` over `invalid_move`, and `chest_opened` over `moved`.
 
-The solving move increments `openedChests`, calculates and persists a pending reward and changes status to `chest_opened` in one transaction. The reward is shown immediately and is stable across reads, refreshes and retries. It is **not yet credited** to resource totals. The exact ore formula, efficiency penalties and pick-replenishment schedule remain open in #47/#49/#51; example numbers here are illustrative only.
+The solving move increments `openedChests`, calculates and persists a pending reward and changes status to `chest_opened` in one transaction. The reward is shown immediately and is stable across reads, refreshes and retries. It is **not yet credited** to resource totals. Approved deterministic-ore-v1 awards floor((10 + 5 * (chestNumber - 1)) * max(4, 10 - invalidMovesOnChest) / 10). Pick replenishment retains its previous probabilities; further tuning remains open. Example snapshots are illustrative.
 
 `/continue` is allowed only in `chest_opened`. In one transaction, it credits the stored reward exactly once, generates the next solvable lock, increments `chestIndex`, resets per-chest counters and changes status to `playing` with `reward: null`. It returns the credited amounts separately as `claimedReward` for feedback. It preserves current-pick damage unless a future explicit gameplay decision changes that rule. If lock generation or persistence fails, no part is committed; the pending reward and version stay unchanged. Do not generate or award anything in the browser.
 
@@ -92,10 +91,26 @@ All other action/status combinations return `409 INVALID_RUN_STATUS` without mut
 2. Authenticate, validate schema/origin and authorize access before serving a replay. Within the transaction, check the action record **before** checking the current version or lifecycle. An exact duplicate of a committed request returns its original status code and JSON, including the original snapshot/version, even after the run has advanced or finished. It never creates another lock, credits again, or increments version. Creation retries return the same `201` and ID.
 3. A new action on an existing run requires `expectedVersion === current version`. Mismatch returns `409 VERSION_CONFLICT` with authorized `runId`, `currentVersion`, `currentStatus`. No pins, damage, resources, metrics, reward or action success record changes.
 4. For matching versions, verify legal status and action, then atomically commit state, counters, version `+1`, and replay record. Successful invalid moves and resets also consume a version. Errors consume no version and do not reserve action IDs. Concurrent identical requests wait/re-read the one committed result; concurrent different requests from one version allow at most one commit.
-5. Action deduplication and state changes require a database transaction/constraints, not an in-memory map. Keep successful replay records for as long as the run is available; retention/tombstones must prevent old IDs from executing again. The existing proposed `(run_id, action_id)` constraint alone cannot cover create or cross-run reuse: #31–#32 must also enforce `UNIQUE(player_id, action_id)` or an equivalent atomic design. A committed creation action references the newly generated run ID; the caller need not know that ID to retry creation.
+5. Action deduplication and state changes require a database transaction/constraints, not an in-memory map. Keep successful replay records for as long as the run is available; retention/tombstones must prevent old IDs from executing again. The implemented composite primary key (owner_id, action_id) covers creation and cross-run reuse. A committed creation action references the newly generated run ID; the caller need not know that ID to retry creation.
 6. After timeout, network loss, `429` or `5xx`, retry the **same** action ID/body (respecting `Retry-After`). Do not generate a fresh ID while commit status is unknown. A crash after commit but before response must still replay the committed result.
 7. After a conflict, stop queued gameplay input and fetch `/api/runs/:id`; `/current` may be null if another tab ended the run. Replace stale state with the authoritative snapshot. Do not automatically reapply a move/reset/continue with a new version; a new deliberate action gets a fresh ID.
 8. A replay may carry an older snapshot than the UI already has. Never replace a higher version of the same run with a lower version. After a delayed response, refetch if needed. Responses for a previously active run must not replace a newer selected run. No optimistic score/pick awards or local authoritative fallback.
+
+## WebSocket protocol (implemented)
+
+GET /api/game/socket?run=<UUID> upgrades an authenticated same-origin connection. It accepts exactly one run query parameter and checks Origin, cookie expiry and ownership before upgrade. Other HTTP gameplay routes reject query fields. The socket is bound to that run; it cannot switch ownership/run through a message.
+
+Client action frame:
+
+~~~json
+{"type":"action","runId":"<UUID>","action":"move","body":{"actionId":"<UUID>","expectedVersion":1,"pinId":0,"direction":1}}
+~~~
+
+The same strict action validators apply. The protocol also supports reset/continue/abandon with their standard bodies; the current UI uses HTTP lifecycle controls after queued moves drain. Server frames are ready {run}, result {actionId,response}, error {actionId?,status,error}, and ping. The client answers {"type":"pong"}. Error/result fields follow the HTTP contract.
+
+Results are sent only after commit, in action order. Adjacent moves batch up to 32 per transaction, retaining each accepted action's version and replay result. Frames are limited to 2 KiB; binary/oversized frames close with 1009. More than 120 messages/second or 128 queued commands closes with 1008; excessive outgoing buffering closes with 1013. Heartbeats run every 20 seconds; stale pong over 60 seconds or session expiry closes with 4001. These per-connection limits do not implement distributed rate limiting.
+
+The client buffers up to 64 inputs, predicts visuals immediately, and reconciles against committed snapshots. It pauses after a predicted solved/failed lock until confirmation. Resources and terminal dialogs remain confirmed. Reconnect preserves unknown action IDs/versions; conflicts discard queued predictions and refetch. HTTP fallback uses the same authority and replay rules. Function duration is bounded (300-second setting), so reconnect is expected.
 
 ## Errors and localization
 
@@ -128,9 +143,9 @@ All application errors use this shape; do not return raw DB errors, stack traces
 
 Transport/platform failures may not be JSON. Clients treat malformed/non-JSON failures as unknown outcomes and use the same retry rules. Conflict metadata appears only in the three owned-run conflict cases documented above; other errors omit it. `requestId` is an opaque support correlation ID, not a session credential.
 
-The API is locale-neutral: do not require a `locale` mutation field or change payloads with `Accept-Language`. The frontend maps every known error code, outcome and status to dictionary keys for **en/pl/de/ru**, with English fallback and a generic fallback for unknown codes. Nicknames are rendered as plain text. Language switching never creates a run or repeats a mutation. Existing dictionaries are unchanged by this contract-only issue; localized API feedback is implemented with #40.
+The API is locale-neutral: do not require a `locale` mutation field or change payloads with `Accept-Language`. The frontend maps every known error code, outcome and status to dictionary keys for **en/pl/de/ru**, with English fallback and a generic fallback for unknown codes. Nicknames are rendered as plain text. Language switching never creates a run or repeats a mutation. Localized API feedback is implemented in the four dictionaries.
 
-## Leaderboard read contract
+## Planned leaderboard read contract
 
 `GET /api/leaderboard?limit=25&cursor=...` accepts a decimal integer `limit` from 1 to 100 (default 25) and an optional opaque server-issued cursor. Unknown query fields, duplicate parameters and invalid limits return `400 INVALID_REQUEST`; malformed/tampered/expired cursors return `400 INVALID_CURSOR`. A rejected cursor is restarted with a cursorless read.
 

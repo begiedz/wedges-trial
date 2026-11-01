@@ -1,63 +1,60 @@
 # Server gameplay setup and operations
 
-Implemented locally: #33, #35–#40 gameplay paths, #41 browser persistence removal, #49 server metrics; #31–#32 gameplay schema/transactions. This is not a claim that entire issues (including leaderboard requirements) are complete or deployed.
+Use Node.js 22 and pnpm 10.18.3. Development uses the configured Neon database through environment variables; Docker and a separate backend process are unnecessary. See [implementation and verification status](status.md).
 
-## Configure and run
+## Configure the database
 
-1. `pnpm install`.
-2. Use the gitignored `.env` for development: `DATABASE_URL` is the direct Neon connection and `DATABASE_URL_POOLED` is the pooled application connection. Next.js loads `.env` automatically; the Drizzle config and migration runner also load it. The application prefers `DATABASE_URL_POOLED`, falling back to `DATABASE_URL`. Migrations use `DATABASE_URL_UNPOOLED` if supplied, otherwise `DATABASE_URL`. Use Node.js 20.12+ (native environment-file loading). Never point development/tests at Production.
-3. Review `drizzle/` SQL, then explicitly run `pnpm db:migrate` on your isolated development/Preview database. Request handlers never migrate automatically.
-4. Set `APP_ORIGIN` to the exact public origin, e.g. `https://trial.example`. Locally omit it (or leave empty) to use the request URL origin. Use `pnpm dev`; Secure cookies require HTTPS or a browser's localhost secure-cookie exception.
-5. Use `/en/game` (also pl/de/ru). Bootstrap creates an anonymous cookie with 30-day fixed expiry. Gameplay never imports old browser saves. A public run UUID in the `?run=` URL enables finished-result refresh; it grants no access without the owner cookie.
+1. Run pnpm install --frozen-lockfile and copy .env.example to gitignored .env if needed.
+2. Set DATABASE_URL to a direct development connection and DATABASE_URL_POOLED to its pooled equivalent. Both must belong to the same Neon endpoint/branch and database. The application prefers the pooled URL, falling back to DATABASE_URL.
+3. Review committed drizzle/ SQL, then run pnpm db:migrate against the isolated development database. Migrations use DATABASE_URL_UNPOOLED when supplied, otherwise DATABASE_URL. Request handlers and Vercel builds do not initialize tables automatically.
+4. Keep database variables in .env for both Next.js and the native migration loader. Next.js also loads .env.local with higher priority; avoid conflicting database overrides there.
 
-The driver is `pg` with Drizzle interactive transactions and Vercel pool lifecycle handling. All mutations lock the session row before replay lookup and run mutation, serializing writes for that owner across runs/tabs. `UNIQUE(owner_id, action_id)` covers creation and every mutation. State and original response commit together. Reads use no-store. Session credentials are 256-bit random tokens; only SHA-256 hashes are stored. Expiry is checked on reads and rechecked under the transaction lock. Advancing `expires_at` into the past revokes a session.
+Use matching ASCII quotes or no surrounding quotes in local env files. Typographic/mismatched quotes can become part of the URL. In Vercel's environment variable editor, paste the raw value without surrounding quotes. Restart local development after changes; redeploy the relevant Vercel environment after changing its variables.
+
+## Run and test native WebSockets
+
+Set APP_ORIGIN=http://localhost:3000 in gitignored .env.local, then run:
+
+~~~sh
+pnpm dev:ws
+~~~
+
+This runs Vercel CLI 54.14.2; login/project linking may be required on first use. Stop another Next.js development process in this project first. Open http://localhost:3000/en/game. For another public port, set APP_ORIGIN to that exact browser-facing origin.
+
+Vercel CLI can proxy to a different internal Next.js port. Pinning the public APP_ORIGIN prevents valid browser requests being rejected with 403; do not disable Origin checks or blindly trust forwarded headers. In browser DevTools, Network → WS should show a 101 upgrade at /api/game/socket?run=<UUID>, then ready, action and committed result frames.
+
+Plain pnpm dev runs Next.js directly and can use predicted, queued HTTP fallback. It does not exercise Vercel's native WebSocket upgrade. The same applies to a plain next start runtime. Secure cookies require HTTPS or the browser's localhost exception.
+
+## Environments and deployment
+
+Configure database variables and APP_ORIGIN separately for Vercel Preview and Production. Preview must use an isolated development database. APP_ORIGIN must exactly match the public origin when supplied; without it the handler compares against the request URL origin. Do not set a localhost origin in deployed environments. Never expose credentials through NEXT_PUBLIC_ variables.
+
+Vercel discovers the Next.js Route Handlers in this application; no additional Express service is needed. Native sockets use @vercel/functions and ws. The socket function has a 300-second duration setting, so reconnect is part of normal operation. A successful build does not verify database credentials, migration state or live WebSocket behavior.
+
+Development Neon migration and Preview HTTPS session/run flows were verified. Native WebSocket upgrade was verified locally. Production readiness and deployed WebSocket performance still require explicit checks; see [status](status.md).
+
+## Diagnostics
+
+| Symptom | Check |
+| --- | --- |
+| POST /api/players/session returns 403 | APP_ORIGIN must equal the browser origin, including scheme/port; check .env.local and the Vercel proxy port. |
+| Session/actions return 503 | Use the response requestId to find the structured game_api_failure log. Diagnostics expose allowlisted reason codes, never SQL or credentials. |
+| DATABASE_TABLE_MISSING | Apply committed migrations to the database actually selected by the application's pooled URL. |
+| DATABASE_TARGET_MISMATCH during migration | Direct and pooled URLs identify different endpoints/databases; copy both from the same Neon branch. |
+| DIRECT_DATABASE_URL_REQUIRED or invalid URL | Supply a valid direct PostgreSQL URL; migration connections must not use the pooled hostname. |
+| Waiting/retry screen or absent completion dialog | Resolve the failed action first: terminal dialogs require a confirmed server snapshot. Inspect HTTP responses/socket error frames. |
+| No 101 upgrade locally | Use pnpm dev:ws; plain Next.js uses HTTP fallback. |
+
+## Migrations and rollback
+
+Keep drizzle/ SQL, meta/_journal.json and snapshots in Git. SQL is reviewable schema history, the journal orders migrations, and snapshots support incremental generation. Run pnpm db:generate when the schema changes, review and commit the result, then explicitly migrate the intended environment. Do not regenerate/edit already-applied migrations. The migration runner uses Drizzle ORM with a direct connection, target validation, timeout and sanitized failures.
+
+On an application rollback, retain tables/data for recovery. Do not drop tables or import editable old browser saves. No automatic retention cleanup exists; preserve sessions, runs and action replays until a safe policy is implemented. Clearing/expiring the anonymous cookie loses access; a nickname cannot recover ownership.
 
 ## Verification
 
-`pnpm test`, `pnpm lint`, `pnpm build`.
+Run pnpm test, pnpm lint and pnpm build for relevant code changes. Explicitly set TEST_DATABASE_URL to a nonproduction test connection to enable PostgreSQL integration tests; it is not automatically taken from development credentials. Tests create a random schema, apply committed SQL there and drop only that schema afterward. Without the variable, the database suite is skipped, including in current default CI.
 
-Set `TEST_DATABASE_URL` to a disposable PostgreSQL database and run `pnpm test`. The integration suite creates a randomly named schema, applies the committed migration there, tests replay/concurrency/rollback and drops only that schema afterward. Without that variable it explicitly skips the database suite. Do not use Production credentials. Development uses the Neon connection from `.env`; Docker is not required. For integration tests, explicitly provide a separate test database via `TEST_DATABASE_URL`; do not automatically reuse the development database.
+The last implementation verification passed 113 tests with real PostgreSQL enabled, including WebSocket burst/replay, ownership, expiry, concurrent actions and rollback. The build passed. Full lint has pre-existing formatting/import errors; changed code passed focused Biome checks. Local burst timing is not a production latency guarantee.
 
-## Retention and rollback
-
-No automatic deletion is implemented. Retain sessions, runs and replay records together; do not prune records while a run/action can be resumed or retried. Finished and abandoned runs remain immutable. A future retention policy must preserve claimed leaderboard references and replay tombstones.
-
-Before switching an existing deployment, prepare an isolated Preview database, apply migrations and exercise session cookies, refresh, concurrent actions and late-game generation there. Roll back application deployment if necessary; retain the new tables and data for recovery. Never drop tables or import editable local saves to recover ranked scores. No Production migration or deployment is part of this task.
-
-## Outstanding release work
-
-- Leaderboard storage, eligibility, nickname claims and public ranking (#24/#25/#34/#46), including final ranking decision #51. No score claim endpoint is exposed yet.
-- Shared/distributed rate limits and measured operational budgets (#43/#28/#44). Strict schemas, a 2 KiB body cap, Origin checks and ownership exist, but these do not replace rate limits or stop valid-action bots.
-- Neon/Vercel Preview integration, cold starts, deployment and production monitoring. Local PostgreSQL verification does not establish deployment performance.
-- Pick replenishment balance, difficulty calibration and solver evidence (#47/#48/#50/#51). Ore is `floor((10 + 5*(chest-1))*max(4,10-invalidMoves)/10)` under `deterministic-ore-v1`; pick rewards retain existing probabilities. No unverified-optimum penalty is used.
-- Session expiry/cookie deletion loses anonymous ownership; it is not recoverable by nickname.
-
-## Verification record (2026-11-01)
-
-93 tests passed including real PostgreSQL 17 migration, session expiry, foreign access, concurrent writes, replay and rollback. `pnpm db:migrate` was exercised only against the disposable local test container. The production build passed, and a running production server passed HTTP smoke checks for Secure cookie bootstrap, create/replay, move, restore, stale-version rejection and abandonment. Neon/Vercel runtime behavior remains unverified. Full lint reports pre-existing formatting/import errors in unrelated UI scaffolding; changed-file Biome checks pass.
-
-## Committed migrations
-
-Keep `drizzle/` in Git, including SQL, `meta/_journal.json` and snapshots. SQL is the reviewable migration history; the journal tracks order, and snapshots let Drizzle generate incremental migrations. Generate and commit new migrations when the schema changes. Do not regenerate or edit already-applied migrations. `.env` stays ignored and must not be committed.
-
-## Development database update — 2026-11-01
-
-Development now uses the user-supplied `.env` connections, without Docker. A read-only connection check passed and the committed migration was applied successfully to that configured development database. `pnpm db:migrate` uses the Drizzle ORM migrator through `scripts/migrate.cjs`, with direct-URL validation, connection timeout and sanitized failure codes. This avoids the Drizzle Kit CLI exiting without a diagnostic in this environment. The generated SQL/journal remain the migration source of truth. No production deployment was performed.
-
-## Database target troubleshooting — 2026-11-01
-
-A direct URL and a pooled URL must point to the same Neon endpoint/branch and database. A verified incident had existing tables on the direct endpoint while the application’s pooled endpoint had no tables, so a successful migration did not initialize the application database. The migration runner now rejects this mismatch with `DATABASE_TARGET_MISMATCH`, including explicit `DATABASE_URL_UNPOOLED` overrides. Copy the direct and pooled connections from the same Neon branch; do not pair connections from different branches.
-
-Use either no surrounding quotes or matching ASCII quotes in `.env`. A mismatched opening ASCII quote and closing typographic quote (`”`) produces different parsing between native Node environment loading and Next.js, and can leave quote characters inside the connection string. Restart the development server after correcting connection variables because its database pool is cached. Secrets remain untracked.
-
-## Fast gameplay over WebSocket — 2026-11-01
-
-Gameplay uses the authenticated same-origin `/api/game/socket?run=<UUID>` endpoint on Vercel Functions with `@vercel/functions` 3.10.5 and `ws`. This no longer requires a separate WebSocket host: Vercel WebSockets are generally available as of 2026-10-20. HTTPS remains for bootstrap, run lifecycle, recovery and an explicit transport fallback when a local runtime cannot upgrade sockets.
-
-Start native WebSocket development with `pnpm dev:ws` (Vercel CLI 54.14.2). Stop any existing `next dev` process in this project first. For the default public local address, set `APP_ORIGIN=http://localhost:3000` in gitignored `.env.local`; Vercel CLI can proxy to a different internal Next.js port, so comparing against that internal URL alone rejects the browser origin with 403. Use the exact browser-facing origin if selecting another port. This pins CSRF checks to one allowed origin; do not disable Origin validation or blindly trust forwarded headers. Plain `pnpm dev` can still use predicted, queued HTTPS input, but native upgrade testing requires Vercel CLI. In DevTools Network → WS, expect status 101 and ready/action/result frames.
-
-Movement is predicted synchronously for rendering and queued in order rather than blocking the controls for every round trip. The public snapshot contains `moveRules` (movement mechanics required to predict rendering), but no seed, solver paths or verified optimum. Predicted pins/damage are temporary UI state; ore, lockpicks, rewards, terminal statuses and persistence remain server-confirmed. Server snapshots reconcile outstanding predictions. No gameplay is saved in browser storage.
-
-The server coalesces up to 32 queued moves in one PostgreSQL transaction, persists each accepted action and its original response, and updates the final run once. Every accepted input still consumes one version and updates metrics once. Exact retries retain the original action ID/version; reconnect replays unknown commits, while version conflicts discard queued predictions and refetch authoritative state. Heartbeats and reconnect handle function duration limits. Session expiry, origin, ownership, frame size, input queue limits and per-connection message limits are checked; distributed abuse limits remain separate work.
-
-Verification: a real authenticated WebSocket upgrade on localhost through Vercel CLI succeeded, including ready → action → committed result. A real WebSocket/PostgreSQL integration test committed a 20-move burst in 311 ms total and replayed all moves without incrementing version again. Client tests prove rapid inputs render before any acknowledgement. The latency number is a local measurement, not a production guarantee.
+Remaining release work includes ranking, distributed abuse limits, monitoring, cold-start/late-game budgets, pick balance and difficulty calibration. See [roadmap](roadmap.md).

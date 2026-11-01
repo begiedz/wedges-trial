@@ -7,7 +7,7 @@
 - Wedge's Trial is a **noncommercial** Gothic-inspired browser lockpicking puzzle with endless chest progression, ore-nugget score and a global leaderboard.
 - Use **pnpm, Next.js 16, React 19, TypeScript (strict), Radix/shadcn UI, Tailwind CSS, Biome and Vitest**. Follow existing patterns; avoid new infrastructure and dependencies without justification.
 - The **chosen target** is **Vercel (Next.js Route Handlers) + Neon PostgreSQL + Drizzle ORM**. Gameplay uses **Vercel-native WebSockets** with visual prediction and authoritative reconciliation; HTTPS remains for bootstrap, lifecycle and recovery. No standalone Express/Docker server is required.
-- The repository is in **migration**: gameplay now commits on the server in Neon; the client predicts visuals only, and gameplay browser persistence has been removed. **Never describe the target backend as already deployed.** See `docs/architecture/status.md`.
+- The repository is in **migration**: gameplay now commits on the server in Neon; the client predicts visuals only, and gameplay browser persistence has been removed. Distinguish implemented code, verified development/Preview behavior and production readiness; never infer deployment from a commit or build. See `docs/architecture/status.md`.
 - Consult the version-matched Next.js docs at `node_modules/next/dist/docs/` before modifying framework-specific code, and follow local documentation over assumptions.
 
 ## Gameplay invariants (preserve unless explicitly changed)
@@ -15,13 +15,13 @@
 - Primary mode: **endless**. Each chest has a randomly constructed, solvable lock; difficulty generally increases with progress.
 - Each pin has a bounded integer position and a target. Moving one pin may move other pins according to fixed per-lock dependency rules; both directions have inverse effects.
 - An **invalid move** would push at least one affected pin outside its legal range; it changes no pin positions.
-- A lockpick **breaks after exactly three invalid moves on that pick**. Breaking it does **not** reset the lock. A separate manual reset button restores pin positions; **reset must not restore spent picks, clear accumulated per-chest scoring penalties, or grant free durability**. Existing reset code currently has a bug that clears partial damage; fix with tests.
+- A lockpick **breaks after exactly three invalid moves on that pick**. Breaking it does **not** reset the lock. A separate manual reset button restores pin positions; **reset must not restore spent picks, clear accumulated per-chest scoring penalties, or grant free durability**. Preserve regression coverage for partial damage across reset and chest continuation.
 - Player resources: **lockpicks and ore nuggets only**. Ore is the score resource. Do not silently introduce XP, energy, lives or currencies.
 - Pure, deterministic *given inputs* domain functions belong in `src/game/`, independent of React, database, network and sound.
-- Randomness in **lock generation** remains. **Ore rewards must become deterministic** and reflect chest progression and player performance. The **exact formula**, bonus for efficiency, lockpick replenishment and ranked-vs-endless scoring remain **open balancing decisions**; see `docs/architecture/decisions.md` and GitHub Issues #47, #51.
+- Randomness in **lock generation** remains. **Ore rewards are deterministic** under approved deterministic-ore-v1: floor((10 + 5 * (chestNumber - 1)) * max(4, 10 - invalidMovesOnChest) / 10). Further efficiency tuning, lockpick replenishment and ranked-vs-endless scoring remain **open balancing decisions**; see `docs/architecture/decisions.md` and GitHub Issues #47, #51.
 - Do not claim a generated lock's shortest solution is proven if `solveLock()` returns `null` because its search budget was exhausted. Do not penalize players against an unverified optimum.
 
-## Trust boundary and persistence (target)
+## Trust boundary and persistence (implemented gameplay; ranking target)
 
 - **Server is authoritative** for game state, lock generation, moves, lockpick damage, resets, rewards, run status and leaderboard scores. The browser sends **intent/actions only** (`pinId`, direction, action ID, expected version), not trusted state or points.
 - Persist active runs and transitions in Neon. No `localStorage` / `sessionStorage` persistence of gameplay state, scores or secrets. Keep front-end state for rendering only; do not trust it on requests.

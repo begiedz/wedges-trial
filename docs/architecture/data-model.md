@@ -1,40 +1,25 @@
-> Implementation update (2026-11-01): `src/server/db/schema.ts` and versioned `drizzle/` migrations implement sessions, runs and run_actions. Full trusted game state, initial lock, counters and pending rewards are stored in a typed JSONB document. Leaderboard entries remain planned. No migration has been applied to Neon.
+# PostgreSQL data model
 
-# Proposed Neon / PostgreSQL data model
+The implemented schema is [src/server/db/schema.ts](../../src/server/db/schema.ts). Versioned SQL, journal and snapshots are committed under drizzle/. The configured development Neon database has been migrated; other environments require an explicit migration step. See [setup](server-setup.md).
 
-> This is a **schema proposal** for Drizzle migrations, not a statement that the tables already exist. Final column types and index definitions should be implemented and verified in #31.
+## Implemented tables
 
-## Tables
+| Table | Stored fields and constraints |
+| --- | --- |
+| sessions | UUID primary key, unique SHA-256 token_hash, expires_at and created_at. The raw 256-bit bearer token exists only in the cookie. |
+| runs | UUID primary key, owner_id foreign key to sessions, positive version, checked status, ruleset_version, typed game JSONB, created_at/updated_at. Partial unique index permits only one playing/chest_opened run per owner. Resource/chest bounds are checked. |
+| run_actions | Composite primary key (owner_id, action_id), run_id foreign key, request fingerprint, original response JSONB and HTTP status code. IDs are unique across creation and mutations for an owner. |
 
-### `sessions`
+The game document contains current RunState, initial lock, pending reward, opened-chest count, per-chest and run-total moves/invalidMoves/brokenPicks, and finishedAt. It does not currently store a verified optimal solution. Public DTOs omit the initial lock, internal owner/session fields and solver metadata; public movement rules support visual prediction.
 
-- Anonymous session ID, hashed random bearer token, expiry/revocation and timestamps. Session ownership is internal, not a public player profile. Secure HttpOnly cookie holds the bearer secret.
-- No required `players` or `display_name` row when a user opens the game. Internal anonymous owner IDs are allowed solely for ownership and idempotency.
+## Transactions and recovery
 
-### `runs`
+Mutations lock the owner session row, recheck expiry, authorize the run and check replay before version/status. Run changes and original responses commit together. Batched WebSocket moves preserve individual action records and versions within one transaction. Finished/abandoned gameplay is immutable; reading it does not resume an active run.
 
-- UUID, anonymous owner/session reference, status (`playing`, `chest_opened`, `finished`, `abandoned`), version.
-- Trusted chest, ore, pick, move/mistake counters, lock JSONB, verified solver metadata where available, ruleset version and timestamps.
-- At most one active run per anonymous owner; multiple completed runs allowed.
+No browser save is imported. No automatic cleanup is implemented. Keep sessions, runs and replay records while recovery/retries are possible. A future retention policy must preserve active ownership, replay safety and claimed ranking references.
 
-### `run_actions`
+## Planned ranking schema
 
-- Mutation replay records and unique (owner, action_id) across run creation and mutations; keep enough retention/tombstones for safe idempotency.
+There is no players or leaderboard_entries table today. Anonymous play requires no profile. The target leaderboard entry references one immutable finished run, with a validated nickname and claim timestamp; run_id must be unique. Names are neither unique identities nor authentication.
 
-### `leaderboard_entries`
-
-- One claimed entry per qualifying finished run: unique `run_id` FK, validated `nickname`, `claimed_at`. Score is read from immutable server-owned run data, never from a client request.
-- Names are presentation-only, need not be unique and cannot authenticate or recover sessions.
-
-## Invariants
-
-- Server computes score and verifies run ownership, finality, nickname and qualification at claim time.
-- Public TOP 100 contains only claimed finished runs. Rank individual runs, not one best run per player.
-- Fewer than 100 claimed entries: any valid finished run may qualify. Full ranking: the run must outrank the 100th under the agreed deterministic order (#51), rechecked atomically to avoid concurrency races.
-- One claim per run and idempotent retries. A preliminary eligible response does not reserve a place.
-- No browser storage for gameplay state; last nickname may optionally be cached for input convenience, not identity.
-- Periodically prune non-qualifying/abandoned old runs only after safe retention limits; do not prune active runs, claimed leaderboard references or still-replayable actions.
-
-## Data flow
-
-Never import unverified old local saves into competitive ranking. Drizzle schema and migrations are planned (#31), not implemented by this document.
+Qualification and claim must atomically recheck the current TOP 100 cutoff. Public results contain claimed runs only, rather than each owner's best score. Ranking order, cursor snapshot storage and retention require implementation decisions before their migrations are generated.
