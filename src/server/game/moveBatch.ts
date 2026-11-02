@@ -2,9 +2,18 @@ import { and, eq, inArray } from "drizzle-orm";
 import type { MoveRequest } from "@/api/contracts";
 import type { GameReply } from "@/api/realtime";
 import { getDatabase } from "@/server/db";
-import { runActions, runs, sessions } from "@/server/db/schema";
-import { publicRun, transition } from "./engine";
+import { runActions } from "@/server/db/schema";
+import { transition } from "./engine";
 import { GameError } from "./errors";
+import {
+  commandFingerprint,
+  lockOwner,
+  ownedRun,
+  type ReplayRecord,
+  replayResponse,
+  requireVersion,
+  writeRun,
+} from "./persistence";
 
 export type MoveCommit = { actionId: string } & (
   | { response: GameReply }
@@ -19,18 +28,8 @@ export async function executeMoveBatch(
   if (!commands.length || commands.length > 32)
     throw new GameError("INVALID_REQUEST", 400);
   return getDatabase().transaction(async (tx) => {
-    const [owner] = await tx
-      .select()
-      .from(sessions)
-      .where(eq(sessions.id, ownerId))
-      .for("update");
-    if (!owner || owner.expiresAt <= new Date())
-      throw new GameError("SESSION_REQUIRED", 401);
-    const [initial] = await tx
-      .select()
-      .from(runs)
-      .where(and(eq(runs.id, runId), eq(runs.ownerId, ownerId)));
-    if (!initial) throw new GameError("RUN_NOT_FOUND", 404);
+    await lockOwner(tx, ownerId);
+    const initial = await ownedRun(tx, ownerId, runId);
     const existing = await tx
       .select()
       .from(runActions)
@@ -43,28 +42,22 @@ export async function executeMoveBatch(
           ),
         ),
       );
-    const replays = new Map(existing.map((x) => [x.actionId, x]));
+    const replays = new Map<string, ReplayRecord>(
+      existing.map((x) => [x.actionId, x]),
+    );
     const inserts: (typeof runActions.$inferInsert)[] = [];
     const results: MoveCommit[] = [];
     let run = initial;
     for (const input of commands) {
-      const fingerprint = JSON.stringify([
-        "move",
-        runId,
-        input.expectedVersion,
-        input.pinId,
-        input.direction,
-      ]);
+      const fingerprint = commandFingerprint("move", runId, input);
       try {
         const replay = replays.get(input.actionId);
         if (replay) {
-          if (replay.fingerprint !== fingerprint)
-            throw new GameError("ACTION_ID_REUSED", 409);
+          replayResponse(replay, fingerprint);
           results.push({ actionId: input.actionId, response: replay.response });
           continue;
         }
-        if (input.expectedVersion !== run.version)
-          throw new GameError("VERSION_CONFLICT", 409, publicRun(run));
+        requireVersion(run, input.expectedVersion);
         const next = transition(run, "move", input);
         run = next.run;
         const record = {
@@ -84,15 +77,7 @@ export async function executeMoveBatch(
       }
     }
     if (inserts.length) {
-      await tx
-        .update(runs)
-        .set({
-          version: run.version,
-          status: run.status,
-          game: run.game,
-          updatedAt: run.updatedAt,
-        })
-        .where(eq(runs.id, run.id));
+      await writeRun(tx, run);
       await tx.insert(runActions).values(inserts);
     }
     return results;

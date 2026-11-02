@@ -1,5 +1,6 @@
 import { checkSolved } from "@/game/checkSolved";
 import type { Direction, LockState, MoveRule, RunState } from "@/game/types";
+import { evaluateRule } from "./movement";
 
 type LockMoveResult =
   | {
@@ -46,41 +47,9 @@ export function applyMoveToLock(
     };
   }
 
-  const nextPositions = new Map<number, number>();
-
-  for (const pin of lock.pins) {
-    nextPositions.set(pin.id, pin.position);
-  }
-
-  for (const effect of rule.effects) {
-    const currentPosition = nextPositions.get(effect.pinId);
-
-    if (currentPosition === undefined) {
-      return {
-        kind: "ignored",
-        lock,
-      };
-    }
-
-    nextPositions.set(effect.pinId, currentPosition + effect.delta);
-  }
-
-  const hasOutOfBoundsPin = lock.pins.some((pin) => {
-    const nextPosition = nextPositions.get(pin.id) ?? pin.position;
-    return nextPosition < pin.min || nextPosition > pin.max;
-  });
-
-  if (hasOutOfBoundsPin) {
-    return {
-      kind: "invalid",
-      lock,
-    };
-  }
-
-  const nextPins = lock.pins.map((pin) => ({
-    ...pin,
-    position: nextPositions.get(pin.id) ?? pin.position,
-  }));
+  const evaluated = evaluateRule(lock.pins, rule);
+  if (evaluated.kind !== "valid") return { kind: evaluated.kind, lock };
+  const nextPins = evaluated.pins;
   const solved = checkSolved({ pins: nextPins });
 
   return {
@@ -130,28 +99,33 @@ export function applyValidMoveToRun(run: RunState, lock: LockState): RunState {
   };
 }
 
-export function applyMove(
+export function evaluateMove(
   run: RunState,
   pinId: number,
   direction: Direction,
-): RunState {
+): { kind: LockMoveResult["kind"]; run: RunState } {
   if (
     run.currentLock.isSolved ||
     run.currentLock.isFailed ||
     run.lockpicks <= 0
   ) {
-    return run;
+    return { kind: "ignored", run };
   }
-
   const result = applyMoveToLock(run.currentLock, pinId, direction);
-
-  if (result.kind === "ignored") {
-    return run;
+  switch (result.kind) {
+    case "ignored":
+      return { kind: result.kind, run };
+    case "invalid":
+      return { kind: result.kind, run: applyInvalidMoveToRun(run) };
+    case "valid":
+      return { kind: result.kind, run: applyValidMoveToRun(run, result.lock) };
   }
+}
 
-  if (result.kind === "invalid") {
-    return applyInvalidMoveToRun(run);
-  }
-
-  return applyValidMoveToRun(run, result.lock);
+export function applyMove(
+  run: RunState,
+  pinId: number,
+  direction: Direction,
+): RunState {
+  return evaluateMove(run, pinId, direction).run;
 }

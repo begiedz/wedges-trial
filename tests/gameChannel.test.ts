@@ -188,3 +188,64 @@ describe("WebSocket gameplay and visual prediction", () => {
     expect(channel.view.run.currentLock.pins[0].position).toBe(0);
   });
 });
+
+describe("transport recovery boundaries", () => {
+  it("falls back to ordered HTTP when the initial upgrade fails", async () => {
+    const run = fixture();
+    const channel = new GameChannel(run, vi.fn(), vi.fn());
+    channels.push(channel);
+    channel.connect();
+    const socket = latestSocket();
+    channel.move(0, 1);
+    channel.move(0, -1);
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ run: { ...run, version: 2 } })),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ run: { ...run, version: 3 } })),
+      );
+    vi.stubGlobal("fetch", fetcher);
+    socket.close();
+    await vi.waitFor(() => expect(channel.pendingCount).toBe(0));
+    expect(
+      fetcher.mock.calls.map(
+        (call) => JSON.parse(call[1].body).expectedVersion,
+      ),
+    ).toEqual([1, 2]);
+    expect(channel.confirmed.version).toBe(3);
+  });
+  it("replays original commands after a transient socket error", () => {
+    const { channel, socket } = connected();
+    channel.move(0, 1);
+    const original = socket.sent[0];
+    socket.receive({
+      type: "error",
+      status: 503,
+      error: { code: "SERVICE_UNAVAILABLE", requestId: "request" },
+    });
+    const replacement = latestSocket();
+    replacement.receive({ type: "ready", run: fixture() });
+    expect(replacement.sent).toEqual([original]);
+  });
+  it("resolves lifecycle waiters when an old replay drains after a newer reconnect snapshot", async () => {
+    vi.useFakeTimers();
+    const { channel, socket } = connected();
+    channel.move(0, 1);
+    const command = JSON.parse(socket.sent[0]);
+    socket.close();
+    vi.advanceTimersByTime(250);
+    const replacement = latestSocket();
+    replacement.receive({ type: "ready", run: { ...fixture(), version: 4 } });
+    const idle = channel.idle();
+    replacement.receive({
+      type: "result",
+      actionId: command.body.actionId,
+      response: { run: { ...fixture(), version: 2 }, outcome: "moved" },
+    });
+    await idle;
+    expect(channel.pendingCount).toBe(0);
+    expect(channel.confirmed.version).toBe(4);
+  });
+});

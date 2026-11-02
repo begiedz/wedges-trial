@@ -10,7 +10,7 @@ Gameplay is implemented in one Next.js application on Vercel, using Neon Postgre
 | src/server/game/ | Validation, ownership, transitions, batching, transactions and safe diagnostics |
 | src/server/db/ | Drizzle schema, pg pool and Vercel pool lifecycle integration |
 | src/game/ | Pure puzzle rules, generation and reward calculations |
-| src/client/game/channel.ts | Ordered input, transient prediction and authoritative reconciliation |
+| src/client/game/ | HTTP validation, session orchestration, socket transport, ordered queue and pure prediction |
 | src/components/game/ | Controls, session hook and dialogs |
 
 ## Implemented endpoints
@@ -42,3 +42,5 @@ The client predicts pin movement and damage immediately. Resources, rewards, ter
 /api/leaderboard and the eligibility/name-claim endpoints are not implemented. The approved target is arcade TOP 100 of claimed finished runs, with ownership validation, one claim per run and an atomic cutoff recheck. Nicknames are presentation only. Final ordering remains a product decision under #51.
 
 For environments, migrations, local WebSocket testing and diagnostics, see [server setup](server-setup.md). Distributed rate limits, production monitoring and late-game compute budgets remain release work.
+
+For concrete dependency directions, state ownership, flows and replay-storage growth, see [module boundaries](module-boundaries.md).

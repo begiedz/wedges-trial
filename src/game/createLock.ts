@@ -5,10 +5,10 @@ import { solveLock } from "@/game/solver";
 import type {
   DifficultyConfig,
   LockState,
-  MoveRule,
   Pin,
   RandomSource,
 } from "@/game/types";
+import { evaluateRule } from "./movement";
 
 function clonePins(pins: Pin[]): Pin[] {
   return pins.map((pin) => ({ ...pin }));
@@ -22,33 +22,6 @@ function createSolvedPins(config: DifficultyConfig): Pin[] {
     target: config.targetPosition,
     position: config.targetPosition,
   }));
-}
-
-function tryApplyRule(pins: Pin[], rule: MoveRule): Pin[] | null {
-  const nextPositions = new Map(pins.map((pin) => [pin.id, pin.position]));
-
-  for (const effect of rule.effects) {
-    const currentPosition = nextPositions.get(effect.pinId);
-
-    if (currentPosition === undefined) {
-      return null;
-    }
-
-    nextPositions.set(effect.pinId, currentPosition + effect.delta);
-  }
-
-  const nextPins = pins.map((pin) => ({
-    ...pin,
-    position: nextPositions.get(pin.id) ?? pin.position,
-  }));
-
-  if (
-    nextPins.some((pin) => pin.position < pin.min || pin.position > pin.max)
-  ) {
-    return null;
-  }
-
-  return nextPins;
 }
 
 function createMixedLock(
@@ -65,7 +38,10 @@ function createMixedLock(
 
   for (let move = 0; move < mixingMoves; move += 1) {
     const candidates = rules
-      .map((rule) => tryApplyRule(mixedPins, rule))
+      .map((rule) => {
+        const result = evaluateRule(mixedPins, rule);
+        return result.kind === "valid" ? result.pins : null;
+      })
       .filter(
         (pins): pins is Pin[] =>
           pins !== null &&
@@ -137,7 +113,8 @@ export function createLock(
             rule.direction === move.direction,
         );
         if (rule) {
-          pins = tryApplyRule(pins, rule) ?? pins;
+          const result = evaluateRule(pins, rule);
+          if (result.kind === "valid") pins = result.pins;
         }
       }
       return { ...lock, pins };

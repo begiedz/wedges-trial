@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { getNextPinId } from "@/client/game/pinSelection";
 
 import { ActionButton } from "@/components/lock-debug/atoms/ActionButton";
 import { MetricCard } from "@/components/lock-debug/atoms/MetricCard";
@@ -21,21 +22,6 @@ const MAX_EVENT_LOG_ITEMS = 8;
 
 function pushEvent(log: string[], entry: string): string[] {
   return [entry, ...log].slice(0, MAX_EVENT_LOG_ITEMS);
-}
-
-function getNextSelectedPinId(
-  pins: LockState["pins"],
-  selectedPinId: number | null,
-  offset: number,
-): number | null {
-  if (pins.length === 0) {
-    return null;
-  }
-
-  const currentIndex = pins.findIndex((pin) => pin.id === selectedPinId);
-  const safeIndex = currentIndex >= 0 ? currentIndex : 0;
-  const nextIndex = (safeIndex + offset + pins.length) % pins.length;
-  return pins[nextIndex]?.id ?? null;
 }
 
 function formatRuleText(
@@ -280,11 +266,7 @@ export function TextLockTester() {
       }
 
       if (event.key === "w" || event.key === "ArrowUp") {
-        const nextPinId = getNextSelectedPinId(
-          run.currentLock.pins,
-          selectedPinId,
-          1,
-        );
+        const nextPinId = getNextPinId(run.currentLock.pins, selectedPinId, 1);
 
         if (nextPinId !== null) {
           event.preventDefault();
@@ -300,11 +282,7 @@ export function TextLockTester() {
       }
 
       if (event.key === "s" || event.key === "ArrowDown") {
-        const nextPinId = getNextSelectedPinId(
-          run.currentLock.pins,
-          selectedPinId,
-          -1,
-        );
+        const nextPinId = getNextPinId(run.currentLock.pins, selectedPinId, -1);
 
         if (nextPinId !== null) {
           event.preventDefault();

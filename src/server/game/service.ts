@@ -1,40 +1,20 @@
-import { createHash, randomBytes, randomUUID } from "node:crypto";
-import { and, desc, eq, gt, inArray } from "drizzle-orm";
-import type { Direction } from "@/game/types";
+import { randomUUID } from "node:crypto";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { getDatabase } from "@/server/db";
-import { runActions, runs, sessions } from "@/server/db/schema";
+import { runActions, runs } from "@/server/db/schema";
 import { type Action, newRun, publicRun, transition } from "./engine";
 import { GameError } from "./errors";
+import {
+  commandFingerprint,
+  lockOwner,
+  ownedRun,
+  replayResponse,
+  requireVersion,
+  writeRun,
+} from "./persistence";
+import type { Command } from "./types";
 
-export const SESSION_SECONDS = 60 * 60 * 24 * 30;
-export const tokenHash = (token: string) =>
-  createHash("sha256").update(token).digest("hex");
-export async function findSession(token: string | undefined) {
-  if (!token || !/^[a-f0-9]{64}$/.test(token)) return null;
-  const [session] = await getDatabase()
-    .select()
-    .from(sessions)
-    .where(
-      and(
-        eq(sessions.tokenHash, tokenHash(token)),
-        gt(sessions.expiresAt, new Date()),
-      ),
-    );
-  return session ?? null;
-}
-export async function bootstrap(token: string | undefined) {
-  const existing = await findSession(token);
-  if (existing) return { token: null };
-  const nextToken = randomBytes(32).toString("hex");
-  await getDatabase()
-    .insert(sessions)
-    .values({
-      id: randomUUID(),
-      tokenHash: tokenHash(nextToken),
-      expiresAt: new Date(Date.now() + SESSION_SECONDS * 1000),
-    });
-  return { token: nextToken };
-}
+export { bootstrap, findSession, SESSION_SECONDS, tokenHash } from "./session";
 export async function readRun(ownerId: string, id?: string) {
   const db = getDatabase();
   if (id) {
@@ -58,12 +38,7 @@ export async function readRun(ownerId: string, id?: string) {
     .limit(1);
   return active ? publicRun(active) : null;
 }
-export type Command = {
-  actionId: string;
-  expectedVersion?: number;
-  pinId?: number;
-  direction?: Direction;
-};
+export type { Command } from "./types";
 export async function execute(
   ownerId: string,
   action: Action | "create",
@@ -72,27 +47,9 @@ export async function execute(
 ) {
   // Serialize per owner, including creation and action IDs reused across different runs.
   return getDatabase().transaction(async (tx) => {
-    const [owner] = await tx
-      .select()
-      .from(sessions)
-      .where(eq(sessions.id, ownerId))
-      .for("update");
-    if (!owner || owner.expiresAt <= new Date())
-      throw new GameError("SESSION_REQUIRED", 401);
-    const [owned] = id
-      ? await tx
-          .select()
-          .from(runs)
-          .where(and(eq(runs.id, id), eq(runs.ownerId, ownerId)))
-      : [];
-    if (id && !owned) throw new GameError("RUN_NOT_FOUND", 404);
-    const fingerprint = JSON.stringify([
-      action,
-      id ?? null,
-      input.expectedVersion ?? null,
-      input.pinId ?? null,
-      input.direction ?? null,
-    ]);
+    await lockOwner(tx, ownerId);
+    const owned = id ? await ownedRun(tx, ownerId, id) : undefined;
+    const fingerprint = commandFingerprint(action, id, input);
     const [replay] = await tx
       .select()
       .from(runActions)
@@ -102,11 +59,7 @@ export async function execute(
           eq(runActions.actionId, input.actionId),
         ),
       );
-    if (replay) {
-      if (replay.fingerprint !== fingerprint)
-        throw new GameError("ACTION_ID_REUSED", 409);
-      return { body: replay.response, status: replay.statusCode };
-    }
+    if (replay) return replayResponse(replay, fingerprint);
     let response: typeof runActions.$inferInsert.response;
     let runId: string;
     if (action === "create") {
@@ -128,18 +81,9 @@ export async function execute(
       response = { run: publicRun(run), outcome: "run_started" };
     } else {
       if (!owned) throw new GameError("RUN_NOT_FOUND", 404);
-      if (input.expectedVersion !== owned.version)
-        throw new GameError("VERSION_CONFLICT", 409, publicRun(owned));
+      requireVersion(owned, input.expectedVersion);
       const next = transition(owned, action, input);
-      await tx
-        .update(runs)
-        .set({
-          version: next.run.version,
-          status: next.run.status,
-          game: next.run.game,
-          updatedAt: next.run.updatedAt,
-        })
-        .where(eq(runs.id, owned.id));
+      await writeRun(tx, next.run);
       runId = owned.id;
       response = next.response;
     }

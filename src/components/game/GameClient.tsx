@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { RunDto } from "@/api/contracts";
 import LockPickIcon from "@/assets/images/icons/items/T_ItemIcon_ItKe_Lockpick.png";
 import OreNuggetIcon from "@/assets/images/icons/items/T_ItemIcon_ItMi_Orenugget.png";
 import Separator from "@/assets/images/T_TitleLine_Small.png";
-import { START_NEW_RUN_EVENT } from "@/components/game/events";
+import { getNextPinId } from "@/client/game/pinSelection";
+import { onNewRunRequested } from "@/components/game/events";
 import Card from "@/components/general/atoms/card";
 import Difficulty from "@/components/general/molecules/difficulty";
 import ItemFrame from "@/components/general/molecules/item-frame";
@@ -17,27 +17,8 @@ import { ChestRewardDialog } from "./ChestRewardDialog";
 import { DialogAction } from "./GameDialog";
 import { RestartRunDialog } from "./RestartRunDialog";
 import { RunFailedDialog } from "./RunFailedDialog";
+import { useGameKeyboard } from "./useGameKeyboard";
 import { useGameSession } from "./useGameSession";
-
-function getNextPinId(
-  run: RunDto,
-  selectedPinId: number | null,
-  offset: number,
-): number | null {
-  if (run.currentLock.pins.length === 0) {
-    return null;
-  }
-
-  const currentIndex = run.currentLock.pins.findIndex(
-    (pin) => pin.id === selectedPinId,
-  );
-  const safeIndex = currentIndex >= 0 ? currentIndex : 0;
-  const nextIndex =
-    (safeIndex + offset + run.currentLock.pins.length) %
-    run.currentLock.pins.length;
-
-  return run.currentLock.pins[nextIndex]?.id ?? null;
-}
 
 export function GameClient() {
   const t = useGameDictionary();
@@ -114,7 +95,9 @@ export function GameClient() {
       return;
     }
 
-    setSelectedPinId((currentPinId) => getNextPinId(run, currentPinId, -1));
+    setSelectedPinId((currentPinId) =>
+      getNextPinId(run.currentLock.pins, currentPinId, -1),
+    );
   }, [run, interactionBlocked]);
 
   const selectNextPin = useCallback(() => {
@@ -122,7 +105,9 @@ export function GameClient() {
       return;
     }
 
-    setSelectedPinId((currentPinId) => getNextPinId(run, currentPinId, 1));
+    setSelectedPinId((currentPinId) =>
+      getNextPinId(run.currentLock.pins, currentPinId, 1),
+    );
   }, [run, interactionBlocked]);
 
   const resetLock = useCallback(() => {
@@ -131,96 +116,19 @@ export function GameClient() {
     setInvalidMove({ pinId: -1, sequence: 0 });
   }, [interactionBlocked, resetSessionLock]);
 
-  useEffect(() => {
-    const handleStartNewRun = () => {
-      requestNewRun();
-    };
+  useEffect(() => onNewRunRequested(requestNewRun), [requestNewRun]);
 
-    window.addEventListener(START_NEW_RUN_EVENT, handleStartNewRun);
-
-    return () => {
-      window.removeEventListener(START_NEW_RUN_EVENT, handleStartNewRun);
-    };
-  }, [requestNewRun]);
-
-  useEffect(() => {
-    if (!run) {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.defaultPrevented ||
-        event.ctrlKey ||
-        event.metaKey ||
-        event.altKey ||
-        rewardOpen ||
-        restartOpen ||
-        run.status === "finished"
-      )
-        return;
-      const target = event.target;
-      if (
-        target instanceof HTMLElement &&
-        target.closest(
-          "input, textarea, select, [contenteditable=true], [role=dialog]",
-        )
-      )
-        return;
-      const key = event.key.toLowerCase();
-
-      if (key === "a" || key === "arrowleft") {
-        event.preventDefault();
-        moveLeft();
-        return;
-      }
-
-      if (key === "d" || key === "arrowright") {
-        event.preventDefault();
-        moveRight();
-        return;
-      }
-
-      if (key === "w" || key === "arrowup") {
-        event.preventDefault();
-        selectPreviousPin();
-        return;
-      }
-
-      if (key === "s" || key === "arrowdown") {
-        event.preventDefault();
-        selectNextPin();
-        return;
-      }
-
-      if (key === "r") {
-        event.preventDefault();
-        resetLock();
-      }
-
-      if (key === "n") {
-        event.preventDefault();
-        if (reward) setRewardOpen(true);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [
-    reward,
-    rewardOpen,
-    restartOpen,
-    setRewardOpen,
+  useGameKeyboard({
+    enabled: !!run && !rewardOpen && !restartOpen && run.status !== "finished",
     moveLeft,
     moveRight,
-    resetLock,
-    run,
-    selectNextPin,
     selectPreviousPin,
-  ]);
+    selectNextPin,
+    resetLock,
+    showReward: () => {
+      if (reward) setRewardOpen(true);
+    },
+  });
 
   if (!run) {
     return (

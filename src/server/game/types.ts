@@ -1,5 +1,5 @@
 import type { RunStatus } from "@/api/contracts";
-import type { ChestReward, LockState, RunState } from "@/game/types";
+import type { ChestReward, Direction, LockState, RunState } from "@/game/types";
 
 export type Metrics = {
   moves: number;
@@ -30,3 +30,10 @@ export const emptyMetrics = (): Metrics => ({
   invalidMoves: 0,
   brokenPicks: 0,
 });
+
+export type Command = {
+  actionId: string;
+  expectedVersion?: number;
+  pinId?: number;
+  direction?: Direction;
+};

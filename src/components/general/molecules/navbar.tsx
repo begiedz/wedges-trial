@@ -4,7 +4,7 @@ import { ChevronDown, Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
-import { START_NEW_RUN_EVENT } from "@/components/game/events";
+import { requestNewRun } from "@/components/game/events";
 import Button from "@/components/general/atoms/button";
 import {
   DropdownMenu,
@@ -74,7 +74,7 @@ export function Navbar() {
   const isGamePage = pathname === `/${locale}/game`;
 
   const handleStartNewRun = React.useCallback(() => {
-    window.dispatchEvent(new Event(START_NEW_RUN_EVENT));
+    requestNewRun();
     setOpen(false);
   }, []);
 

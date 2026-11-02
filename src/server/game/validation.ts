@@ -1,6 +1,6 @@
 import type { Action } from "./engine";
 import { GameError } from "./errors";
-import type { Command } from "./service";
+import type { Command } from "./types";
 export const isUuid = (value: unknown): value is string =>
   typeof value === "string" &&
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(

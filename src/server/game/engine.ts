@@ -1,5 +1,6 @@
-import type { RunDto } from "@/api/contracts";
-import { applyMove, applyMoveToLock } from "@/game/applyMove";
+import type { PublicLockDto, RunDto } from "@/api/contracts";
+import { evaluateMove } from "@/game/applyMove";
+import { MAX_INVALID_MOVES_PER_PICK } from "@/game/constants";
 import { createLock } from "@/game/createLock";
 import { createRun } from "@/game/createRun";
 import {
@@ -52,12 +53,12 @@ export function publicRun(run: StoredRun): RunDto {
     currentLock: {
       pins: state.currentLock.pins.map((pin) => ({ ...pin })),
       invalidMovesOnCurrentPick: state.currentLock.invalidMovesOnCurrentPick,
-      maxInvalidMovesPerPick: 3 as const,
+      maxInvalidMovesPerPick: MAX_INVALID_MOVES_PER_PICK,
       moveRules: state.currentLock.rules.map((rule) => ({
         ...rule,
         effects: rule.effects.map((effect) => ({ ...effect })),
       })),
-    },
+    } satisfies PublicLockDto,
     createdAt: run.createdAt.toISOString(),
     updatedAt: run.updatedAt.toISOString(),
   };
@@ -82,6 +83,67 @@ export function publicRun(run: StoredRun): RunDto {
       return { ...base, status: run.status, reward: null, result: null };
   }
 }
+function abandonRun(run: StoredRun) {
+  const game = run.game;
+  run.status = "abandoned";
+  game.reward = null;
+}
+function continueRun(run: StoredRun) {
+  const game = run.game;
+  if (!game.reward) throw new Error("Missing reward");
+  const claimedReward = game.reward;
+  const nextIndex = game.state.chestIndex + 1;
+  const lock = createLock(getDifficultyForChest(nextIndex - 1));
+  lock.invalidMovesOnCurrentPick =
+    game.state.currentLock.invalidMovesOnCurrentPick;
+  game.state = {
+    chestIndex: nextIndex,
+    oreNuggets: game.state.oreNuggets + claimedReward.oreNuggets,
+    lockpicks: game.state.lockpicks + claimedReward.lockpicks,
+    currentLock: lock,
+  };
+  game.initialLock = cloneLockState(lock);
+  game.chestMetrics = emptyMetrics();
+  game.reward = null;
+  run.status = "playing";
+}
+function moveRun(
+  run: StoredRun,
+  input: { pinId?: number; direction?: Direction },
+  now: Date,
+) {
+  const game = run.game;
+  const { pinId, direction } = input;
+  if (
+    pinId === undefined ||
+    direction === undefined ||
+    !game.state.currentLock.pins.some((pin) => pin.id === pinId)
+  )
+    throw new GameError("INVALID_PIN", 400);
+  const result = evaluateMove(game.state, pinId, direction);
+  if (result.kind === "ignored") throw new GameError("INVALID_PIN", 400);
+  const before = game.state;
+  game.state = result.run;
+  for (const metrics of [game.chestMetrics, game.totalMetrics]) {
+    metrics.moves++;
+    if (result.kind === "invalid") metrics.invalidMoves++;
+    if (game.state.lockpicks < before.lockpicks) metrics.brokenPicks++;
+  }
+  if (game.state.currentLock.isFailed) {
+    run.status = "finished";
+    game.finishedAt = now.toISOString();
+  } else if (game.state.currentLock.isSolved) {
+    run.status = "chest_opened";
+    game.openedChests++;
+    game.reward = {
+      ...getChestReward(game.state.chestIndex),
+      oreNuggets: getDeterministicOre(
+        game.state.chestIndex,
+        game.chestMetrics.invalidMoves,
+      ),
+    };
+  }
+}
 export type Action = "move" | "reset" | "continue" | "abandon";
 export function transition(
   previous: StoredRun,
@@ -93,84 +155,28 @@ export function transition(
   const game = run.game;
   const conflict = () =>
     new GameError("INVALID_RUN_STATUS", 409, publicRun(previous));
-  if (action === "abandon") {
-    if (run.status !== "playing" && run.status !== "chest_opened")
-      throw conflict();
-    run.status = "abandoned";
-    game.reward = null;
-  } else if (action === "continue") {
-    if (run.status !== "chest_opened" || !game.reward) throw conflict();
-    const claimedReward = game.reward;
-    const nextIndex = game.state.chestIndex + 1;
-    const lock = createLock(getDifficultyForChest(nextIndex - 1));
-    lock.invalidMovesOnCurrentPick =
-      game.state.currentLock.invalidMovesOnCurrentPick;
-    game.state = {
-      chestIndex: nextIndex,
-      oreNuggets: game.state.oreNuggets + claimedReward.oreNuggets,
-      lockpicks: game.state.lockpicks + claimedReward.lockpicks,
-      currentLock: lock,
-    };
-    game.initialLock = cloneLockState(lock);
-    game.chestMetrics = emptyMetrics();
-    game.reward = null;
-    run.status = "playing";
-  } else {
-    if (run.status !== "playing") throw conflict();
-    if (action === "reset")
+  switch (action) {
+    case "abandon":
+      if (run.status !== "playing" && run.status !== "chest_opened")
+        throw conflict();
+      abandonRun(run);
+      break;
+    case "continue":
+      if (run.status !== "chest_opened" || !game.reward) throw conflict();
+      continueRun(run);
+      break;
+    case "reset":
+      if (run.status !== "playing") throw conflict();
       game.state = resetCurrentLock(game.state, game.initialLock);
-    else {
-      const { pinId, direction } = input;
-      if (
-        pinId === undefined ||
-        direction === undefined ||
-        !game.state.currentLock.pins.some((pin) => pin.id === pinId)
-      )
-        throw new GameError("INVALID_PIN", 400);
-      const result = applyMoveToLock(game.state.currentLock, pinId, direction);
-      if (result.kind === "ignored") throw new GameError("INVALID_PIN", 400);
-      const before = game.state;
-      game.state = applyMove(before, pinId, direction);
-      for (const metrics of [game.chestMetrics, game.totalMetrics]) {
-        metrics.moves++;
-        if (result.kind === "invalid") metrics.invalidMoves++;
-        if (game.state.lockpicks < before.lockpicks) metrics.brokenPicks++;
-      }
-      if (game.state.currentLock.isFailed) {
-        run.status = "finished";
-        game.finishedAt = now.toISOString();
-      } else if (game.state.currentLock.isSolved) {
-        run.status = "chest_opened";
-        game.openedChests++;
-        game.reward = {
-          ...getChestReward(game.state.chestIndex),
-          oreNuggets: getDeterministicOre(
-            game.state.chestIndex,
-            game.chestMetrics.invalidMoves,
-          ),
-        };
-      }
-    }
+      break;
+    case "move":
+      if (run.status !== "playing") throw conflict();
+      moveRun(run, input, now);
+      break;
   }
   run.version++;
   run.updatedAt = now;
-  const outcome =
-    action === "move"
-      ? run.status === "finished"
-        ? "run_finished"
-        : run.status === "chest_opened"
-          ? "chest_opened"
-          : game.state.lockpicks < previous.game.state.lockpicks
-            ? "pick_broken"
-            : game.chestMetrics.invalidMoves >
-                previous.game.chestMetrics.invalidMoves
-              ? "invalid_move"
-              : "moved"
-      : action === "reset"
-        ? "lock_reset"
-        : action === "continue"
-          ? "chest_continued"
-          : "run_abandoned";
+  const outcome = actionOutcome(action, run, previous);
   return {
     run,
     response: {
@@ -181,4 +187,26 @@ export function transition(
         : {}),
     },
   };
+}
+
+function actionOutcome(action: Action, run: StoredRun, previous: StoredRun) {
+  const game = run.game;
+  switch (action) {
+    case "reset":
+      return "lock_reset";
+    case "continue":
+      return "chest_continued";
+    case "abandon":
+      return "run_abandoned";
+    case "move":
+      if (run.status === "finished") return "run_finished";
+      if (run.status === "chest_opened") return "chest_opened";
+      if (game.state.lockpicks < previous.game.state.lockpicks)
+        return "pick_broken";
+      if (
+        game.chestMetrics.invalidMoves > previous.game.chestMetrics.invalidMoves
+      )
+        return "invalid_move";
+      return "moved";
+  }
 }

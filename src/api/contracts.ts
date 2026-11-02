@@ -1,4 +1,5 @@
 /** Gameplay wire contract. Leaderboard endpoints remain planned. */
+import type { MAX_INVALID_MOVES_PER_PICK } from "@/game/constants";
 import type {
   ChestReward,
   Direction,
@@ -26,7 +27,7 @@ export type MoveRequest = RunActionRequest & {
 export type PublicLockDto = {
   pins: Pin[];
   invalidMovesOnCurrentPick: number;
-  maxInvalidMovesPerPick: 3;
+  maxInvalidMovesPerPick: typeof MAX_INVALID_MOVES_PER_PICK;
   /** Public movement mechanics for visual prediction; never a solver solution. */
   moveRules?: MoveRule[];
 };
