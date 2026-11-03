@@ -5,12 +5,12 @@ Gameplay has migrated from browser-owned state to server-authoritative PostgreSQ
 | Area | Implemented | Remaining |
 | --- | --- | --- |
 | Gameplay | Server generation, moves, reset, rewards, continue, abandon and finalization | Difficulty calibration and late-game performance measurements |
-| Persistence | Neon/PostgreSQL, Drizzle migrations, atomic versioned actions and replay records | Safe retention policy and operational monitoring |
+| Persistence | Neon/PostgreSQL, Drizzle migrations, atomic versioned actions and replay records | Scheduling/monitoring of conservative manual retention |
 | Identity | Anonymous hashed-token sessions; Secure, HttpOnly, SameSite=Strict cookie | Leaderboard eligibility and nickname claims |
 | Transport | Vercel-native WebSocket, ordered inputs, immediate visual prediction and reconciliation; HTTP recovery/fallback | Deployed WebSocket performance and reconnect verification |
 | Client | React adapter over a framework-independent session controller; no gameplay localStorage/sessionStorage | Ranking UI |
 | Balance | Approved deterministic ore; reset and continuation preserve pick damage; endless ore ranking approved under #51 | Pick replenishment calibration and release abuse controls |
-| Ranking | Finished runs and metrics persisted; pure ordering and snapshot qualification policy tested under #51 | Leaderboard storage, TOP 100 reads, atomic qualification and one claim per run |
+| Ranking | Finished runs and metrics persisted; pure ordering and snapshot qualification policy tested under #51 | Public endpoints, atomic qualification and claim orchestration (schema/internal reads now implemented under #31) |
 | Audio/assets | Existing visual assets | Provenance audit; optional music/SFX controls |
 
 ## Verification boundaries
@@ -43,3 +43,9 @@ Local refactor verification on 2026-11-02: 131 tests passed; seven opt-in Postgr
 The task author approved endless ore ranking. Pure policy now projects server-finished results, orders ore/chests/finish time/UUID and evaluates dynamic TOP 100 snapshot eligibility within deterministic-ore-v1. The [ranking contract](competitive-ranking.md) documents sustain/automation risks, version boundaries and handoff requirements for #24/#34/#46/#47. Claim persistence, atomic rechecks, public endpoints and nickname UI remain unimplemented; no GitHub issue changes, migration or deployment were performed.
 
 Local verification: 145 tests passed; seven opt-in PostgreSQL tests skipped because TEST_DATABASE_URL was unset. Type checking, lint and production build passed; lint retains the existing custom-cursor `!important` warning. The sandboxed build stalled and was stopped; the build passed outside the sandbox. No live database or browser end-to-end verification was performed for this policy-only change.
+
+## Persistence schema (#31) — 2026-11-03
+
+Added claim storage, one-claim/FK/name constraints, immutable terminal results, generated score projections and ranking indexes, bounded internal TOP 100 reads, session revocation checks, replay timestamps and conservative manual cleanup. Fresh migrations and upgrades of existing finished documents are exercised in disposable PostgreSQL; cleanup tests cover concurrent maintenance, live recovery, replay grace periods, active runs, durable claims and transaction rollback. Public claim/read endpoints and atomic cutoff orchestration remain #24/#46 work. No Neon or production migration, cleanup or deployment was performed.
+
+Local #31 verification: 159 tests passed with all 14 PostgreSQL integration tests enabled, including legacy migration backfill. Fresh migration and immediate journal rerun succeeded; schema generation reports no drift. Type checking, lint and production build passed (existing cursor `!important` lint warning). PostgreSQL tests and build required execution outside the sandbox. See [acceptance evidence](data-model.md#issue-31-acceptance-evidence--2026-11-03).

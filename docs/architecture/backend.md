@@ -39,7 +39,7 @@ The client predicts pin movement and damage immediately. Resources, rewards, ter
 
 ## Planned ranking
 
-/api/leaderboard and the eligibility/name-claim endpoints are not implemented. The approved target is arcade TOP 100 of claimed finished runs, with ownership validation, one claim per run and an atomic cutoff recheck. Nicknames are presentation only. Ordering and snapshot qualification are implemented as pure policy under #51; see [competitive ranking](competitive-ranking.md). Persistence, authenticated claims and public reads remain planned.
+/api/leaderboard and the eligibility/name-claim endpoints are not implemented. The approved target is arcade TOP 100 of claimed finished runs, with ownership validation, one claim per run and an atomic cutoff recheck. Nicknames are presentation only. Ordering and snapshot qualification are implemented as pure policy under #51; see [competitive ranking](competitive-ranking.md). Claim storage and a bounded internal TOP 100 read are implemented under #31; authenticated atomic claims and public reads remain planned.
 
 For environments, migrations, local WebSocket testing and diagnostics, see [server setup](server-setup.md). Distributed rate limits, production monitoring and late-game compute budgets remain release work.
 

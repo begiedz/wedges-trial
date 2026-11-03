@@ -6,20 +6,47 @@ The implemented schema is [src/server/db/schema.ts](../../src/server/db/schema.t
 
 | Table | Stored fields and constraints |
 | --- | --- |
-| sessions | UUID primary key, unique SHA-256 token_hash, expires_at and created_at. The raw 256-bit bearer token exists only in the cookie. |
-| runs | UUID primary key, owner_id foreign key to sessions, positive version, checked status, ruleset_version, typed game JSONB, created_at/updated_at. Partial unique index permits only one playing/chest_opened run per owner. Resource/chest bounds are checked. |
-| run_actions | Composite primary key (owner_id, action_id), run_id foreign key, request fingerprint, original response JSONB and HTTP status code. IDs are unique across creation and mutations for an owner. |
+| sessions | UUID primary key, unique SHA-256 token_hash, expires_at, nullable revoked_at and created_at. The raw 256-bit bearer token exists only in the cookie. |
+| runs | UUID primary key, owner_id foreign key to sessions, positive version, checked status, ruleset_version, typed game JSONB, created_at/updated_at. Partial unique index permits only one playing/chest_opened run per owner. Resource/chest bounds, metric presence/nonnegativity and lock objects are checked. Generated ore_nuggets/opened_chests columns and trigger-maintained finished_at support the per-ruleset ranking index. Terminal rows reject updates. |
+| run_actions | Composite primary key (owner_id, action_id), run_id foreign key, request fingerprint, original response JSONB, checked successful HTTP status code and created_at. A composite FK ensures the action owner owns its run. IDs are unique across creation and mutations for an owner. |
 
 The game document contains current RunState, initial lock, pending reward, opened-chest count, per-chest and run-total moves/invalidMoves/brokenPicks, and finishedAt. It does not currently store a verified optimal solution. Public DTOs omit the initial lock, internal owner/session fields and solver metadata; public movement rules support visual prediction.
+
+| leaderboard_entries | run_id primary key/FK, nickname and claimed_at. Claims require a finished run and reject updates/deletes. Nicknames are trimmed, 1–24 PostgreSQL characters, without control characters; duplicate names and multiple finished runs per owner are allowed. |
 
 ## Transactions and recovery
 
 Mutations lock the owner session row, recheck expiry, authorize the run and check replay before version/status. Run changes and original responses commit together. Batched WebSocket moves preserve individual action records and versions within one transaction. Finished/abandoned gameplay is immutable; reading it does not resume an active run.
 
-No browser save is imported. No automatic cleanup is implemented. Keep sessions, runs and replay records while recovery/retries are possible. A future retention policy must preserve active ownership, replay safety and claimed ranking references.
+No browser save is imported. No automatic cleanup is scheduled. The manual `cleanupExpiredRuns()` transaction is described below. Expiry and revocation are checked again under the mutation owner lock.
 
-## Planned ranking schema
+## Ranking storage and reads (#31)
 
-There is no players or leaderboard_entries table today. Anonymous play requires no profile. The target leaderboard entry references one immutable finished run, with a validated nickname and claim timestamp; run_id must be unique. Names are neither unique identities nor authentication.
+`leaderboard_entries` contains labels only. `readTopRuns()` joins claims to immutable finished runs, filters deterministic-ore-v1, orders ore DESC, opened chests DESC, finished_at ASC, UUID ASC and limits to 100. Displaced claims remain durable. Generated numeric columns derive exclusively from game JSONB; the run trigger derives the indexed timestamp from game.finishedAt. No caller-supplied score is stored in a claim.
 
-Qualification and claim must atomically recheck the current TOP 100 cutoff. Public results contain claimed runs only, rather than each owner's best score. Ranking order is approved under #51: ore DESC, opened chests DESC, finished_at ASC, run UUID ASC, within one ruleset. Retain displaced claims with a unique run_id and query only the first 100; cursor snapshot storage and safe retention still require implementation decisions. See [competitive ranking](competitive-ranking.md).
+This is internal storage/read infrastructure, not a public endpoint or claim service. Ownership, Origin, nickname normalization, action replay and the atomic cutoff recheck must be implemented together in #24/#46 before exposing insertion. Database constraints enforce finished status and one claim per run, but do not independently enforce TOP 100 qualification. See [competitive ranking](competitive-ranking.md).
+
+## Conservative retention policy (#31)
+
+`src/server/db/retention.ts` exports manual maintenance; requests and builds never call it. All replay IDs and runs remain while their session is live, so a forgotten action ID cannot be reused. Eligible submission is preserved for the entire live owning session; cleanup adds no earlier claim deadline. Expired/revoked credentials cannot submit or retry.
+
+After ownership access ends, an unclaimed finished/abandoned run may be removed only when updated_at and every action's created_at are older than 30 days. Active runs are always retained, even under expired owners. Claimed runs, displaced claims and their owner records survive indefinitely. Sessions are removed only when expired/revoked and no run or action references them. Existing replay rows receive migration-time created_at, granting a full grace period rather than guessing their age.
+
+Maintenance locks up to 100 expired/revoked owners with FOR UPDATE SKIP LOCKED, matching gameplay's first lock, and removes at most 100 runs per selected owner. Actions and terminal runs are deleted in the same transaction; failure rolls both back. There is no automatic replay pruning, scheduler, active-run expiry or production cleanup authorization. Owner selection skips records with only protected runs so they cannot starve eligible cleanup work. Operators should monitor backlog before scheduling this helper at scale.
+
+## Migration and rollback
+
+Apply committed migrations in order using `pnpm db:migrate` against an explicitly selected nonproduction direct connection first. Migration 0001 backfills finished timestamps and introduces checks, indexes, revocation, claims and custom PL/pgSQL triggers; keep those custom SQL statements when generating later migrations. An invalid legacy document aborts migration rather than silently changing score. The original 0000 migration is unchanged.
+
+Rollback the application while retaining the additive schema and data. Do not drop claims, generated projections or replay timestamps as part of an application rollback. A schema rollback requires stopping writes and reviewing a separate data-preserving migration. No production migration or deployment is implied by local tests.
+
+## Issue #31 acceptance evidence — 2026-11-03
+
+| Criterion | Status | Evidence |
+| --- | --- | --- |
+| Reproducible migrations, checked constraints, no name before play | PASS | Fresh `pnpm db:migrate` and immediate rerun succeeded in disposable PostgreSQL 17. Integration tests upgrade a legacy finished run and reject missing/negative metrics/resources, duplicate active runs, invalid claim names and foreign-owner action references. Anonymous bootstrap/create tests require no nickname. `pnpm db:generate` reports no schema drift. |
+| Multiple finished runs for one anonymous session | PASS | PostgreSQL test inserts and claims two finished runs for the same owner with the same nickname. |
+| One claim per run; retention/replay and safe cleanup | PASS | Concurrent duplicate inserts commit once; terminal updates and claim deletion fail. Cleanup tests retain live recovery, recent replay records, active/recent runs and durable claims, serialize concurrent maintenance and roll back replay deletion on failure. Existing creation/move replay, ownership, conflict, refresh and rollback tests still pass. |
+| No gameplay browser storage | PASS | Existing session controller/prediction tests pass; source search for `localStorage` / `sessionStorage` returns no matches in src. No client persistence changes were introduced. |
+
+Verification: all 159 tests passed with TEST_DATABASE_URL pointing only to disposable local PostgreSQL; `pnpm exec tsc --noEmit`, `pnpm lint` and `pnpm build` passed. Lint retains the existing cursor `!important` warning. Tests and build ran outside the sandbox after restricted network/build attempts failed or stalled. The local test container was removed afterward. No remote migration, cleanup, deployment or GitHub issue mutation was performed.

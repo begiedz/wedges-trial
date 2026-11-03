@@ -17,7 +17,7 @@ export async function lockOwner(tx: Transaction, ownerId: string) {
     .from(sessions)
     .where(eq(sessions.id, ownerId))
     .for("update");
-  if (!owner || owner.expiresAt <= new Date())
+  if (!owner || owner.revokedAt || owner.expiresAt <= new Date())
     throw new GameError("SESSION_REQUIRED", 401);
 }
 export async function ownedRun(

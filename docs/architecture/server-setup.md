@@ -49,7 +49,7 @@ Development Neon migration and Preview HTTPS session/run flows were verified. Na
 
 Keep drizzle/ SQL, meta/_journal.json and snapshots in Git. SQL is reviewable schema history, the journal orders migrations, and snapshots support incremental generation. Run pnpm db:generate when the schema changes, review and commit the result, then explicitly migrate the intended environment. Do not regenerate/edit already-applied migrations. The migration runner uses Drizzle ORM with a direct connection, target validation, timeout and sanitized failures.
 
-On an application rollback, retain tables/data for recovery. Do not drop tables or import editable old browser saves. No automatic retention cleanup exists; preserve sessions, runs and action replays until a safe policy is implemented. Clearing/expiring the anonymous cookie loses access; a nickname cannot recover ownership.
+On an application rollback, retain tables/data for recovery. Do not drop tables or import editable old browser saves. No automatic retention cleanup is scheduled. A manual, transaction-safe helper now exists; review the conservative [retention policy](data-model.md) before any maintenance. Clearing/expiring the anonymous cookie loses access; a nickname cannot recover ownership.
 
 ## Verification
 

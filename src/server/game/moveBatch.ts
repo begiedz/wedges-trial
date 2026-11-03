@@ -15,6 +15,8 @@ import {
   writeRun,
 } from "./persistence";
 
+import type { StoredRun } from "./types";
+
 export type MoveCommit = { actionId: string } & (
   | { response: GameReply }
   | { failure: GameError }
@@ -47,7 +49,7 @@ export async function executeMoveBatch(
     );
     const inserts: (typeof runActions.$inferInsert)[] = [];
     const results: MoveCommit[] = [];
-    let run = initial;
+    let run: StoredRun = initial;
     for (const input of commands) {
       const fingerprint = commandFingerprint("move", runId, input);
       try {

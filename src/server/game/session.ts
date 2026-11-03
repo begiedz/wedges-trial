@@ -1,5 +1,5 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, isNull } from "drizzle-orm";
 import { getDatabase } from "@/server/db";
 import { sessions } from "@/server/db/schema";
 
@@ -14,6 +14,7 @@ export async function findSession(token: string | undefined) {
     .where(
       and(
         eq(sessions.tokenHash, tokenHash(token)),
+        isNull(sessions.revokedAt),
         gt(sessions.expiresAt, new Date()),
       ),
     );

@@ -9,6 +9,7 @@ import { bindGameSocket } from "@/server/game/socket";
 const { WebSocket, WebSocketServer } = createRequire(import.meta.url)("ws");
 
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { cleanupExpiredRuns } from "@/server/db/retention";
 import * as schema from "@/server/db/schema";
 import { newRun } from "@/server/game/engine";
 import {
@@ -17,6 +18,7 @@ import {
   findSession,
   readRun,
 } from "@/server/game/service";
+import { readTopRuns } from "@/server/leaderboard/read";
 
 let db: ReturnType<typeof drizzle<typeof schema>>;
 vi.mock("@/server/db", () => ({ getDatabase: () => db }));
@@ -26,6 +28,7 @@ let admin: Pool;
 let pool: Pool;
 const ownerId = randomUUID();
 const otherId = randomUUID();
+const legacyRunId = randomUUID();
 const actionId = () => randomUUID();
 async function seed() {
   const run = newRun(randomUUID(), ownerId);
@@ -55,8 +58,34 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
       max: 6,
     });
     db = drizzle(pool, { schema });
-    const migration = await readFile("drizzle/0000_needy_alice.sql", "utf8");
-    await pool.query(migration.replaceAll('"public".', `"${schemaName}".`));
+    const journal = JSON.parse(
+      await readFile("drizzle/meta/_journal.json", "utf8"),
+    );
+    for (const entry of journal.entries) {
+      const migration = await readFile(`drizzle/${entry.tag}.sql`, "utf8");
+      await pool.query(migration.replaceAll('"public".', `"${schemaName}".`));
+      if (entry.idx === 0) {
+        const legacyOwner = randomUUID();
+        const legacy = newRun(legacyRunId, legacyOwner);
+        legacy.status = "finished";
+        legacy.game.finishedAt = "2026-01-01T13:00:00+01:00";
+        legacy.game.state.lockpicks = 0;
+        legacy.game.state.currentLock.isFailed = true;
+        await pool.query(
+          "INSERT INTO sessions (id,token_hash,expires_at) VALUES ($1::uuid,$1::text,now() + interval '1 day')",
+          [legacyOwner],
+        );
+        await pool.query(
+          "INSERT INTO runs (id,owner_id,version,status,ruleset_version,game) VALUES ($1,$2,1,'finished',$3,$4)",
+          [
+            legacyRunId,
+            legacyOwner,
+            legacy.rulesetVersion,
+            JSON.stringify(legacy.game),
+          ],
+        );
+      }
+    }
     await db.insert(schema.sessions).values(
       [ownerId, otherId].map((id) => ({
         id,
@@ -71,6 +100,15 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
       await admin.query(`DROP SCHEMA "${schemaName}" CASCADE`);
       await admin.end();
     }
+  });
+  it("upgrades existing finished documents and backfills the indexed finish instant", async () => {
+    const { rows } = await pool.query(
+      "SELECT finished_at,ore_nuggets,opened_chests FROM runs WHERE id=$1",
+      [legacyRunId],
+    );
+    expect(rows[0].finished_at.toISOString()).toBe("2026-01-01T12:00:00.000Z");
+    expect(Number(rows[0].ore_nuggets)).toBe(0);
+    expect(rows[0].opened_chests).toBe(0);
   });
   it("stores only hashed credentials, resumes and rejects invalid/expired cookies", async () => {
     const result = await bootstrap(undefined);
@@ -291,5 +329,233 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
       actionId: actionId(),
       expectedVersion: 2,
     });
+  });
+  it("rejects revoked credentials even on an already connected mutation", async () => {
+    const result = await bootstrap(undefined);
+    const session = await findSession(result.token ?? undefined);
+    if (!session) throw new Error("Missing session");
+    await pool.query("UPDATE sessions SET revoked_at = now() WHERE id = $1", [
+      session?.id,
+    ]);
+    expect(await findSession(result.token ?? undefined)).toBeNull();
+    await expect(
+      execute(session.id, "create", undefined, { actionId: actionId() }),
+    ).rejects.toMatchObject({ code: "SESSION_REQUIRED" });
+  });
+
+  it("checks missing/negative resources and metrics, active uniqueness and replay ownership", async () => {
+    const owner = randomUUID();
+    await db.insert(schema.sessions).values({
+      id: owner,
+      tokenHash: owner,
+      expiresAt: new Date(Date.now() + 60000),
+    });
+    for (const mutate of [
+      (r: ReturnType<typeof newRun>) => {
+        r.game.totalMetrics.moves = -1;
+      },
+      (r: ReturnType<typeof newRun>) => {
+        r.game.state.oreNuggets = -1;
+      },
+      (r: ReturnType<typeof newRun>) => {
+        delete (r.game as Partial<typeof r.game>).chestMetrics;
+      },
+    ]) {
+      const invalid = newRun(randomUUID(), owner);
+      mutate(invalid);
+      await expect(db.insert(schema.runs).values(invalid)).rejects.toThrow();
+    }
+    const run = newRun(randomUUID(), owner);
+    await db.insert(schema.runs).values(run);
+    await expect(
+      db.insert(schema.runs).values(newRun(randomUUID(), owner)),
+    ).rejects.toThrow();
+    await expect(
+      pool.query(
+        "INSERT INTO run_actions (owner_id,action_id,run_id,fingerprint,response,status_code) VALUES ($1,$2,$3,'x','{}',200)",
+        [otherId, actionId(), run.id],
+      ),
+    ).rejects.toMatchObject({ code: "23503" });
+    await expect(
+      db
+        .insert(schema.leaderboardEntries)
+        .values({ runId: run.id, nickname: "Wedge" }),
+    ).rejects.toThrow();
+  });
+
+  it("stores multiple immutable finished runs per owner and one durable claim per run", async () => {
+    const finished = Array.from({ length: 2 }, () => {
+      const run = newRun(randomUUID(), otherId);
+      run.status = "finished";
+      run.game.finishedAt = new Date().toISOString();
+      run.game.state.lockpicks = 0;
+      run.game.state.currentLock.isFailed = true;
+      return run;
+    });
+    await db.insert(schema.runs).values(finished);
+    for (const nickname of ["", " ", " Wedge", "x".repeat(25), "a\nb"]) {
+      await expect(
+        db
+          .insert(schema.leaderboardEntries)
+          .values({ runId: finished[0].id, nickname }),
+      ).rejects.toThrow();
+    }
+    const claims = await Promise.allSettled(
+      [1, 2].map(() =>
+        db
+          .insert(schema.leaderboardEntries)
+          .values({ runId: finished[0].id, nickname: "Wedge" }),
+      ),
+    );
+    expect(claims.filter((x) => x.status === "fulfilled")).toHaveLength(1);
+    await db
+      .insert(schema.leaderboardEntries)
+      .values({ runId: finished[1].id, nickname: "Wedge" });
+    await expect(
+      pool.query(
+        "UPDATE runs SET game = jsonb_set(game, '{state,oreNuggets}', '999') WHERE id = $1",
+        [finished[0].id],
+      ),
+    ).rejects.toMatchObject({ code: "23514" });
+    await expect(
+      pool.query("DELETE FROM leaderboard_entries WHERE run_id = $1", [
+        finished[0].id,
+      ]),
+    ).rejects.toMatchObject({ code: "23514" });
+    await expect(
+      pool.query("DELETE FROM runs WHERE id = $1", [finished[0].id]),
+    ).rejects.toMatchObject({ code: "23503" });
+  });
+
+  it("reads only the best 100 claimed runs with cohort and chronological tie breaks", async () => {
+    const finished = Array.from({ length: 103 }, (_, i) => {
+      const run = newRun(randomUUID(), otherId);
+      run.status = "finished";
+      run.rulesetVersion = i === 102 ? "future" : run.rulesetVersion;
+      run.game.finishedAt =
+        i === 0 ? "2026-01-01T13:00:00+01:00" : "2026-01-01T12:00:00Z";
+      run.game.state.lockpicks = 0;
+      run.game.state.currentLock.isFailed = true;
+      run.game.state.oreNuggets = 1000;
+      run.game.openedChests = 5;
+      return run;
+    });
+    await db.insert(schema.runs).values(finished);
+    await db.insert(schema.leaderboardEntries).values(
+      finished
+        .slice(0, 101)
+        .concat(finished[102])
+        .map((r) => ({ runId: r.id, nickname: "Wedge" })),
+    );
+    const top = await readTopRuns();
+    expect(top).toHaveLength(100);
+    expect(top.map((r) => r.runId)).toEqual(
+      finished
+        .slice(0, 101)
+        .map((r) => r.id)
+        .sort()
+        .slice(0, 100),
+    );
+    expect(top.every((r) => r.oreNuggets === 1000)).toBe(true);
+  });
+
+  it("cleans only expired old unclaimed terminal runs, preserving live recovery, recent replay, active runs and claims", async () => {
+    const expired = randomUUID();
+    const live = randomUUID();
+    const old = new Date(Date.now() - 31 * 86400000);
+    await db.insert(schema.sessions).values(
+      [expired, live].map((id) => ({
+        id,
+        tokenHash: id,
+        expiresAt: id === expired ? old : new Date(Date.now() + 60000),
+      })),
+    );
+    const fixtures = Array.from({ length: 6 }, (_, i) => {
+      const run = newRun(randomUUID(), i === 1 ? live : expired, old);
+      run.status = i === 2 ? "playing" : i === 4 ? "finished" : "abandoned";
+      if (run.status === "finished") {
+        run.game.finishedAt = old.toISOString();
+        run.game.state.lockpicks = 0;
+        run.game.state.currentLock.isFailed = true;
+      }
+      if (i === 5) run.updatedAt = new Date();
+      return run;
+    });
+    await db.insert(schema.runs).values(fixtures);
+    await db
+      .insert(schema.leaderboardEntries)
+      .values({ runId: fixtures[4].id, nickname: "Keeper" });
+    for (const i of [0, 1, 3]) {
+      await pool.query(
+        "INSERT INTO run_actions (owner_id,action_id,run_id,fingerprint,response,status_code,created_at) VALUES ($1,$2,$3,'original','{}',200,$4)",
+        [
+          fixtures[i].ownerId,
+          actionId(),
+          fixtures[i].id,
+          i === 3 ? new Date() : old,
+        ],
+      );
+    }
+    const cleanups = await Promise.all([
+      cleanupExpiredRuns(),
+      cleanupExpiredRuns(),
+    ]);
+    expect(cleanups.reduce((sum, result) => sum + result.deletedRuns, 0)).toBe(
+      1,
+    );
+    const remaining = await pool.query(
+      "SELECT id FROM runs WHERE id = ANY($1::uuid[])",
+      [fixtures.map((r) => r.id)],
+    );
+    expect(remaining.rows.map((r) => r.id).sort()).toEqual(
+      fixtures
+        .slice(1)
+        .map((r) => r.id)
+        .sort(),
+    );
+    expect(
+      (
+        await pool.query(
+          "SELECT fingerprint FROM run_actions WHERE run_id = $1",
+          [fixtures[1].id],
+        )
+      ).rows[0].fingerprint,
+    ).toBe("original");
+    expect(await cleanupExpiredRuns()).toEqual({ deletedRuns: 0 });
+  });
+  it("rolls cleanup back together with replay deletion if removing the run fails", async () => {
+    const owner = randomUUID();
+    const old = new Date(Date.now() - 31 * 86400000);
+    await db
+      .insert(schema.sessions)
+      .values({ id: owner, tokenHash: owner, expiresAt: old });
+    const run = newRun(randomUUID(), owner, old);
+    run.status = "abandoned";
+    await db.insert(schema.runs).values(run);
+    await pool.query(
+      "INSERT INTO run_actions (owner_id,action_id,run_id,fingerprint,response,status_code,created_at) VALUES ($1,$2,$3,'rollback','{}',200,$4)",
+      [owner, actionId(), run.id, old],
+    );
+    await pool.query(
+      `CREATE FUNCTION fail_cleanup() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF OLD.id = '${run.id}'::uuid THEN RAISE EXCEPTION 'injected failure'; END IF; RETURN OLD; END $$; CREATE TRIGGER fail_cleanup BEFORE DELETE ON runs FOR EACH ROW EXECUTE FUNCTION fail_cleanup()`,
+    );
+    try {
+      await expect(cleanupExpiredRuns()).rejects.toThrow();
+      expect(
+        (
+          await pool.query("SELECT 1 FROM run_actions WHERE run_id=$1", [
+            run.id,
+          ])
+        ).rowCount,
+      ).toBe(1);
+      expect(
+        (await pool.query("SELECT 1 FROM runs WHERE id=$1", [run.id])).rowCount,
+      ).toBe(1);
+    } finally {
+      await pool.query(
+        "DROP TRIGGER fail_cleanup ON runs; DROP FUNCTION fail_cleanup()",
+      );
+    }
+    expect(await cleanupExpiredRuns()).toEqual({ deletedRuns: 1 });
   });
 });

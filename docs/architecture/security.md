@@ -4,7 +4,7 @@
 
 The server computes all trusted state, damage, rewards and final results. Client prediction is rendering only. Editing browser state or submitting score fields cannot alter persisted resources; valid-action bots and automated solvers are still possible.
 
-- Anonymous credentials are 256-bit random tokens in Secure, HttpOnly, SameSite=Strict cookies. Only SHA-256 hashes are stored. Sessions expire after 30 days; expiry is rechecked under the mutation transaction lock.
+- Anonymous credentials are 256-bit random tokens in Secure, HttpOnly, SameSite=Strict cookies. Only SHA-256 hashes are stored. Sessions expire after 30 days; expiry and explicit revocation are rechecked under the mutation transaction lock.
 - HTTP mutations and WebSocket upgrade require the exact allowed Origin. Private operations authorize ownership; foreign/unknown run IDs both return 404. A run UUID is not a credential.
 - Strict runtime schemas reject unknown fields, malformed IDs, invalid versions/directions and caller-owned state. HTTP bodies and socket frames are capped at 2 KiB.
 - Session-row locking, version checks and owner-scoped action IDs protect concurrent writes and exact retries. State, counters and replay responses commit atomically, including batched moves.
