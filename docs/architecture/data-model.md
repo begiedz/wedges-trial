@@ -22,4 +22,4 @@ No browser save is imported. No automatic cleanup is implemented. Keep sessions,
 
 There is no players or leaderboard_entries table today. Anonymous play requires no profile. The target leaderboard entry references one immutable finished run, with a validated nickname and claim timestamp; run_id must be unique. Names are neither unique identities nor authentication.
 
-Qualification and claim must atomically recheck the current TOP 100 cutoff. Public results contain claimed runs only, rather than each owner's best score. Ranking order, cursor snapshot storage and retention require implementation decisions before their migrations are generated.
+Qualification and claim must atomically recheck the current TOP 100 cutoff. Public results contain claimed runs only, rather than each owner's best score. Ranking order is approved under #51: ore DESC, opened chests DESC, finished_at ASC, run UUID ASC, within one ruleset. Retain displaced claims with a unique run_id and query only the first 100; cursor snapshot storage and safe retention still require implementation decisions. See [competitive ranking](competitive-ranking.md).

@@ -18,7 +18,7 @@
 - A lockpick **breaks after exactly three invalid moves on that pick**. Breaking it does **not** reset the lock. A separate manual reset button restores pin positions; **reset must not restore spent picks, clear accumulated per-chest scoring penalties, or grant free durability**. Preserve regression coverage for partial damage across reset and chest continuation.
 - Player resources: **lockpicks and ore nuggets only**. Ore is the score resource. Do not silently introduce XP, energy, lives or currencies.
 - Pure, deterministic *given inputs* domain functions belong in `src/game/`, independent of React, database, network and sound.
-- Randomness in **lock generation** remains. **Ore rewards are deterministic** under approved deterministic-ore-v1: floor((10 + 5 * (chestNumber - 1)) * max(4, 10 - invalidMovesOnChest) / 10). Further efficiency tuning, lockpick replenishment and ranked-vs-endless scoring remain **open balancing decisions**; see `docs/architecture/decisions.md` and GitHub Issues #47, #51.
+- Randomness in **lock generation** remains. **Ore rewards are deterministic** under approved deterministic-ore-v1: floor((10 + 5 * (chestNumber - 1)) * max(4, 10 - invalidMovesOnChest) / 10). Endless ore ranking is approved (ore DESC, opened chests DESC, finished time ASC, run UUID ASC); further efficiency tuning and lockpick replenishment remain **open balancing decisions**; see `docs/architecture/decisions.md` and GitHub Issues #47, #51.
 - Do not claim a generated lock's shortest solution is proven if `solveLock()` returns `null` because its search budget was exhausted. Do not penalize players against an unverified optimum.
 
 ## Trust boundary and persistence (implemented gameplay; ranking target)

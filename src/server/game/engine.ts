@@ -9,11 +9,12 @@ import {
 } from "@/game/progressDifficulty";
 import { cloneLockState, resetCurrentLock } from "@/game/resetLock";
 import { getChestReward, getDeterministicOre } from "@/game/rewards";
+import { RULESET_VERSION } from "@/game/ruleset";
 import type { Direction } from "@/game/types";
 import { GameError } from "./errors";
 import { emptyMetrics, type StoredRun } from "./types";
 
-export const RULESET_VERSION = "deterministic-ore-v1";
+export { RULESET_VERSION } from "@/game/ruleset";
 export function newRun(
   id: string,
   ownerId: string,

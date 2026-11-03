@@ -13,7 +13,7 @@ This is the **decision ledger**. Do not upgrade a proposal into an invariant wit
 | Anonymous gameplay | Opaque HttpOnly session cookie; no login or nickname before play | #33, #34 |
 | Arcade name entry | Ask nickname only when a finished server-verified run qualifies for TOP 100; no permanent public player profile required | #24, #34, #46 |
 | Run-based leaderboard | Rank claimed finished runs; multiple runs may share nickname or anonymous owner | #24, #25 |
-| Endless primary mode | Random solvable puzzles, escalating difficulty | #48, #51 |
+| Endless primary mode | Random solvable puzzles, escalating difficulty; ore-based survival ranking, no bounded ranked mode for v1 | #48, #51 |
 | Game resources | Ore nuggets and lockpicks only; ore is rank score | #24, #47 |
 | Three invalid moves | A pick breaks on exactly three out-of-bounds attempts | #36, #37 |
 | Reset fairness | Reset cannot refund spent picks or erase damage/penalties | #37, #49 |
@@ -25,7 +25,7 @@ This is the **decision ledger**. Do not upgrade a proposal into an invariant wit
 
 1. **Further reward tuning:** the deterministic ore formula below is approved for `deterministic-ore-v1`; excess-valid-move penalties and future recalibration remain open.
 2. **Lockpick replenishment:** predictable grant schedule vs another deterministic mechanic; total sustain/balance is unresolved.
-3. **Competitive scoring order:** run-based arcade TOP 100 is accepted, but ranking by ore / endless survival versus efficiency or separate bounded mode remains unresolved (#51). Provisional ordering is ore DESC, opened chests DESC, finished_at ASC, run ID ASC.
+3. **Competitive scoring order (resolved 2026-11-03):** endless ore ranking is approved; see the #51 decision below. A bounded challenge or efficiency ranking would be a separate future product decision.
 4. **Difficulty tiers:** precise chest thresholds, optional milestone chests, minimum shortest-path length and acceptance criteria require calibration (#48, #50).
 5. **Solver optimum:** whether reliable optimum is computed for every lock and how to score if budget is exhausted (#50).
 6. **Run limits/anti-bot:** rate limit thresholds and possible fairness controls require measurement (#43, #51).
@@ -47,8 +47,16 @@ This is the **decision ledger**. Do not upgrade a proposal into an invariant wit
 
 ## Approved implementation decision — 2026-11-01
 
-The task author approved deterministic ore: `base = 10 + 5 * (chestNumber - 1)`, `ore = floor(base * max(0.4, 1 - 0.1 * invalidMovesOnChest))`. Implementation uses integer tenths to avoid floating-point floor errors. Ruleset: `deterministic-ore-v1`. All invalid moves survive resets and pick breaks; no excess-valid-move penalty is applied. Lockpick reward probabilities remain the existing behavior pending a separate balancing decision. This approval supersedes open item 1 for this ruleset. Leaderboard ordering and release balance remain open.
+The task author approved deterministic ore: `base = 10 + 5 * (chestNumber - 1)`, `ore = floor(base * max(0.4, 1 - 0.1 * invalidMovesOnChest))`. Implementation uses integer tenths to avoid floating-point floor errors. Ruleset: `deterministic-ore-v1`. All invalid moves survive resets and pick breaks; no excess-valid-move penalty is applied. Lockpick reward probabilities remain the existing behavior pending a separate balancing decision. This approval supersedes open item 1 for this ruleset. The later #51 decision below settles leaderboard ordering; release balance remains open.
 
 ## Approved transport direction — 2026-11-01
 
 The task author explicitly requested WebSockets after testing the blocking per-move HTTPS UI. Use Vercel-native WebSockets for gameplay, ordered input buffering and immediate visual prediction with authoritative reconciliation. The server remains responsible for every committed action, resource, reward and final result. Public movement mechanics may be sent to the owner to predict visuals; internal solver paths/seeds remain private. No separate WebSocket hosting service is required by the chosen implementation.
+
+## Approved competitive scoring decision — 2026-11-03 (#51)
+
+The task author selected endless ore ranking. Keep endless as the primary mode; v1 has no bounded ranked challenge, duration cap, or excess-valid-move/optimum penalty. Rank each claimed, server-finished run by **credited ore DESC, opened chests DESC, finished_at ASC, run UUID ASC**. Finish time compares instants, not timestamp strings; UUIDs use PostgreSQL UUID order (canonical lowercase in TypeScript). Names and owner IDs never break ties or deduplicate entries. Zero-ore finished runs qualify while space exists. Abandoned and active runs never qualify.
+
+The pure policy is implemented in `src/server/leaderboard/policy.ts`: it projects a persisted final result, compares ranks and evaluates a snapshot of claimed runs. The policy is not an endpoint or an atomic claim service. Snapshot eligibility reserves nothing. Retain displaced claims (query only TOP 100) so one run cannot reclaim; claim uniqueness and cutoff recheck must share a database transaction under #24/#46. Compare only the same ruleset. The active cohort remains `deterministic-ore-v1`, since this decision changes no gameplay rewards. Any future change to ore, replenishment, difficulty or run limits that affects score comparability requires a new ruleset and separate ranking cohort, rather than silently mixing historic scores.
+
+Retain current random pick replenishment for this cohort; a deterministic replacement and calibration remain open. This ranking measures endless survival and ore accumulation, not equal-puzzle efficiency or freedom from luck. See [competitive ranking](competitive-ranking.md) for sustain analysis, release risks and linked implementation contracts.

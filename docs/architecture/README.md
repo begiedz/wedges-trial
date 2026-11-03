@@ -24,6 +24,7 @@ The domain engine remains **pure TypeScript** and is executed by the server for 
 | [status.md](status.md) | Present implementation, target, migration boundaries |
 | [decisions.md](decisions.md) | Approved decisions and open design questions |
 | [gameplay.md](gameplay.md) | Domain invariants, progression and reward design |
+| [competitive-ranking.md](competitive-ranking.md) | Approved endless ore ordering, qualification, sustainability and version boundaries (#51) |
 | [backend.md](backend.md) | API, run lifecycle, transactions, error semantics |
 | [api-contract.md](api-contract.md) | Canonical v1 requests, DTOs, lifecycle, examples and retry rules (#29) |
 | [data-model.md](data-model.md) | Implemented schema, replay storage and planned ranking tables |

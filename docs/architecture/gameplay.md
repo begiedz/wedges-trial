@@ -40,4 +40,4 @@ Pins/damage render immediately through client prediction; score, rewards, resour
 
 The solver uses a bounded search. A null result can mean budget exhaustion and does not prove unsolvability or an optimum. Generated locks retain solvability by construction; test actual legal solution replay. Do not penalize players against an unverified shortest path.
 
-Measure early, threshold and high-chest generation, fallbacks and difficulty before setting new tiers or efficiency penalties. Endless remains primary; competitive mode/order remains open. See [decisions](decisions.md), #28 and #47–#51.
+Measure early, threshold and high-chest generation, fallbacks and difficulty before setting new tiers or efficiency penalties. Endless remains primary; approved competitive ordering is credited ore DESC, opened chests DESC, finished time ASC, run UUID ASC. There is no v1 efficiency penalty or bounded ranked mode. See [competitive ranking](competitive-ranking.md) for qualification and sustainability. See [decisions](decisions.md), #28 and #47–#51.

@@ -16,7 +16,7 @@ Next: ranking storage/query, finished-run qualification and atomic nickname clai
 4. **Frontend migration:** #40 (GameClient), #41 (remove localStorage).
 5. **Ranking:** #24 (SQL ranking), #46 (read, eligibility and claim API), #25 (UI), #7 (dialogs).
 6. **Quality and deploy:** #42 (integration testing), #43 (security), #44 (deploy), #45 (operations/docs).
-7. **Game-balance work:** #47 (deterministic rewards), #48 (progression), #49 (move metrics), #50 (generator/solver), #51 (ranking design).
+7. **Game-balance work:** #47 (deterministic rewards), #48 (progression), #49 (move metrics), #50 (generator/solver), #51 (ranking design and pure snapshot policy implemented; persistence/API work remains under #24/#46).
 
 ## Separate audio/asset backlog
 

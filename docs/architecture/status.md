@@ -9,8 +9,8 @@ Gameplay has migrated from browser-owned state to server-authoritative PostgreSQ
 | Identity | Anonymous hashed-token sessions; Secure, HttpOnly, SameSite=Strict cookie | Leaderboard eligibility and nickname claims |
 | Transport | Vercel-native WebSocket, ordered inputs, immediate visual prediction and reconciliation; HTTP recovery/fallback | Deployed WebSocket performance and reconnect verification |
 | Client | React adapter over a framework-independent session controller; no gameplay localStorage/sessionStorage | Ranking UI |
-| Balance | Approved deterministic ore; reset and continuation preserve pick damage | Pick replenishment and competitive ranking decisions |
-| Ranking | Finished runs and metrics persisted | Leaderboard storage, TOP 100 reads, atomic qualification and one claim per run |
+| Balance | Approved deterministic ore; reset and continuation preserve pick damage; endless ore ranking approved under #51 | Pick replenishment calibration and release abuse controls |
+| Ranking | Finished runs and metrics persisted; pure ordering and snapshot qualification policy tested under #51 | Leaderboard storage, TOP 100 reads, atomic qualification and one claim per run |
 | Audio/assets | Existing visual assets | Provenance audit; optional music/SFX controls |
 
 ## Verification boundaries
@@ -37,3 +37,9 @@ See [setup and troubleshooting](server-setup.md), [backend](backend.md), [API co
 Movement evaluation and pick damage are shared by generation/runtime/prediction; the server evaluates each move once. Action-specific transitions and shared persistence helpers retain authoritative transaction/replay boundaries. Session lifecycle is independent of React; dialogs, keyboard handling and URL synchronization remain presentation concerns. See [module boundaries and state ownership](module-boundaries.md). No database migration, retention policy, balance change or deployment is part of this refactor.
 
 Local refactor verification on 2026-11-02: 131 tests passed; seven opt-in PostgreSQL integration tests were skipped because TEST_DATABASE_URL was unset. Type checking (`pnpm exec tsc --noEmit`), `pnpm lint` and the production build passed. Lint retains one existing custom-cursor `!important` warning; existing formatting/import errors were corrected without behavior changes. The restricted build stalled and was stopped; the build passed when rerun outside the sandbox. No live database, deployment or browser end-to-end verification was performed for this refactor.
+
+## Competitive scoring policy (#51) — 2026-11-03
+
+The task author approved endless ore ranking. Pure policy now projects server-finished results, orders ore/chests/finish time/UUID and evaluates dynamic TOP 100 snapshot eligibility within deterministic-ore-v1. The [ranking contract](competitive-ranking.md) documents sustain/automation risks, version boundaries and handoff requirements for #24/#34/#46/#47. Claim persistence, atomic rechecks, public endpoints and nickname UI remain unimplemented; no GitHub issue changes, migration or deployment were performed.
+
+Local verification: 145 tests passed; seven opt-in PostgreSQL tests skipped because TEST_DATABASE_URL was unset. Type checking, lint and production build passed; lint retains the existing custom-cursor `!important` warning. The sandboxed build stalled and was stopped; the build passed outside the sandbox. No live database or browser end-to-end verification was performed for this policy-only change.
