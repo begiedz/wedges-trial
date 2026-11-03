@@ -1,4 +1,4 @@
-name: Tests
+name: CI
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ on:
 
 jobs:
   test:
-    name: Run tests
+    name: Quality checks
     runs-on: ubuntu-latest
 
     steps:
@@ -33,3 +33,9 @@ jobs:
 
       - name: Run tests
         run: pnpm test
+
+      - name: Check TypeScript
+        run: pnpm exec tsc --noEmit
+
+      - name: Run lint
+        run: pnpm lint
