@@ -1,3 +1,4 @@
+
 name: CI
 
 on:
@@ -11,8 +12,8 @@ on:
       - master
 
 jobs:
-  test:
-    name: Quality checks
+  checks:
+    name: Quality Checks
     runs-on: ubuntu-latest
 
     steps:
@@ -35,7 +36,7 @@ jobs:
         run: pnpm test
 
       - name: Check TypeScript
-        run: pnpm exec tsc --noEmit
+        run: pnpm typecheck
 
       - name: Run lint
         run: pnpm lint
