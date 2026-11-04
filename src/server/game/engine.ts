@@ -74,6 +74,7 @@ export function publicRun(run: StoredRun): RunDto {
         status: run.status,
         reward: null,
         result: {
+          totalMetrics: { ...run.game.totalMetrics },
           oreNuggets: state.oreNuggets,
           openedChests,
           finishedAt,

@@ -48,6 +48,10 @@ async function seed() {
   await db.insert(schema.runs).values(run);
   return run;
 }
+async function storedGame(id: string) {
+  const { rows } = await pool.query("SELECT game FROM runs WHERE id=$1", [id]);
+  return rows[0].game as ReturnType<typeof newRun>["game"];
+}
 describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
   beforeAll(async () => {
     admin = new Pool({ connectionString: url });
@@ -159,6 +163,11 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
     expect(
       (await readRun(ownerId, run.id))?.currentLock.invalidMovesOnCurrentPick,
     ).toBe(1);
+    expect((await storedGame(run.id)).totalMetrics).toEqual({
+      moves: 1,
+      invalidMoves: 1,
+      brokenPicks: 0,
+    });
     await expect(readRun(otherId, run.id)).rejects.toMatchObject({
       code: "RUN_NOT_FOUND",
     });
@@ -191,6 +200,11 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
     await expect(
       execute(ownerId, "move", run.id, { ...first, direction: -1 }),
     ).rejects.toMatchObject({ code: "ACTION_ID_REUSED" });
+    expect((await storedGame(run.id)).totalMetrics).toEqual({
+      moves: 2,
+      invalidMoves: 0,
+      brokenPicks: 0,
+    });
     const next = { actionId: actionId(), expectedVersion: 3 };
     const replies = await Promise.all([
       execute(ownerId, "continue", run.id, next),
@@ -198,10 +212,76 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
     ]);
     expect(replies[0]).toEqual(replies[1]);
     expect(replies[0].body.run.oreNuggets).toBe(10);
+    const continued = await storedGame(run.id);
+    expect(continued.chestMetrics).toEqual({
+      moves: 0,
+      invalidMoves: 0,
+      brokenPicks: 0,
+    });
+    expect(continued.totalMetrics).toEqual({
+      moves: 2,
+      invalidMoves: 0,
+      brokenPicks: 0,
+    });
+    expect(continued.initialLock.optimalMoves).toBe(
+      continued.state.currentLock.optimalMoves,
+    );
     await execute(ownerId, "abandon", run.id, {
       actionId: actionId(),
       expectedVersion: 4,
     });
+  });
+
+  it("preserves mistakes and broken picks across refresh, repeated resets and final-action retries", async () => {
+    const run = await seed();
+    let version = 1;
+    for (let i = 0; i < 9; i++) {
+      const command = {
+        actionId: actionId(),
+        expectedVersion: version,
+        pinId: 0,
+        direction: -1 as const,
+      };
+      const result = await execute(ownerId, "move", run.id, command);
+      expect(await execute(ownerId, "move", run.id, command)).toEqual(result);
+      version++;
+      expect((await readRun(ownerId, run.id))?.version).toBe(version);
+      if (i < 8) {
+        for (let reset = 0; reset < 2; reset++) {
+          await execute(ownerId, "reset", run.id, {
+            actionId: actionId(),
+            expectedVersion: version++,
+          });
+        }
+      }
+      const game = await storedGame(run.id);
+      const expected = {
+        moves: i + 1,
+        invalidMoves: i + 1,
+        brokenPicks: Math.floor((i + 1) / 3),
+      };
+      expect(game.chestMetrics).toEqual(expected);
+      expect(game.totalMetrics).toEqual(expected);
+      expect(game.state.currentLock.invalidMovesOnCurrentPick).toBe(
+        (i + 1) % 3,
+      );
+    }
+    const finished = await readRun(ownerId, run.id);
+    expect(finished?.status).toBe("finished");
+    expect(finished?.result?.totalMetrics).toEqual({
+      moves: 9,
+      invalidMoves: 9,
+      brokenPicks: 3,
+    });
+    await expect(
+      execute(ownerId, "move", run.id, {
+        actionId: actionId(),
+        expectedVersion: version,
+        pinId: 0,
+        direction: -1,
+      }),
+    ).rejects.toMatchObject({ code: "INVALID_RUN_STATUS" });
+    expect((await storedGame(run.id)).totalMetrics.moves).toBe(9);
   });
 
   it("commits and replays a rapid burst over a real WebSocket connection", async () => {
@@ -219,7 +299,9 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
         );
       },
     );
-    const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`);
+    const connect = () =>
+      new WebSocket(`ws://127.0.0.1:${server.address().port}`);
+    let client = connect();
     const messages: Array<{
       type: string;
       response?: { run: { version: number } };
@@ -248,9 +330,27 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
         { timeout: 10000 },
       );
       const burstMs = performance.now() - started;
+      expect((await storedGame(run.id)).totalMetrics).toEqual({
+        moves: 20,
+        invalidMoves: 0,
+        brokenPicks: 0,
+      });
       const state = await readRun(ownerId, run.id);
       expect(state?.version).toBe(21);
       expect(state?.currentLock.pins[0].position).toBe(0);
+      // A new transport retries unknown acknowledgements using the original IDs.
+      const closed = new Promise<void>((resolve) =>
+        client.once("close", resolve),
+      );
+      client.close();
+      await closed;
+      client = connect();
+      client.on("message", (data: { toString(): string }) =>
+        messages.push(JSON.parse(data.toString())),
+      );
+      await vi.waitFor(() =>
+        expect(messages.filter((x) => x.type === "ready")).toHaveLength(2),
+      );
       for (const frame of frames) client.send(JSON.stringify(frame));
       await vi.waitFor(
         () =>
@@ -258,6 +358,7 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
         { timeout: 10000 },
       );
       expect((await readRun(ownerId, run.id))?.version).toBe(21);
+      expect((await storedGame(run.id)).totalMetrics.moves).toBe(20);
       console.info(
         `WebSocket burst: 20 moves committed in ${Math.round(burstMs)} ms; replay preserved version 21.`,
       );
@@ -288,10 +389,16 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
     );
     await expect(executeMoveBatch(ownerId, run.id, commands)).rejects.toThrow();
     expect((await readRun(ownerId, run.id))?.version).toBe(1);
+    expect((await storedGame(run.id)).totalMetrics.moves).toBe(0);
     await pool.query("ALTER TABLE run_actions DROP CONSTRAINT batch_failure");
     const retries = await executeMoveBatch(ownerId, run.id, commands);
     expect(retries).toHaveLength(2);
     expect((await readRun(ownerId, run.id))?.version).toBe(3);
+    expect((await storedGame(run.id)).totalMetrics).toEqual({
+      moves: 2,
+      invalidMoves: 0,
+      brokenPicks: 0,
+    });
     await execute(ownerId, "abandon", run.id, {
       actionId: actionId(),
       expectedVersion: 3,
@@ -315,6 +422,11 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
     const restored = await readRun(ownerId, run.id);
     expect(restored?.version).toBe(1);
     expect(restored?.currentLock.invalidMovesOnCurrentPick).toBe(0);
+    expect((await storedGame(run.id)).totalMetrics).toEqual({
+      moves: 0,
+      invalidMoves: 0,
+      brokenPicks: 0,
+    });
     await pool.query(
       "ALTER TABLE run_actions DROP CONSTRAINT injected_failure",
     );

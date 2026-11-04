@@ -63,6 +63,7 @@ function createMixedLock(
   }
 
   const lock: LockState = {
+    optimalMoves: null,
     pins: mixedPins,
     rules,
     invalidMovesOnCurrentPick: 0,
@@ -117,14 +118,18 @@ export function createLock(
           if (result.kind === "valid") pins = result.pins;
         }
       }
-      return { ...lock, pins };
+      return {
+        ...lock,
+        pins,
+        optimalMoves: Math.min(solution.length, maxLength),
+      };
     }
     if (
       solution &&
       solution.length <= maxLength &&
       solution.length > bestLength
     ) {
-      bestLock = lock;
+      bestLock = { ...lock, optimalMoves: solution.length };
       bestLength = solution.length;
     }
   }

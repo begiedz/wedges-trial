@@ -82,6 +82,11 @@ export function isRunDto(value: unknown): value is RunDto {
         object(value.result) &&
         integer(value.result.oreNuggets) &&
         integer(value.result.openedChests) &&
+        (value.result.totalMetrics === undefined ||
+          (object(value.result.totalMetrics) &&
+            integer(value.result.totalMetrics.moves) &&
+            integer(value.result.totalMetrics.invalidMoves) &&
+            integer(value.result.totalMetrics.brokenPicks))) &&
         date(value.result.finishedAt) &&
         value.result.reason === "lockpicks_exhausted"
       );

@@ -6,7 +6,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ChestRewardDialog } from "@/components/game/ChestRewardDialog";
 import { RestartRunDialog } from "@/components/game/RestartRunDialog";
 import { RunFailedDialog } from "@/components/game/RunFailedDialog";
+import de from "@/i18n/dictionaries/de.json";
 import en from "@/i18n/dictionaries/en.json";
+import pl from "@/i18n/dictionaries/pl.json";
+import ru from "@/i18n/dictionaries/ru.json";
 import { I18nProvider } from "@/i18n/provider";
 
 vi.mock("next/image", () => ({
@@ -102,19 +105,80 @@ describe("chest reward dialog", () => {
 });
 
 describe("failed run dialog", () => {
+  it.each([en, pl, de, ru])(
+    "renders localized statistic labels with matching dictionary keys",
+    (dictionary) => {
+      expect(Object.keys(dictionary.game.dialogs.failed).sort()).toEqual(
+        Object.keys(en.game.dialogs.failed).sort(),
+      );
+      render(
+        createElement(RunFailedDialog, {
+          open: true,
+          result: {
+            oreNuggets: 57,
+            openedChests: 4,
+            finishedAt: new Date(0).toISOString(),
+            reason: "lockpicks_exhausted",
+            totalMetrics: { moves: 123, invalidMoves: 9, brokenPicks: 3 },
+          },
+          onNewRun: vi.fn(),
+        }),
+        {
+          wrapper: ({ children }: { children: ReactNode }) =>
+            createElement(I18nProvider, { dictionary, locale: "en", children }),
+        },
+      );
+      for (const metric of ["moves", "invalidMoves", "brokenPicks"] as const)
+        expect(
+          screen.getByText(dictionary.game.dialogs.failed[metric]),
+        ).toBeTruthy();
+    },
+  );
+  it("marks statistics unavailable for a legacy replay instead of inventing zero totals", () => {
+    render(
+      createElement(RunFailedDialog, {
+        open: true,
+        result: {
+          oreNuggets: 0,
+          openedChests: 0,
+          finishedAt: new Date(0).toISOString(),
+          reason: "lockpicks_exhausted",
+        },
+        onNewRun: vi.fn(),
+      }),
+      { wrapper },
+    );
+    expect(
+      screen.getAllByText(en.game.dialogs.failed.unavailable),
+    ).toHaveLength(3);
+  });
   it("shows final results and keeps the modal open on Escape", () => {
     const onNewRun = vi.fn();
     render(
       createElement(RunFailedDialog, {
         open: true,
-        oreNuggets: 57,
-        openedChests: 4,
+        result: {
+          oreNuggets: 57,
+          openedChests: 4,
+          finishedAt: new Date(0).toISOString(),
+          reason: "lockpicks_exhausted",
+          totalMetrics: { moves: 123, invalidMoves: 9, brokenPicks: 3 },
+        },
         onNewRun,
       }),
       { wrapper },
     );
 
     expect(screen.getByText("57")).toBeTruthy();
+    for (const [label, count] of [
+      [en.game.dialogs.failed.moves, "123"],
+      [en.game.dialogs.failed.invalidMoves, "9"],
+      [en.game.dialogs.failed.brokenPicks, "3"],
+    ]) {
+      expect(screen.getByText(label).parentElement?.textContent).toContain(
+        count,
+      );
+    }
     expect(screen.getByText("4")).toBeTruthy();
     fireEvent.keyDown(document, { key: "Escape", code: "Escape" });
     expect(

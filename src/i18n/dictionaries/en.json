@@ -198,6 +198,10 @@
         "title": "Trial ended",
         "description": "Your last lockpick has broken. Your haul marks the end of this trial.",
         "openedChests": "Opened chests",
+        "moves": "Total moves",
+        "invalidMoves": "Invalid moves",
+        "brokenPicks": "Broken lockpicks",
+        "unavailable": "Unavailable",
         "leaderboard": "Leaderboard"
       },
       "restart": {

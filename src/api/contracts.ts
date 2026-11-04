@@ -32,7 +32,16 @@ export type PublicLockDto = {
   moveRules?: MoveRule[];
 };
 
+export type RunMetricsDto = {
+  /** All processed moves, including invalid moves. */
+  moves: number;
+  invalidMoves: number;
+  brokenPicks: number;
+};
+
 export type RunResultDto = {
+  /** Absent only on replay responses persisted before statistics were exposed. */
+  totalMetrics?: RunMetricsDto;
   oreNuggets: number;
   openedChests: number;
   finishedAt: string;

@@ -198,6 +198,10 @@
         "title": "Prüfung beendet",
         "description": "Dein letzter Dietrich ist zerbrochen. Deine Beute steht am Ende dieser Prüfung fest.",
         "openedChests": "Geöffnete Truhen",
+        "moves": "Züge insgesamt",
+        "invalidMoves": "Ungültige Züge",
+        "brokenPicks": "Zerbrochene Dietriche",
+        "unavailable": "Nicht verfügbar",
         "leaderboard": "Bestenliste"
       },
       "restart": {

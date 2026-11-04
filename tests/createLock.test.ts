@@ -72,6 +72,7 @@ describe("createLock", () => {
         let lock = createLock(difficulty, createSeededRandom(seed));
         const solution = solveLock(lock);
         expect(solution).not.toBeNull();
+        expect(lock.optimalMoves).toBe(solution?.length);
         expect(solution?.length).toBeGreaterThanOrEqual(
           difficulty.minSolutionLength ?? 1,
         );
@@ -83,6 +84,25 @@ describe("createLock", () => {
           expect(result.kind).toBe("valid");
           lock = result.lock;
         }
+        expect(checkSolved(lock)).toBe(true);
+      }
+    },
+  );
+
+  it.each([99, 999, 9999])(
+    "retains honest metadata and solvability at late difficulty index %i",
+    (index) => {
+      for (const seed of [1, 7, 42]) {
+        let lock = createLock(
+          getDifficultyForChest(index),
+          createSeededRandom(seed),
+        );
+        const solution = solveLock(lock);
+        if (lock.optimalMoves !== null)
+          expect(lock.optimalMoves).toBe(solution?.length);
+        expect(solution).not.toBeNull();
+        for (const move of solution ?? [])
+          lock = applyMoveToLock(lock, move.pinId, move.direction).lock;
         expect(checkSolved(lock)).toBe(true);
       }
     },
@@ -103,6 +123,7 @@ describe("createLock", () => {
     try {
       lock = createLock(difficulty, createSeededRandom(42));
       expect(search).toHaveBeenCalledTimes(12);
+      expect(lock.optimalMoves).toBeNull();
     } finally {
       search.mockRestore();
     }
@@ -131,6 +152,7 @@ describe("createLock", () => {
     expect(calls).toBeLessThanOrEqual(100);
     expect(checkSolved(lock)).toBe(false);
     expect(solveLock(lock)?.length).toBe(3);
+    expect(lock.optimalMoves).toBe(3);
     expect(lock.maxInvalidMovesPerPick).toBe(3);
   });
 

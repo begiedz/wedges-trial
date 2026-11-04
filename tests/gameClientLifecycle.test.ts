@@ -74,6 +74,7 @@ describe("game dialogs after confirmed server transitions", () => {
               lockpicks: 0,
               reward: null,
               result: {
+                totalMetrics: { moves: 84, invalidMoves: 12, brokenPicks: 4 },
                 oreNuggets: 0,
                 openedChests: 0,
                 reason: "lockpicks_exhausted",
@@ -100,6 +101,12 @@ describe("game dialogs after confirmed server transitions", () => {
               : en.game.dialogs.failed.title,
         }),
       ).toBeTruthy();
+      if (status === "finished") {
+        expect(
+          screen.getByText(en.game.dialogs.failed.moves).parentElement
+            ?.textContent,
+        ).toContain("84");
+      }
       expect(fetchMock).toHaveBeenCalledTimes(3);
     },
   );

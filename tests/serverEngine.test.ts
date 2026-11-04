@@ -5,6 +5,7 @@ import { newRun, publicRun, transition } from "@/server/game/engine";
 function fixture() {
   const run = newRun("run", "owner");
   run.game.state.currentLock = {
+    optimalMoves: 2,
     pins: [{ id: 0, position: 0, min: 0, max: 2, target: 2 }],
     rules: [1, -1].map((direction) => ({
       sourcePinId: 0,
@@ -54,21 +55,75 @@ describe("authoritative domain lifecycle", () => {
     expect(next.game.totalMetrics.moves).toBe(3);
     expect(() => transition(next, "continue", {})).toThrow();
   });
-  it("freezes final result on last pick and hides rules and internal metrics", () => {
+  it("freezes final statistics on last pick and hides solver metadata", () => {
     let run = fixture();
     run.game.state.lockpicks = 1;
     for (let i = 0; i < 3; i++)
       run = transition(run, "move", { pinId: 0, direction: -1 }).run;
+    run.game.state.currentLock.optimalMoves = 2;
     const dto = publicRun(run);
     expect(dto.status).toBe("finished");
     expect(dto.result?.reason).toBe("lockpicks_exhausted");
+    expect(dto.result?.totalMetrics).toEqual({
+      moves: 3,
+      invalidMoves: 3,
+      brokenPicks: 1,
+    });
+    expect(dto.result?.totalMetrics).not.toBe(run.game.totalMetrics);
     expect(JSON.stringify(dto)).not.toMatch(
-      /"rules"|ownerId|initialLock|chestMetrics/,
+      /"rules"|ownerId|initialLock|chestMetrics|optimalMoves/,
     );
     for (const action of ["move", "reset", "continue", "abandon"] as const)
       expect(() =>
         transition(run, action, { pinId: 0, direction: 1 }),
       ).toThrow();
+  });
+  it("counts valid and invalid moves once, preserves all counters on reset, and clears only chest counters on continue", () => {
+    let run = fixture();
+    const move = (direction: 1 | -1) => {
+      run = transition(run, "move", { pinId: 0, direction }).run;
+    };
+    move(1);
+    expect(run.game.state.currentLock.optimalMoves).toBe(2);
+    move(-1);
+    for (let i = 0; i < 4; i++) move(-1);
+    const metrics = { moves: 6, invalidMoves: 4, brokenPicks: 1 };
+    expect(run.game.chestMetrics).toEqual(metrics);
+    expect(run.game.totalMetrics).toEqual(metrics);
+    expect(run.game.state.currentLock.invalidMovesOnCurrentPick).toBe(1);
+    run = transition(run, "reset", {}).run;
+    expect(run.game.state.currentLock.optimalMoves).toBe(2);
+    expect(run.game.initialLock.optimalMoves).toBe(2);
+    expect(run.game.chestMetrics).toEqual(metrics);
+    expect(run.game.totalMetrics).toEqual(metrics);
+    move(1);
+    move(1);
+    expect(run.game.reward?.oreNuggets).toBe(6);
+    run = transition(run, "continue", {}).run;
+    expect(run.game.chestMetrics).toEqual({
+      moves: 0,
+      invalidMoves: 0,
+      brokenPicks: 0,
+    });
+    expect(run.game.totalMetrics).toEqual({ ...metrics, moves: 8 });
+    expect(run.game.state.currentLock.invalidMovesOnCurrentPick).toBe(1);
+  });
+  it("does not count unknown pins, missing rules, solved or failed moves", () => {
+    const run = fixture();
+    expect(() =>
+      transition(run, "move", { pinId: 99, direction: 1 }),
+    ).toThrow();
+    run.game.state.currentLock.rules = [];
+    expect(() => transition(run, "move", { pinId: 0, direction: 1 })).toThrow();
+    for (const flag of ["isSolved", "isFailed"] as const) {
+      const terminal = fixture();
+      terminal.game.state.currentLock[flag] = true;
+      expect(() =>
+        transition(terminal, "move", { pinId: 0, direction: 1 }),
+      ).toThrow();
+      expect(terminal.game.totalMetrics.moves).toBe(0);
+    }
+    expect(run.game.totalMetrics.moves).toBe(0);
   });
   it("has deterministic monotonic ore and a forty-percent floor", () => {
     expect(getDeterministicOre(1, 0)).toBe(10);

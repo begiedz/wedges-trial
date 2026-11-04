@@ -24,8 +24,14 @@ export type MoveRule = {
 export type LockDifficulty = 1 | 2 | 3 | 4;
 
 export type LockState = {
+  /** Verified shortest distance from this chest’s initial layout.
+   * null/absent means unverified (including legacy locks and capped searches).
+   * Remains fixed as pins move; internal metadata, never a scoring penalty.
+   */
+  optimalMoves?: number | null;
   pins: Pin[];
   rules: MoveRule[];
+  /** Durability only; resets on break, unlike cumulative server metrics. */
   invalidMovesOnCurrentPick: number;
   maxInvalidMovesPerPick: number;
   isSolved: boolean;

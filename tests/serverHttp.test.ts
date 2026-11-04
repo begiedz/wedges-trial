@@ -15,6 +15,13 @@ const actionId = "12345678-1234-4234-8234-123456789012";
 describe("HTTP trust boundary", () => {
   it.each([
     { actionId, score: 100 },
+    ...["chestMetrics", "totalMetrics", "optimalMoves"].map((field) => ({
+      actionId,
+      expectedVersion: 1,
+      pinId: 0,
+      direction: 1,
+      [field]: 100,
+    })),
     { actionId, expectedVersion: 0, pinId: 0, direction: 1 },
     { actionId, expectedVersion: 1, pinId: 0, direction: 2 },
     null,

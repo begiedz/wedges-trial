@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { GameApiClient, TransportError } from "@/client/game/api";
+import { isRunDto } from "@/client/game/response";
 import { runDto } from "./fixtures/run";
 
 const json = (value: unknown, status = 200) =>
@@ -39,6 +40,37 @@ describe("HTTP response boundary", () => {
       vi.fn<typeof fetch>().mockResolvedValue(json(value)),
     );
     await expect(api.current()).rejects.toThrow("INVALID_RESPONSE");
+  });
+  it("validates final statistics and supports original legacy replay responses", () => {
+    const finished = {
+      ...runDto(),
+      status: "finished",
+      reward: null,
+      result: {
+        oreNuggets: 10,
+        openedChests: 1,
+        finishedAt: new Date(0).toISOString(),
+        reason: "lockpicks_exhausted",
+      },
+    };
+    expect(isRunDto(finished)).toBe(true);
+    for (const totalMetrics of [
+      { moves: 12, invalidMoves: 3, brokenPicks: 1 },
+      null,
+      {},
+      { moves: -1, invalidMoves: 3, brokenPicks: 1 },
+      { moves: 12, invalidMoves: 1.5, brokenPicks: 1 },
+      { moves: 12, invalidMoves: 3, brokenPicks: "1" },
+    ]) {
+      expect(
+        isRunDto({ ...finished, result: { ...finished.result, totalMetrics } }),
+      ).toBe(
+        totalMetrics !== null &&
+          totalMetrics.moves === 12 &&
+          totalMetrics.invalidMoves === 3 &&
+          totalMetrics.brokenPicks === 1,
+      );
+    }
   });
   it("permits no active run and validates session readiness", async () => {
     const api = new GameApiClient(

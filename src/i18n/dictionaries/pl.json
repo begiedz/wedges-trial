@@ -198,6 +198,10 @@
         "title": "Koniec próby",
         "description": "Twój ostatni wytrych się złamał. Zebrane łupy wieńczą tę próbę.",
         "openedChests": "Otwarte skrzynie",
+        "moves": "Wszystkie ruchy",
+        "invalidMoves": "Błędne ruchy",
+        "brokenPicks": "Złamane wytrychy",
+        "unavailable": "Brak danych",
         "leaderboard": "Ranking"
       },
       "restart": {

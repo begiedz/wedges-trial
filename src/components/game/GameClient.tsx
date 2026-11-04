@@ -257,8 +257,7 @@ export function GameClient() {
       )}
       <RunFailedDialog
         open={run.status === "finished" && !restartOpen && !error}
-        oreNuggets={run.oreNuggets}
-        openedChests={run.openedChests}
+        result={run.result}
         onNewRun={requestNewRun}
       />
       <RestartRunDialog

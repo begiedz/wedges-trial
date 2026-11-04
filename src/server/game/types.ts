@@ -1,11 +1,7 @@
-import type { RunStatus } from "@/api/contracts";
+import type { RunMetricsDto, RunStatus } from "@/api/contracts";
 import type { ChestReward, Direction, LockState, RunState } from "@/game/types";
 
-export type Metrics = {
-  moves: number;
-  invalidMoves: number;
-  brokenPicks: number;
-};
+export type Metrics = RunMetricsDto;
 export type StoredGame = {
   state: RunState;
   initialLock: LockState;

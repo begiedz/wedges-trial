@@ -51,8 +51,10 @@ Every run response includes the entire confirmed public snapshot, not a patch:
 | `difficulty` | Server-derived display band: 1, 2, 3 or 4 |
 | `currentLock` | Visible pins (`id`, `position`, `target`, `min`, `max`), current pick damage and literal `maxInvalidMovesPerPick: 3` |
 | `reward` | Non-null only in `chest_opened`: fixed pending `{ oreNuggets, lockpicks }` |
-| `result` | Non-null only in `finished`: immutable final ore, solved-chest count, finish time and `reason: "lockpicks_exhausted"` |
+| `result` | Non-null only in `finished`: immutable final ore, solved-chest count, cumulative `totalMetrics: { moves, invalidMoves, brokenPicks }`, finish time and `reason: "lockpicks_exhausted"` |
 | `createdAt`, `updatedAt` | Server timestamps; `updatedAt` changes with committed mutations |
+
+Final statistics include every processed valid/invalid move and all broken picks across chests and resets. They are read-only server projections, not accepted mutation fields. Historical stored action replies can omit `result.totalMetrics`; replay them unchanged and show unavailable statistics until a fresh owned read supplies totals. Current-pick damage is durability, not cumulative mistake history.
 
 Use `status` instead of redundant `isSolved`/`isFailed` flags. Optional currentLock.moveRules exposes public movement mechanics to the owner for visual prediction. Generation seed, initial lock, solver path/optimum and session/player credentials are never serialized. Changed pin highlights can be derived by comparing public snapshots. Terminal snapshots retain the last visible lock for display. Scores from old local saves are never imported into this API.
 
@@ -288,6 +290,7 @@ A last-pick-breaking move returns `200` with `outcome: "run_finished"`, the same
 {
   "oreNuggets": 120,
   "openedChests": 8,
+  "totalMetrics": { "moves": 80, "invalidMoves": 12, "brokenPicks": 4 },
   "finishedAt": "2026-10-31T12:10:00.000Z",
   "reason": "lockpicks_exhausted"
 }
