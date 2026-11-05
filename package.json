@@ -16,7 +16,9 @@
     "db:migrate": "node scripts/migrate.cjs",
     "dev:ws": "pnpm dlx vercel@54.14.2 dev",
     "check:names": "node scripts/check-names.cjs",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "benchmark:locks": "node scripts/benchmark-locks.cjs",
+    "benchmark:preview": "node scripts/benchmark-preview.cjs"
   },
   "dependencies": {
     "@formatjs/intl-localematcher": "^0.8.14",
