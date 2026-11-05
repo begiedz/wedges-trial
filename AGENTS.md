@@ -33,20 +33,21 @@
 ## Frontend, localization and audio
 
 - Current production route shape is `src/app/[lang]/` (**not `[locale]`**). Keep English, Polish, German and Russian (`en`, `pl`, `de`, `ru`); no hardcoded user-visible text.
-- Product-specific React presentation and tests belong in `src/features/<name>/`; routes compose minimal public feature APIs. Shared UI must remain feature-independent. Keep `src/game`, `src/client/game`, `src/api` and `src/server` in their existing layers; run `pnpm check:architecture` for dependency enforcement.
+- Product-specific React presentation belongs in `src/features/<name>/`; tests belong in `tests/` mirroring source paths and basenames. Routes compose minimal public feature APIs. Shared UI must remain feature-independent. Keep `src/game`, `src/client/game`, `src/api` and `src/server` in their existing layers; run `pnpm check:architecture` for dependency enforcement.
 - Reuse existing components and assets; keep keyboard, touch and responsive behavior accessible. Keep domain decisions out of UI components.
 - Music and SFX are optional user-controlled capabilities with **independent on/off and volume**. No unexpected autoplay; support browser playback restrictions. Audio state must not modify gameplay logic.
 - **Do not add or distribute extracted Gothic Remake music, audio, fonts or game assets without adequate usage and redistribution rights.** Noncommercial use is not an automatic license. Existing assets require a provenance audit; see `docs/architecture/audio-assets.md` and Issue #52.
 
 ## Coding and verification
 
-1. Read the affected code, relevant architectural docs and task-specific skill before editing. Keep changes small, typed and testable.
-2. If existing code conflicts with target architecture, implement an **incremental migration**; do not delete working local flows before the server replacement is ready.
-3. Prefer explicit types, pure transformations, server-side validation, parameterized DB operations, migrations and clear errors. Avoid speculative abstractions.
-4. Run `pnpm test`, `pnpm lint` and `pnpm build` for relevant code changes when feasible; report commands not run or failures honestly.
-5. For DB or API changes, include tests for unauthorized users, malformed input, duplicate requests, concurrent actions, conflict recovery, refresh and rollback.
-6. Do not edit generated assets, add secrets, apply production migrations, deploy or modify GitHub issues unless the task authorizes it.
-7. Distinguish **implemented**, **approved target**, **proposed balance** and **blocked by licensing** in docs and reports. Do not invent product decisions.
+1. Use lowercase kebab-case for project-owned filenames/directories; preserve framework/tooling and upstream/generated exceptions. Keep TypeScript symbol conventions unchanged. See `docs/agent/file-naming.md` and run `pnpm check:names`.
+2. Read the affected code, relevant architectural docs and task-specific skill before editing. Keep changes small, typed and testable.
+3. If existing code conflicts with target architecture, implement an **incremental migration**; do not delete working local flows before the server replacement is ready.
+4. Prefer explicit types, pure transformations, server-side validation, parameterized DB operations, migrations and clear errors. Avoid speculative abstractions.
+5. Run `pnpm test`, `pnpm lint` and `pnpm build` for relevant code changes when feasible; report commands not run or failures honestly.
+6. For DB or API changes, include tests for unauthorized users, malformed input, duplicate requests, concurrent actions, conflict recovery, refresh and rollback.
+7. Do not edit generated assets, add secrets, apply production migrations, deploy or modify GitHub issues unless the task authorizes it.
+8. Distinguish **implemented**, **approved target**, **proposed balance** and **blocked by licensing** in docs and reports. Do not invent product decisions.
 
 ## Where to look
 

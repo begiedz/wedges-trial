@@ -1,1 +1,1 @@
-export { TextLockTester } from "./LockTester";
+export { TextLockTester } from "./lock-tester";

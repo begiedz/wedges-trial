@@ -9,6 +9,8 @@ Read `docs/agent/working-agreement.md`, domain docs and current tests.
 
 ## Procedure
 
+Use `tests/<src-relative-path>/<basename>.test.ts(x)` with kebab-case names; place multi-module suites in `tests/integration/` and script tests in `tests/scripts/`. See `docs/agent/file-naming.md`; run `pnpm check:names` and `pnpm test:coverage`.
+
 1. Reproduce a bug with a failing test before fixing when feasible.
 2. Prioritize game invariants, generator solvability, retry and transaction correctness over implementation details.
 3. Keep seeded randomness for reproducible tests; run representative early, threshold and high chest indices.

@@ -1,4 +1,4 @@
-import { checkSolved } from "@/game/checkSolved";
+import { checkSolved } from "@/game/check-solved";
 import type { LockMove, LockState } from "@/game/types";
 
 type SearchNode = {

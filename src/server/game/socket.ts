@@ -3,7 +3,7 @@ import type { ApiErrorResponse, MoveRequest } from "@/api/contracts";
 import type { SocketCommand, SocketReply } from "@/api/realtime";
 import { failureReason } from "./diagnostics";
 import { GameError } from "./errors";
-import { executeMoveBatch } from "./moveBatch";
+import { executeMoveBatch } from "./move-batch";
 import { execute, readRun } from "./service";
 import { isUuid, validateCommand } from "./validation";
 

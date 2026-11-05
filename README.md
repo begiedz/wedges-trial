@@ -97,9 +97,9 @@ The app uses `next/font/google` for Noto Serif and a local heading font. A fresh
 
 Tests cover pin dependencies, valid and invalid moves, pick damage and breakage, generated lock solvability, difficulty progression, solver behavior, server persistence, authorization, idempotency, concurrency, rollback and reset behavior. WebSocket tests cover burst input, prediction and reconnect/replay. Set TEST_DATABASE_URL explicitly to enable the isolated-schema PostgreSQL suite; otherwise it is skipped. React tests cover reward claims, duplicate inputs, dialog interactions, keyboard handling and restart flows.
 
-Run tests, type checking, lint and a production build before submitting relevant code changes. The GitHub Actions workflow currently runs `pnpm test` for pushes and pull requests targeting `development` and `master`; it does not yet run the other checks.
+Run tests, type checking, lint and a production build before submitting relevant code changes. GitHub Actions runs coverage tests, type checking, lint (including naming and architecture guards) and a production build on Ubuntu for pushes and pull requests targeting `development` and `master`.
 
-There are existing repository-wide Biome formatting/import errors. If a full lint run fails, distinguish those from errors introduced by your change and check the files you touched separately.
+Use `pnpm test:coverage` for source-mapped V8 coverage. Generated reports live in ignored `coverage/`.
 
 ## Codebase and architecture
 
@@ -122,10 +122,12 @@ src/
   server/               Validation, authoritative service and Drizzle persistence
   proxy.ts              Locale routing
 
-tests/                  Domain, client, server and architecture regressions
+tests/                  Mirrored source tests; integration/ for multi-module suites
 docs/architecture/      Current state, target design and API contract
 docs/agent/             Contribution workflow and agent documentation
 ```
+
+Project-owned filenames and directories use **lowercase kebab-case**; TypeScript symbols retain `LockPin`, `RunState`, `useLockGame` and `MAX_LOCKPICKS`. Tests mirror `src/` under `tests/`. See [conventions and exceptions](docs/agent/file-naming.md); `pnpm check:names` runs through lint and regression tests.
 
 ### Puzzle generation
 

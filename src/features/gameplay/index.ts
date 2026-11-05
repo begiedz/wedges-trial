@@ -1,2 +1,2 @@
-export { GameClient } from "./components/game/GameClient";
-export { GameplayNavigation } from "./components/game/GameplayNavigation";
+export { GameClient } from "./components/game/game-client";
+export { GameplayNavigation } from "./components/game/gameplay-navigation";

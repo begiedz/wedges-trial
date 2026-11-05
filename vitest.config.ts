@@ -8,7 +8,13 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["tests/**/*.test.ts", "src/features/**/*.test.ts"],
+    include: ["tests/**/*.{test,spec}.{ts,tsx}"],
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/**/*.d.ts"],
+      reporter: ["text", "json-summary", "html"],
+    },
     pool: "threads",
     poolOptions: {
       threads: {

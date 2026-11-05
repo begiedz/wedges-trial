@@ -2,7 +2,7 @@ import type { RunDto } from "@/api/contracts";
 import type { SocketCommand, SocketReply } from "@/api/realtime";
 import type { Direction } from "@/game/types";
 import { GameApiClient, TransportError } from "./api";
-import { CommandQueue } from "./commandQueue";
+import { CommandQueue } from "./command-queue";
 import { SocketTransport } from "./transport";
 
 export class GameChannel {

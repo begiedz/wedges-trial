@@ -1,6 +1,6 @@
 import type { RunDto } from "@/api/contracts";
 import type { SocketCommand } from "@/api/realtime";
-import { applyMove } from "@/game/applyMove";
+import { applyMove } from "@/game/apply-move";
 import type { LockState, RunState } from "@/game/types";
 
 export type Prediction = { run: RunDto; terminal: boolean };

@@ -212,7 +212,7 @@ function checkArchitecture(root = process.cwd()) {
       withFileTypes: true,
     })) {
       const file = `${directory}/${entry.name}`;
-      if (entry.isDirectory() && entry.name !== "__tests__") walk(file);
+      if (entry.isDirectory()) walk(file);
       else if (
         entry.isFile() &&
         /\.[cm]?[jt]sx?$/.test(file) &&

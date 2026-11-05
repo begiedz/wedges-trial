@@ -4,11 +4,13 @@
 
 1. Read **root `AGENTS.md`** for stable requirements and constraints.
 2. Read **`docs/architecture/status.md`** to distinguish current code from planned functionality.
-3. Read [module boundaries and state ownership](../architecture/module-boundaries.md) when changing frontend features or client/server orchestration. Product-specific React code and tests belong in `src/features/<name>/`; routes use minimal feature public APIs, shared UI stays feature-independent, and `pnpm check:architecture` enforces dependency directions. Pick exactly the skills relevant to your work from the registry below; open their `SKILL.md` files.
+3. Read [module boundaries and state ownership](../architecture/module-boundaries.md) when changing frontend features or client/server orchestration. Product-specific React code belongs in `src/features/<name>/`; tests mirror source paths and basenames under `tests/`; routes use minimal feature public APIs, shared UI stays feature-independent, and `pnpm check:architecture` enforces dependency directions. Pick exactly the skills relevant to your work from the registry below; open their `SKILL.md` files.
 4. Read the appropriate architecture page and affected source/test files.
 5. Do small changes and follow `working-agreement.md` before finalizing.
 
 Skills follow the open `SKILL.md` format (frontmatter with `name` and `description`). They are usable as ordinary markdown if a given tool has no native skill discovery. They do **not** rely on branded prompts, proprietary APIs or special model capabilities.
+
+Read [file naming and test placement](file-naming.md) before adding or moving files.
 
 ## Skill registry
 

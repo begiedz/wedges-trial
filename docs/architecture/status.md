@@ -22,9 +22,9 @@ Gameplay has migrated from browser-owned state to server-authoritative PostgreSQ
 
 ## Implementation entrypoints
 
-- UI: src/features/gameplay/components/game/GameClient.tsx and src/features/gameplay/hooks/useGameSession.ts.
+- UI: src/features/gameplay/components/game/game-client.tsx and src/features/gameplay/hooks/use-game-session.ts.
 - Client lifecycle: src/client/game/session.ts; HTTP: api.ts and response.ts.
-- Client command synchronization: src/client/game/channel.ts and commandQueue.ts; prediction.ts and transport.ts own pure prediction and socket lifecycle.
+- Client command synchronization: src/client/game/channel.ts and command-queue.ts; prediction.ts and transport.ts own pure prediction and socket lifecycle.
 - HTTP and upgrade routes: src/app/api/.
 - Validation, orchestration, batching: src/server/game/.
 - Schema and driver: src/server/db/; committed migration history: drizzle/.
@@ -69,3 +69,9 @@ After the requested UI restoration, 177 tests passed and 16 opt-in PostgreSQL te
 Gameplay React components, hooks, dialogs, controls and lock visualization now live in `src/features/gameplay/`, with colocated React tests and a minimal public API for route/layout composition. The existing debug tester belongs to `features/lock-debug`. Shared navigation takes an action slot; it no longer imports gameplay. The reused pin-selection helper belongs to `lib`. Domain, API, session controller and authoritative server behavior are unchanged; no database migration or runtime dependency was added.
 
 `pnpm check:architecture` enforces dependency directions, feature privacy, cycles and transitive server-only dependencies. Lint/tests invoke it in local development and existing CI. Local verification: 209 tests passed; 16 PostgreSQL tests skipped (`TEST_DATABASE_URL` unset; no working local server executable). Type checking, lint and production build passed; existing cursor CSS warning remains. The sandboxed build stalled and was stopped; the build passed outside the sandbox. No browser end-to-end, live database, migration, deployment or GitHub issue mutation was performed. See [criterion-by-criterion acceptance evidence](module-boundaries.md#issue-57-acceptance-evidence--2026-11-05), including the unverified environment-dependent PostgreSQL suite.
+
+## Filename and test conventions (#59) — 2026-11-05
+
+Project-owned source/test filenames now use lowercase kebab-case independently of TypeScript symbols. All tests live under `tests/`, with matching source directories/basenames and explicit multi-module integration suites; this supersedes #57's temporary feature test colocation and coordinates #58's placement convention. Framework/tooling names, third-party assets and generated migration files are preserved. `pnpm check:names` enforces naming and mirroring through lint/CI and regression tests. Vitest discovers the centralized tests and provides V8 coverage through one matching development-only provider. CI adds coverage and production-build checks.
+
+Local verification on a copied, case-sensitive Linux filesystem (Node 22): `pnpm test` and `pnpm test:coverage` each passed all 237 tests, including all 16 PostgreSQL integration tests against disposable PostgreSQL 17. Typecheck, lint and production build passed; the existing cursor CSS warning remains. Coverage maps to renamed sources (62.67% statements/lines, 87.92% branches, 78.51% functions). Syntax comparison of all 127 existing source/test modules confirmed only path/import-order changes. No gameplay, API, stored-data or symbol-naming change; no Neon/production migration, deployment, live browser check or GitHub mutation. See [criterion-by-criterion evidence and rollback](../agent/file-naming.md#issue-59-acceptance-evidence--2026-11-05).

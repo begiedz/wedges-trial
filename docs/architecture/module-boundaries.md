@@ -11,8 +11,8 @@ The #56 responsibility boundaries are retained. The #57 frontend refactor moves 
 | `components/lock/` | `features/gameplay/components/lock/` | Gameplay-only tumbler and pin rendering |
 | General `difficulty`, `movement`, `item-frame` | `features/gameplay/components/game/` | Only game screen/reward dialog use them; no demonstrated site-wide reuse |
 | `components/lock-debug/` | `features/lock-debug/` | Existing development-only debug route, separate from trusted gameplay |
-| `client/game/pinSelection.ts` | `lib/pinSelection.ts` | Pure presentation helper reused by gameplay and debug; no session responsibility |
-| Four React test suites in `tests/` | `features/gameplay/__tests__/` | Tests colocated with their feature; transport/domain/server tests stay in `tests/` |
+| `client/game/pinSelection.ts` | `lib/pin-selection.ts` | Pure presentation helper reused by gameplay and debug; no session responsibility |
+| React test suites | `tests/features/gameplay/`, `tests/integration/gameplay/` | #59 supersedes temporary #57 colocation with mirrored module tests and multi-module integration suites |
 | Navbar imports gameplay events | Shared navbar takes optional `renderAction` slot | Gameplay's `GameplayNavigation` composes it, owns route visibility and dispatches the private confirmation event |
 
 `features/gameplay/index.ts` exports only `GameClient` (game page) and `GameplayNavigation` (locale layout). The debug feature exports only `TextLockTester`. Other files are private; feature internals import one another directly, not through their own public barrel. Generic primitives and site-wide navigation, branding, cards, header and footer remain shared. Dictionaries/provider and assets stay shared without copy changes.
@@ -23,12 +23,12 @@ Migration sequence: inventory consumers and dependency directions; move presenta
 
 ## Adding a feature
 
-1. Put product-specific React UI, hooks, UI state, presentation helpers and tests in `src/features/<name>/`; create only folders with content.
+1. Put product-specific React UI, hooks, UI state and presentation helpers in `src/features/<name>/`; create only folders with content.
 2. Expose only components/interfaces needed by routes in one `index.ts`. Keep Next.js routing/layout/API files in `app` and preserve client directives on interactive entry components.
 3. Routes/layouts compose features and shared site UI. Features consume `client`, contracts and domain as needed, never `app` or `server`. No cross-feature imports, even via another feature's public API: compose at route level instead.
 4. Keep shared primitives feature-independent. Move helpers into shared modules only for demonstrated reuse. Do not move domain, session orchestration or server services into a feature.
 5. Keep trusted resources/outcomes in server-confirmed snapshots and adapt `GameSession` with `useSyncExternalStore`. Feature state is limited to rendering, input selection and dialogs.
-6. Colocate feature tests in `__tests__`; use public APIs from routes and direct private imports only within the owning feature/tests.
+6. Mirror feature tests under `tests/features/<name>/` with matching kebab-case basenames; use `tests/integration/` for multi-module suites (see [naming rules](../agent/file-naming.md)); use public APIs from routes and direct private imports only within the owning feature/tests.
 
 ## Automated enforcement
 
@@ -43,13 +43,13 @@ The check covers aliases and relative paths, imports/re-exports, literal dynamic
 | `src/game/` | Pure movement, damage, generation, reset, progression and rewards | Other domain modules/types only |
 | `src/api/` | Public HTTP/socket contracts | Domain types/constants; never server implementation |
 | `src/server/game/engine.ts` | Authoritative transitions, metrics and public DTO projection | Domain rules, stored types and safe application errors |
-| `src/server/game/service.ts`, `moveBatch.ts` | Run operations and transaction boundaries | Engine, persistence helpers and DB schema/driver |
+| `src/server/game/service.ts`, `move-batch.ts` | Run operations and transaction boundaries | Engine, persistence helpers and DB schema/driver |
 | `src/server/game/persistence.ts` | Owner locking, owned reads, fingerprints, replay checks, version checks and writes | DB infrastructure, stored types and DTO projection |
 | `src/server/game/session.ts` | Anonymous credentials, session lookup/bootstrap/expiry | Node crypto and DB infrastructure |
 | `src/server/game/http.ts`, `socket.ts`, `src/app/api/` | Input limits, authentication/origin checks and transport replies | Validation and application/session services |
 | `src/client/game/api.ts`, `response.ts` | HTTP requests, deadlines, status errors and runtime snapshot validation | Public contracts and domain constant |
 | `src/client/game/transport.ts` | Socket handshake, heartbeat replies, reconnect/backoff and upgrade fallback signal | Public socket contracts; no game state or command queue |
-| `src/client/game/commandQueue.ts`, `prediction.ts` | Confirmed snapshots, ordered pending intents and pure visual prediction | Contracts and pure domain moves |
+| `src/client/game/command-queue.ts`, `prediction.ts` | Confirmed snapshots, ordered pending intents and pure visual prediction | Contracts and pure domain moves |
 | `src/client/game/channel.ts` | Sending queued commands, acknowledgements, HTTP fallback and conflict resync | Queue, prediction through queue, transport and HTTP client |
 | `src/client/game/session.ts` | Bootstrap/restore, lifecycle commands, pending HTTP retries and channel lifetime | HTTP client/channel; no React, URL access or dialogs |
 | `src/features/gameplay/` | React subscription, URL synchronization, dialogs, keyboard and rendering | Client application APIs, contracts and localized presentation |
@@ -108,6 +108,6 @@ Statuses describe local source and automated verification. They do not establish
 | Unit/integration test gate, skips reported | PASS | `pnpm test`: 209 passed, 16 opt-in PostgreSQL tests skipped because `TEST_DATABASE_URL` unset |
 | Production build gate | PASS | `pnpm build` outside sandbox; sandboxed build stalled and was stopped |
 | Environment-dependent PostgreSQL regressions | NOT VERIFIED | No configured test URL; attempted disposable local setup unavailable because installed PostgreSQL files lack a server executable. No Neon/production connection used |
-| Documentation/imports/test paths reflect final implementation | PASS | Ownership/migration guide above, updated READMEs/status/backend/agent guidance; Vitest includes colocated feature tests |
+| Documentation/imports/test paths reflect final implementation | PASS | Ownership/migration guide above, updated READMEs/status/backend/agent guidance; Vitest included colocated feature tests at #57; superseded by the #59 centralized convention |
 
 No deployment, database migration, live browser end-to-end check or GitHub issue mutation was performed. Rollback is a source-only revert; no stored data or wire-version conversion is needed.

@@ -32,11 +32,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run tests
-        run: pnpm test
+      - name: Run tests with coverage
+        run: pnpm test:coverage
 
       - name: Check TypeScript
         run: pnpm typecheck
 
       - name: Run lint
         run: pnpm lint
+
+      - name: Build production application
+        run: pnpm build

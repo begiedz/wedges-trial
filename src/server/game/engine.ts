@@ -1,13 +1,13 @@
 import type { PublicLockDto, RunDto } from "@/api/contracts";
-import { evaluateMove } from "@/game/applyMove";
+import { evaluateMove } from "@/game/apply-move";
 import { MAX_INVALID_MOVES_PER_PICK } from "@/game/constants";
-import { createLock } from "@/game/createLock";
-import { createRun } from "@/game/createRun";
+import { createLock } from "@/game/create-lock";
+import { createRun } from "@/game/create-run";
 import {
   getDifficultyBand,
   getDifficultyForChest,
-} from "@/game/progressDifficulty";
-import { cloneLockState, resetCurrentLock } from "@/game/resetLock";
+} from "@/game/progress-difficulty";
+import { cloneLockState, resetCurrentLock } from "@/game/reset-lock";
 import { getDeterministicOre, getLockpickReward } from "@/game/rewards";
 import { RULESET_VERSION } from "@/game/ruleset";
 import type { Direction } from "@/game/types";
