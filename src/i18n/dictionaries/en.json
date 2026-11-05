@@ -218,6 +218,25 @@
       "loading": "Waiting for the server…",
       "error": "The action could not be confirmed. Retry to recover your game.",
       "retry": "Retry"
+    },
+    "leaderboardClaim": {
+      "title": "TOP 1000",
+      "checking": "Checking leaderboard eligibility…",
+      "qualified": "Your run qualifies. Enter a public nickname to submit it.",
+      "nickname": "Nickname",
+      "help": "1–24 characters, without control characters. This is a public label, not an account.",
+      "invalid": "Enter a nickname of 1–24 characters without control characters.",
+      "submit": "Submit score",
+      "submitting": "Submitting…",
+      "retry": "Retry",
+      "network": "Could not reach the leaderboard. Retry to check or complete your submission.",
+      "expired": "Your session is no longer available. This result cannot be submitted from this browser.",
+      "noLongerQualified": "This run no longer qualifies for TOP 1000. You can start a new run.",
+      "alreadyClaimed": "This run has already been submitted.",
+      "saved": "Your score was submitted.",
+      "notQualified": "This run does not qualify for TOP 1000. You can start a new run.",
+      "continue": "Continue",
+      "description": "Submit your finished run to the leaderboard if it qualifies."
     }
   },
   "debug": {

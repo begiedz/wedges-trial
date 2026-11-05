@@ -256,8 +256,10 @@ export function GameClient() {
         />
       )}
       <RunFailedDialog
+        key={run.id}
         open={run.status === "finished" && !restartOpen && !error}
         result={run.result}
+        runId={run.status === "finished" ? run.id : undefined}
         onNewRun={requestNewRun}
       />
       <RestartRunDialog

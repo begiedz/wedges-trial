@@ -49,16 +49,16 @@ describe("endless ore leaderboard policy", () => {
     ).toBe(0);
   });
 
-  it.each([0, 99, 100, 101])(
+  it.each([0, 99, 100, 999, 1000, 1001])(
     "computes cutoff with %i claims without mutating the snapshot",
     (count) => {
       const claims = Array.from({ length: count }, (_, i) =>
         entry(i + 1),
       ).reverse();
       const snapshot = structuredClone(claims);
-      const low = finished(999);
+      const low = finished(9999);
       expect(qualifyRun(low, claims)).toEqual(
-        count < 100
+        count < 1000
           ? { eligible: true, rank: count + 1 }
           : { eligible: false, reason: "below_cutoff" },
       );
@@ -70,7 +70,7 @@ describe("endless ore leaderboard policy", () => {
     },
   );
 
-  it("accepts a zero-score valid finish while fewer than 100 claims exist", () => {
+  it("accepts a zero-score valid finish while fewer than 1000 claims exist", () => {
     const run = finished();
     run.game.state.oreNuggets = 0;
     run.game.openedChests = 0;
@@ -78,13 +78,13 @@ describe("endless ore leaderboard policy", () => {
   });
 
   it("allows multiple runs by one owner and prevents reclaiming a displaced run", () => {
-    const claims = Array.from({ length: 101 }, (_, i) => entry(i));
-    expect(qualifyRun(finished(101), [])).toEqual({ eligible: true, rank: 1 });
-    expect(qualifyRun(finished(100), claims)).toEqual({
+    const claims = Array.from({ length: 1001 }, (_, i) => entry(i));
+    expect(qualifyRun(finished(1001), [])).toEqual({ eligible: true, rank: 1 });
+    expect(qualifyRun(finished(1000), claims)).toEqual({
       eligible: false,
       reason: "already_claimed",
     });
-    const stronger = finished(102);
+    const stronger = finished(1002);
     stronger.game.state.oreNuggets++;
     expect(qualifyRun(stronger, claims)).toEqual({ eligible: true, rank: 1 });
   });
@@ -142,10 +142,10 @@ describe("endless ore leaderboard policy", () => {
   });
 
   it("rechecks changing cutoffs without reserving a slot", () => {
-    const run = finished(999);
-    const claims = Array.from({ length: 99 }, (_, i) => entry(i));
-    expect(qualifyRun(run, claims)).toEqual({ eligible: true, rank: 100 });
-    expect(qualifyRun(run, [...claims, entry(100)])).toEqual({
+    const run = finished(9999);
+    const claims = Array.from({ length: 999 }, (_, i) => entry(i));
+    expect(qualifyRun(run, claims)).toEqual({ eligible: true, rank: 1000 });
+    expect(qualifyRun(run, [...claims, entry(1000)])).toEqual({
       eligible: false,
       reason: "below_cutoff",
     });

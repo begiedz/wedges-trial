@@ -1011,11 +1011,11 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
     ).rejects.toMatchObject({ code: "23503" });
   });
 
-  it("reads only the best 100 claimed runs with cohort and chronological tie breaks", async () => {
-    const finished = Array.from({ length: 103 }, (_, i) => {
+  it("reads only the best 1000 claimed runs with cohort and chronological tie breaks", async () => {
+    const finished = Array.from({ length: 1003 }, (_, i) => {
       const run = newRun(randomUUID(), otherId);
       run.status = "finished";
-      run.rulesetVersion = i === 102 ? "future" : run.rulesetVersion;
+      run.rulesetVersion = i === 1002 ? "future" : run.rulesetVersion;
       run.game.finishedAt =
         i === 0 ? "2026-01-01T13:00:00+01:00" : "2026-01-01T12:00:00Z";
       run.game.state.lockpicks = 0;
@@ -1027,18 +1027,18 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
     await db.insert(schema.runs).values(finished);
     await db.insert(schema.leaderboardEntries).values(
       finished
-        .slice(0, 101)
-        .concat(finished[102])
+        .slice(0, 1001)
+        .concat(finished[1002])
         .map((r) => ({ runId: r.id, nickname: "Wedge" })),
     );
     const top = await readTopRuns();
-    expect(top).toHaveLength(100);
+    expect(top).toHaveLength(1000);
     expect(top.map((r) => r.runId)).toEqual(
       finished
-        .slice(0, 101)
+        .slice(0, 1001)
         .map((r) => r.id)
         .sort()
-        .slice(0, 100),
+        .slice(0, 1000),
     );
     expect(top.every((r) => r.oreNuggets === 1000)).toBe(true);
   });
@@ -1060,8 +1060,8 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
       run.game.state.oreNuggets = 2000 + index;
       return run;
     });
-    // Fill 99 slots above both candidates; existing 1000-ore entries sit below them.
-    const fillers = Array.from({ length: 99 }, () => {
+    // Fill 999 slots above both candidates; existing 1000-ore entries sit below them.
+    const fillers = Array.from({ length: 999 }, () => {
       const run = structuredClone(candidates[0]);
       run.id = randomUUID();
       run.game.state.oreNuggets = 3000;
@@ -1074,7 +1074,7 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
     const [weak, strong] = candidates;
     expect(await readEligibility(weak.ownerId, weak.id)).toEqual({
       eligible: true,
-      rank: 100,
+      rank: 1000,
     });
     const strongInput = { actionId: actionId(), nickname: "Strong" };
     expect(

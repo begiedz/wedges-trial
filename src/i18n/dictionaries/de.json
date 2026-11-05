@@ -218,6 +218,25 @@
       "loading": "Warten auf den Server…",
       "error": "Die Aktion konnte nicht bestätigt werden. Versuche es erneut, um das Spiel wiederherzustellen.",
       "retry": "Erneut versuchen"
+    },
+    "leaderboardClaim": {
+      "title": "TOP 1000",
+      "checking": "Bestenlistenqualifikation wird geprüft…",
+      "qualified": "Dein Ergebnis qualifiziert sich. Gib einen öffentlichen Spitznamen ein, um es einzutragen.",
+      "nickname": "Spitzname",
+      "help": "1–24 Zeichen, ohne Steuerzeichen. Dies ist eine öffentliche Bezeichnung, kein Konto.",
+      "invalid": "Gib einen Spitznamen mit 1–24 Zeichen ohne Steuerzeichen ein.",
+      "submit": "Ergebnis eintragen",
+      "submitting": "Wird eingetragen…",
+      "retry": "Erneut versuchen",
+      "network": "Die Bestenliste ist nicht erreichbar. Versuche es erneut, um die Eintragung zu prüfen oder abzuschließen.",
+      "expired": "Deine Sitzung ist nicht mehr verfügbar. Dieses Ergebnis kann in diesem Browser nicht eingetragen werden.",
+      "noLongerQualified": "Dieses Ergebnis qualifiziert sich nicht mehr für die TOP 1000. Du kannst eine neue Runde starten.",
+      "alreadyClaimed": "Dieses Ergebnis wurde bereits eingetragen.",
+      "saved": "Dein Ergebnis wurde eingetragen.",
+      "notQualified": "Dieses Ergebnis qualifiziert sich nicht für die TOP 1000. Du kannst eine neue Runde starten.",
+      "continue": "Weiter",
+      "description": "Trage deine abgeschlossene Runde ein, wenn sie sich qualifiziert."
     }
   },
   "debug": {

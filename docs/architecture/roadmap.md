@@ -28,7 +28,7 @@ Next: ranking storage/query, finished-run qualification and atomic nickname clai
 
 - Avoid building public ranking on unverified client scores.
 - Do not prompt nickname on first visit; claim leaderboard placement after a qualifying server-verified Game Over only.
-- Rank claimed runs, not one best score per persistent player. Recheck dynamic TOP 100 cutoff atomically at claim time.
+- Rank claimed runs, not one best score per persistent player. Recheck dynamic TOP 1000 cutoff atomically at claim time.
 - Finalize scoring semantics and verified solver metadata before freezing competitive score formula.
 - Keep server persistence as the source of truth; the legacy local save has been removed.
 - Do not publish Gothic Remake recordings while clearance is unresolved; the audio player can be built against licensed placeholders.

@@ -117,6 +117,9 @@ export type ApiErrorResponse = {
   };
 };
 
+/** Shared qualification/read capacity; page size remains independently bounded. */
+export const LEADERBOARD_SIZE = 1000;
+
 export type LeaderboardQuery = {
   limit?: number;
   cursor?: string;

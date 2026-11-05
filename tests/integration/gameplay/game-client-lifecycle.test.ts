@@ -90,8 +90,12 @@ describe("game dialogs after confirmed server transitions", () => {
             outcome: status === "finished" ? "run_finished" : "chest_opened",
           }),
         );
+      if (status === "finished")
+        fetchMock.mockResolvedValueOnce(ok({ eligible: true, rank: 1 }));
       render(createElement(GameClient), { wrapper });
       await screen.findByText("Chest: #1");
+      expect(screen.queryByRole("textbox")).toBeNull();
+      expect(fetchMock).toHaveBeenCalledTimes(2);
       fireEvent.keyDown(window, { key: "a" });
       expect(
         await screen.findByRole("dialog", {
@@ -106,8 +110,29 @@ describe("game dialogs after confirmed server transitions", () => {
           screen.getByText(en.game.dialogs.failed.moves).parentElement
             ?.textContent,
         ).toContain("84");
+        expect(screen.queryByRole("textbox")).toBeNull();
+        expect(fetchMock).toHaveBeenCalledTimes(3);
+        fireEvent.click(
+          screen.getByRole("button", {
+            name: en.game.leaderboardClaim.continue,
+          }),
+        );
+        expect(
+          screen.queryByRole("dialog", { name: en.game.dialogs.failed.title }),
+        ).toBeNull();
+        expect(
+          await screen.findByRole("dialog", {
+            name: en.game.leaderboardClaim.title,
+          }),
+        ).toBeTruthy();
+        await screen.findByRole("textbox", {
+          name: en.game.leaderboardClaim.nickname,
+        });
+        expect(fetchMock.mock.calls[3][0]).toBe(
+          `/api/runs/${start.id}/leaderboard-eligibility`,
+        );
       }
-      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(fetchMock).toHaveBeenCalledTimes(status === "finished" ? 4 : 3);
     },
   );
 });

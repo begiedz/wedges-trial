@@ -15,7 +15,7 @@ The server computes all trusted state, damage, rewards and final results. Client
 
 ## Remaining release controls
 
-Distributed rate limits, measured compute budgets, monitoring and deployed reconnect/expiry checks remain work. Private leaderboard claims authenticate finished-run ownership, validate names, recheck TOP 100 cutoff under a cohort transaction lock and enforce one claim per run with atomic action replay. Public ranking reads and nickname UI remain separate work. Nicknames are presentation only, never authentication.
+Distributed rate limits, measured compute budgets, monitoring and deployed reconnect/expiry checks remain work. Private leaderboard claims authenticate finished-run ownership, validate names, recheck TOP 1000 cutoff under a cohort transaction lock and enforce one claim per run with atomic action replay. Public ranking reads and nickname UI remain separate work. Nicknames are presentation only, never authentication.
 
 Keep Preview/development and Production databases isolated; tests must never use Production. Migration credentials remain server-only. Asset redistribution requires a provenance/licensing audit independently of application security.
 

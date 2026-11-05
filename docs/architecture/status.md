@@ -6,11 +6,11 @@ Gameplay has migrated from browser-owned state to server-authoritative PostgreSQ
 | --- | --- | --- |
 | Gameplay | Server generation, moves, reset, rewards, continue, abandon and finalization | Difficulty calibration and late-game performance measurements |
 | Persistence | Neon/PostgreSQL, Drizzle migrations, atomic versioned actions and replay records | Scheduling/monitoring of conservative manual retention |
-| Identity | Anonymous hashed-token sessions; protected cookie; authenticated private eligibility and nickname claims | Nickname claim UI and deployed expiry/reconnect checks |
+| Identity | Anonymous hashed-token sessions; protected cookie; authenticated private eligibility, nickname claims and localized Game Over entry | Deployed expiry/reconnect checks |
 | Transport | Vercel-native WebSocket, ordered inputs, immediate visual prediction and reconciliation; HTTP recovery/fallback | Deployed WebSocket performance and reconnect verification |
 | Client | React adapter over a framework-independent session controller; no gameplay localStorage/sessionStorage | Ranking UI |
 | Balance | Approved deterministic ore; reset and continuation preserve pick damage; endless ore ranking approved under #51 | Pick replenishment calibration and release abuse controls |
-| Ranking | Finished runs/metrics, ordering policy, claim storage, internal TOP 100 reads and atomic private eligibility/claim orchestration | Public read/cursor endpoints and nickname UI |
+| Ranking | Finished runs/metrics, ordering policy, claim storage, internal TOP 1000 reads and atomic private eligibility/claim orchestration | Public read/cursor endpoints and ranking screen |
 | Audio/assets | Existing visual assets | Provenance audit; optional music/SFX controls |
 
 ## Verification boundaries
@@ -95,3 +95,23 @@ Local verification: all 262 tests passed, including all 19 PostgreSQL integratio
 Reviewed the existing authoritative final-move transaction, immutable terminal storage, private eligibility/claim service and conservative retention against #39. No runtime change was necessary. Added focused PostgreSQL regressions for both HTTP action execution and socket batching: rollback on final-action replay persistence failure, concurrent identical retries, stable final score/counters/timestamp, rejection of all subsequent lifecycle mutations, direct SQL immutability, active lookup exclusion and eligible unclaimed results remaining absent from ranking reads. See [criterion-by-criterion acceptance evidence](backend.md#issue-39-acceptance-evidence--2026-11-05).
 
 Local verification: `pnpm test` and `pnpm test:coverage` each passed all 264 tests, including all 21 PostgreSQL integration tests against disposable local PostgreSQL 17. Type checking, lint (including naming/architecture checks) and production build passed; the existing cursor CSS warning remains. Database tests and the successful build ran outside the sandbox; the restricted Turbopack build stalled and was stopped. The disposable test container was removed. No browser end-to-end check, Neon/production migration, deployment or GitHub issue mutation was performed. Public leaderboard pagination and nickname UI remain separate work.
+
+## Post-run nickname form (#34) — 2026-11-05
+
+Finished-run Game Over now checks private server eligibility and offers nickname entry only to qualifiers, with EN/PL/DE/RU validation, pending/success states, changed-cutoff/already-claimed messages, session-expiry handling and network retry. Unknown submissions retain their exact action ID/name; synchronous guarding prevents duplicate clicks. Names render as plain text; no nickname/profile is requested before play, and no local storage or client score is introduced. Existing #33 transactions remain authoritative. See [criterion-by-criterion evidence](backend.md#game-over-nickname-entry-34).
+
+Local verification: `pnpm test` and `pnpm test:coverage` each passed all 299 tests, including all 21 PostgreSQL integration tests against disposable local PostgreSQL 17. Type checking, lint, naming/architecture checks and production build passed; lint retains the existing cursor CSS warning. PostgreSQL tests and build ran outside the sandbox. No browser/device visual or deployed end-to-end verification, Neon/production migration, deployment or GitHub issue mutation was performed. No schema/wire/ruleset change is required; public ranking reads/pagination and the ranking screen remain #24/#46 work.
+
+## TOP 1000 and sequential result/claim modals — 2026-11-05
+
+The task author approved expanding qualification to the best 1000 claimed finished runs and paginated browsing. A shared capacity now drives server policy, bounded internal reads and client response validation. The atomic cutoff recheck, ordering, owner checks, durable claims and replay semantics are unchanged. Existing results remain in deterministic-ore-v1; no schema migration/backfill or score change is required.
+
+Game Over shows statistics first; Continue closes it and opens a separate leaderboard modal, where eligibility is requested and qualifiers may enter a nickname. The four dictionaries now describe TOP 1000. The planned public contract specifies 25 entries/page by default, up to 100/request and at most 1000 per frozen cursor traversal. At the task author's explicit request, public pagination/API/snapshot storage and ranking screen remain unimplemented #24/#46 work. See [approved decision and rollback](decisions.md#approved-capacity-pagination-and-modal-flow--2026-11-05).
+
+| Requested change | Status | Evidence |
+| --- | --- | --- |
+| Expand qualification to 1000 | PASS | Policy tests cover 0/99/100/999/1000/1001 claims, eligibility at rank 1000 and rejection after cutoff changes. PostgreSQL tests read exactly the best 1000 claimed results and serialize competing claims at rank 1000. Client accepts the expanded range and rejects rank 1001. |
+| Define paginated leaderboard assumptions | PASS | API/competitive-ranking contract and decision ledger specify total capacity independently of page size, frozen snapshot traversal and navigation. Public implementation is explicitly out of scope. |
+| Nickname prompt follows Game Over in a separate modal | PASS | Four-language `run-failed-dialog.test.tsx` verifies the result precedes eligibility, Continue replaces it with exactly one leaderboard modal, and nonqualifiers can start again without a form. The HTTP-backed gameplay lifecycle regression checks the same ordering. |
+
+Local verification: `pnpm test` and `pnpm test:coverage` each passed all 306 tests, including all 21 PostgreSQL integration tests against disposable local PostgreSQL 17. Type checking, lint, naming/architecture checks and production build passed; lint retains the existing cursor CSS warning. Tests requiring localhost and the build ran outside the sandbox. No live browser/device visual verification, Neon/production migration, deployment or GitHub issue mutation was performed. Earlier dated entries retain the historical TOP 100 verification context; this section supersedes that capacity and the original inline #34 form.

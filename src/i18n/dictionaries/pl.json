@@ -218,6 +218,25 @@
       "loading": "Oczekiwanie na serwer…",
       "error": "Nie udało się potwierdzić akcji. Ponów, aby odzyskać stan gry.",
       "retry": "Ponów"
+    },
+    "leaderboardClaim": {
+      "title": "TOP 1000",
+      "checking": "Sprawdzanie kwalifikacji do rankingu…",
+      "qualified": "Twój wynik kwalifikuje się. Wpisz publiczny pseudonim, aby go zgłosić.",
+      "nickname": "Pseudonim",
+      "help": "1–24 znaki, bez znaków sterujących. To publiczna etykieta, nie konto.",
+      "invalid": "Wpisz pseudonim o długości 1–24 znaków, bez znaków sterujących.",
+      "submit": "Zgłoś wynik",
+      "submitting": "Wysyłanie…",
+      "retry": "Ponów",
+      "network": "Nie udało się połączyć z rankingiem. Ponów, aby sprawdzić lub dokończyć zgłoszenie.",
+      "expired": "Twoja sesja nie jest już dostępna. Nie można zgłosić tego wyniku z tej przeglądarki.",
+      "noLongerQualified": "Ten wynik nie kwalifikuje się już do TOP 1000. Możesz rozpocząć nową grę.",
+      "alreadyClaimed": "Ten wynik został już zgłoszony.",
+      "saved": "Twój wynik został zgłoszony.",
+      "notQualified": "Ten wynik nie kwalifikuje się do TOP 1000. Możesz rozpocząć nową grę.",
+      "continue": "Dalej",
+      "description": "Zgłoś ukończoną grę do rankingu, jeśli wynik się kwalifikuje."
     }
   },
   "debug": {

@@ -40,7 +40,7 @@ export function validateClaim(value: unknown): LeaderboardClaimRequest {
 }
 
 async function qualification(tx: Transaction, run: StoredRun) {
-  // A displaced claim still counts as claimed, even outside the bounded TOP 100.
+  // A displaced claim still counts as claimed, even outside the bounded TOP 1000.
   const [claimed] = await tx
     .select({ runId: leaderboardEntries.runId })
     .from(leaderboardEntries)

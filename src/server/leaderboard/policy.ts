@@ -1,8 +1,11 @@
-import type { LeaderboardQualification } from "@/api/contracts";
+import {
+  LEADERBOARD_SIZE,
+  type LeaderboardQualification,
+} from "@/api/contracts";
 import { RULESET_VERSION } from "@/game/ruleset";
 import type { StoredRun } from "@/server/game/types";
 
-export const LEADERBOARD_SIZE = 100;
+export { LEADERBOARD_SIZE } from "@/api/contracts";
 
 /** Derived only from persisted finished runs, never from request bodies. */
 export type RankedRun = {

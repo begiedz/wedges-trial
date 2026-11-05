@@ -11,7 +11,7 @@ This is the **decision ledger**. Do not upgrade a proposal into an invariant wit
 | Server authority | Browser sends actions only; server computes transitions and score | #35–#42 |
 | No client save | Remove gameplay `localStorage`; restore from server session | #40, #41 |
 | Anonymous gameplay | Opaque HttpOnly session cookie; no login or nickname before play | #33, #34 |
-| Arcade name entry | Ask nickname only when a finished server-verified run qualifies for TOP 100; no permanent public player profile required | #24, #34, #46 |
+| Arcade name entry | Ask nickname only when a finished server-verified run qualifies for TOP 1000; no permanent public player profile required | #24, #34, #46 |
 | Run-based leaderboard | Rank claimed finished runs; multiple runs may share nickname or anonymous owner | #24, #25 |
 | Endless primary mode | Random solvable puzzles, escalating difficulty; ore-based survival ranking, no bounded ranked mode for v1 | #48, #51 |
 | Game resources | Ore nuggets and lockpicks only; ore is rank score | #24, #47 |
@@ -38,9 +38,9 @@ This is the **decision ledger**. Do not upgrade a proposal into an invariant wit
 - Update this ledger, `AGENTS.md` (only if core rules change), gameplay docs, tests and UI copy together.
 - For changed ranking/rewards, decide whether scores require a `rulesetVersion` split to avoid mixing incomparable runs.
 
-## Arcade TOP 100 qualification (accepted)
+## Arcade TOP 1000 qualification (accepted)
 
-- Under 100 claimed entries: every valid server-finished run may claim a place. At 100 entries: a run must outrank the current last entry under deterministic ordering.
+- Under 1000 claimed entries: every valid server-finished run may claim a place. At 1000 entries: a run must outrank the current last entry under deterministic ordering.
 - Game Over eligibility is a snapshot, not a reservation. On nickname submission the backend must recheck atomically; racing submissions may displace a provisional qualifier.
 - No unclaimed run appears in public results. Duplicate submissions for a run are prevented. Names do not establish identity or uniqueness.
 - Safe deletion/expiry of old, unqualified run records is allowed after preserving active sessions, claims and required replay windows. Exact TTL remains an implementation decision.
@@ -57,7 +57,7 @@ The task author explicitly requested WebSockets after testing the blocking per-m
 
 The task author selected endless ore ranking. Keep endless as the primary mode; v1 has no bounded ranked challenge, duration cap, or excess-valid-move/optimum penalty. Rank each claimed, server-finished run by **credited ore DESC, opened chests DESC, finished_at ASC, run UUID ASC**. Finish time compares instants, not timestamp strings; UUIDs use PostgreSQL UUID order (canonical lowercase in TypeScript). Names and owner IDs never break ties or deduplicate entries. Zero-ore finished runs qualify while space exists. Abandoned and active runs never qualify.
 
-The pure policy is implemented in `src/server/leaderboard/policy.ts`: it projects a persisted final result, compares ranks and evaluates a snapshot of claimed runs. The policy is not an endpoint or an atomic claim service. Snapshot eligibility reserves nothing. Retain displaced claims (query only TOP 100) so one run cannot reclaim; claim uniqueness and cutoff recheck must share a database transaction under #24/#46. Compare only the same ruleset. The active cohort remains `deterministic-ore-v1`, since this decision changes no gameplay rewards. Any future change to ore, replenishment, difficulty or run limits that affects score comparability requires a new ruleset and separate ranking cohort, rather than silently mixing historic scores.
+The pure policy is implemented in `src/server/leaderboard/policy.ts`: it projects a persisted final result, compares ranks and evaluates a snapshot of claimed runs. The policy is not an endpoint or an atomic claim service. Snapshot eligibility reserves nothing. Retain displaced claims (query only TOP 1000) so one run cannot reclaim; claim uniqueness and cutoff recheck must share a database transaction under #24/#46. Compare only the same ruleset. The active cohort remains `deterministic-ore-v1`, since this decision changes no gameplay rewards. Any future change to ore, replenishment, difficulty or run limits that affects score comparability requires a new ruleset and separate ranking cohort, rather than silently mixing historic scores.
 
 Retain current random pick replenishment for this cohort; a deterministic replacement and calibration remain open. This ranking measures endless survival and ore accumulation, not equal-puzzle efficiency or freedom from luck. See [competitive ranking](competitive-ranking.md) for sustain analysis, release risks and linked implementation contracts.
 
@@ -66,3 +66,13 @@ Retain current random pick replenishment for this cohort; a deterministic replac
 The earlier deterministic-ore-v1 and #51 approvals govern the older #47 proposal: keep the integer ore curve and 40% floor, apply no excess-valid-move penalty, and retain random pick replenishment. This implementation centralizes tuning, documents the calculation at `getDeterministicOre()` and records a seeded resource simulation in [gameplay](gameplay.md#reward-transparency-and-balance-evidence-47--2026-11-05). No new balance decision or ruleset split is introduced. Random sustain and player/difficulty calibration remain open release work; deterministic ore alone does not make endless runs finite.
 
 The task author subsequently requested the original reward UI with no calculation details. The breakdown UI requirement from #47 is superseded; keep reward items and total ore only, with rules explained in the calculation function’s code comment.
+
+## Approved capacity, pagination and modal flow — 2026-11-05
+
+The task author expanded arcade qualification from TOP 100 to **TOP 1000 claimed finished runs** and requested paginated browsing. The existing run-based identity remains: nicknames are nonunique labels, multiple runs by one anonymous owner may rank, and this does not deduplicate people. Below 1000 claims every valid finished run may submit; at capacity a candidate must outrank the current 1000th. Eligibility remains provisional and is rechecked atomically on submission. Displaced claims remain durable.
+
+The public read contract retains frozen cursor pagination, 25 entries per page by default and a maximum request size of 100; the entire traversal is bounded to 1000 entries. Qualification is independent of page size. The task author explicitly scoped this change to contract, qualification and modals; public read endpoints, snapshot storage and ranking page remain future #24/#46 work. No GitHub issue mutation is implied.
+
+Game Over shows statistics first. Continue closes that modal and opens a separate leaderboard modal; eligibility is fetched there, with nickname entry only for qualifiers and a new-run action for every outcome. This supersedes #34's original inline form. All four languages retain error/retry/expired-session states.
+
+The shared `LEADERBOARD_SIZE` constant in `src/api/contracts.ts` drives policy, bounded SQL reads and client response validation. This expands publication capacity without changing gameplay rewards, ordering or stored results, so `deterministic-ore-v1` stays unchanged. No migration/backfill is required. Historical action replies are replayed unchanged, including old ranks or rejected qualification snapshots; a fresh eligibility read/new claim action uses the new cutoff. Rollback restores the old capacity/UI but retains all durable claims and results, including claims outside the reduced cutoff.
