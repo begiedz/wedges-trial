@@ -1,4 +1,5 @@
 import { checkSolved } from "@/game/check-solved";
+import { evaluateRule } from "@/game/movement";
 import type { LockMove, LockState } from "@/game/types";
 
 type SearchNode = {
@@ -19,15 +20,41 @@ function joinPaths(forward: SearchNode, backward: SearchNode): LockMove[] {
   return path;
 }
 
-export function solveLock(
-  lock: LockState,
-  maxVisitedStates = 20_000,
-): LockMove[] | null {
-  if (checkSolved(lock)) {
-    return [];
+export const DEFAULT_SOLVER_BUDGET = 20_000;
+
+export type SolveResult =
+  | { kind: "found"; solution: LockMove[]; visitedStates: number }
+  | { kind: "budget-exhausted" | "unsolvable"; visitedStates: number };
+
+/** Replays every action using gameplay's atomic movement evaluator. */
+export function verifySolution(lock: LockState, solution: LockMove[]): boolean {
+  let pins = lock.pins;
+  for (const move of solution) {
+    if (checkSolved({ pins })) return false;
+    const rule = lock.rules.find(
+      (rule) =>
+        rule.sourcePinId === move.pinId && rule.direction === move.direction,
+    );
+    if (!rule) return false;
+    const result = evaluateRule(pins, rule);
+    if (result.kind !== "valid") return false;
+    pins = result.pins;
   }
-  if (maxVisitedStates < 2) {
-    return null;
+  return checkSolved({ pins });
+}
+
+/** Complete BFS layers prove shortest distance; only an exhausted reachable
+ * frontier proves unsolvability. Reaching the state cap proves neither.
+ */
+export function solveLockDetailed(
+  lock: LockState,
+  maxVisitedStates = DEFAULT_SOLVER_BUDGET,
+): SolveResult {
+  if (checkSolved(lock)) {
+    return { kind: "found", solution: [], visitedStates: 1 };
+  }
+  if (!Number.isSafeInteger(maxVisitedStates) || maxVisitedStates < 2) {
+    return { kind: "budget-exhausted", visitedStates: 0 };
   }
 
   const pinIndices = new Map(lock.pins.map((pin, index) => [pin.id, index]));
@@ -95,10 +122,23 @@ export function solveLock(
         };
         const meeting = otherVisited.get(key);
         if (meeting) {
-          return forward ? joinPaths(next, meeting) : joinPaths(meeting, next);
+          const solution = forward
+            ? joinPaths(next, meeting)
+            : joinPaths(meeting, next);
+          if (!verifySolution(lock, solution)) {
+            throw new Error("Solver reconstructed an illegal solution");
+          }
+          return {
+            kind: "found",
+            solution,
+            visitedStates: forwardVisited.size + backwardVisited.size,
+          };
         }
         if (forwardVisited.size + backwardVisited.size >= maxVisitedStates) {
-          return null;
+          return {
+            kind: "budget-exhausted",
+            visitedStates: forwardVisited.size + backwardVisited.size,
+          };
         }
         visited.set(key, next);
         nextFrontier.push(next);
@@ -111,5 +151,19 @@ export function solveLock(
       backwardFrontier = nextFrontier;
     }
   }
-  return null;
+  return {
+    kind: "unsolvable",
+    visitedStates: forwardVisited.size + backwardVisited.size,
+  };
+}
+
+/** Compatibility helper for visual/debug callers. Null never proves unsolvability;
+ * generation and diagnostics must inspect solveLockDetailed instead.
+ */
+export function solveLock(
+  lock: LockState,
+  maxVisitedStates = DEFAULT_SOLVER_BUDGET,
+): LockMove[] | null {
+  const result = solveLockDetailed(lock, maxVisitedStates);
+  return result.kind === "found" ? result.solution : null;
 }

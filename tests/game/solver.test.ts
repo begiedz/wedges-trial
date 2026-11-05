@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { applyMoveToLock } from "@/game/apply-move";
 import { checkSolved } from "@/game/check-solved";
-import { solveLock } from "@/game/solver";
+import { solveLock, solveLockDetailed, verifySolution } from "@/game/solver";
 import type { LockState, MoveRule, PinEffect } from "@/game/types";
 
 function createLock(positions: number[], targets: number[]): LockState {
@@ -184,5 +184,66 @@ describe("solveLock", () => {
 
     expectShortestValidSolution(lock);
     expect(solveLock({ ...lock, rules: [unknownRule] })).toBeNull();
+  });
+});
+
+describe("explicit solver evidence", () => {
+  it("distinguishes exhausted searches from proven unreachable targets", () => {
+    const reachable = createLock([0, 0], [2, 2]);
+    expect(solveLockDetailed(reachable, 2)).toEqual({
+      kind: "budget-exhausted",
+      visitedStates: 2,
+    });
+    expect(solveLockDetailed(createLock([2, 2], [0, 0]))).toMatchObject({
+      kind: "unsolvable",
+    });
+    expect(solveLockDetailed(reachable, 100)).toMatchObject({
+      kind: "found",
+      solution: expect.any(Array),
+    });
+  });
+
+  it("exhaustively matches reference BFS for every start/target of small directed and inverse fixtures", () => {
+    for (const inverse of [false, true]) {
+      for (let seed = 1; seed <= 8; seed++) {
+        const fixture = createSeededLock(seed, 2, inverse);
+        for (let start = 0; start < 9; start++) {
+          for (let target = 0; target < 9; target++) {
+            const lock = {
+              ...fixture,
+              pins: fixture.pins.map((pin, index) => ({
+                ...pin,
+                position: Math.floor(start / 3 ** index) % 3,
+                target: Math.floor(target / 3 ** index) % 3,
+              })),
+            };
+            const result = solveLockDetailed(lock, 100);
+            const distance = shortestDistance(lock);
+            if (distance === null) expect(result.kind).toBe("unsolvable");
+            else {
+              expect(result.kind).toBe("found");
+              if (result.kind !== "found") throw new Error("Missing solution");
+              expect(result.solution).toHaveLength(distance);
+              expect(verifySolution(lock, result.solution)).toBe(true);
+            }
+          }
+        }
+      }
+    }
+  });
+
+  it("rejects missing rules, incomplete paths, invalid moves and moves after solving", () => {
+    const lock = createLock([0], [2]);
+    const move = { pinId: 0, direction: 1 as const };
+    expect(verifySolution(lock, [])).toBe(false);
+    expect(verifySolution(lock, [{ pinId: 99, direction: 1 }])).toBe(false);
+    expect(verifySolution(lock, [move, move])).toBe(true);
+    expect(verifySolution(lock, [move, move, move])).toBe(false);
+    expect(
+      verifySolution({ ...lock, pins: [{ ...lock.pins[0], max: 1 }] }, [
+        move,
+        move,
+      ]),
+    ).toBe(false);
   });
 });

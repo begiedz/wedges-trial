@@ -27,7 +27,7 @@ This is the **decision ledger**. Do not upgrade a proposal into an invariant wit
 2. **Lockpick replenishment:** predictable grant schedule vs another deterministic mechanic; total sustain/balance is unresolved.
 3. **Competitive scoring order (resolved 2026-11-03):** endless ore ranking is approved; see the #51 decision below. A bounded challenge or efficiency ranking would be a separate future product decision.
 4. **Difficulty tiers:** precise chest thresholds, optional milestone chests, minimum shortest-path length and acceptance criteria require calibration (#48, #50).
-5. **Solver optimum:** whether reliable optimum is computed for every lock and how to score if budget is exhausted (#50).
+5. **Solver optimum (resolved technically under #50):** explicit search outcomes, replayed shortest paths, and null optimum for construction-only fallbacks are implemented. No optimum-based penalty is approved; difficulty recalibration remains #48.
 6. **Run limits/anti-bot:** rate limit thresholds and possible fairness controls require measurement (#43, #51).
 7. **Media assets:** approval of specific Gothic Remake music/SFX/art or replacements (#52–#54).
 
@@ -76,3 +76,10 @@ The public read contract retains frozen cursor pagination, 25 entries per page b
 Game Over shows statistics first. Continue closes that modal and opens a separate leaderboard modal; eligibility is fetched there, with nickname entry only for qualifiers and a new-run action for every outcome. This supersedes #34's original inline form. All four languages retain error/retry/expired-session states.
 
 The shared `LEADERBOARD_SIZE` constant in `src/api/contracts.ts` drives policy, bounded SQL reads and client response validation. This expands publication capacity without changing gameplay rewards, ordering or stored results, so `deterministic-ore-v1` stays unchanged. No migration/backfill is required. Historical action replies are replayed unchanged, including old ranks or rejected qualification snapshots; a fresh eligibility read/new claim action uses the new cutoff. Rollback restores the old capacity/UI but retains all durable claims and results, including claims outside the reduced cutoff.
+
+
+## Solver validation and measured fallback — 2026-11-05 (#50)
+
+Retain the current deterministic-ore-v1 generator selection, 12 attempts and 20,000-state search cap. Explicit outcomes distinguish proof of unsolvability from budget exhaustion, and all returned solution witnesses are replayed. Offline diagnostics measure target shortfalls without promising a minimum. A 12,000-lock seeded survey shows late targets are frequently missed (92.7% at chest 1,000; 99.1% at chest 10,000). The existing bounded fallback is retained for compatibility, rather than silently changing this cohort's difficulty. This is measured technical behavior, not approval of a new difficulty curve or a claim of human calibration. Any stricter rejection/target change remains an explicit #48 decision and requires ranking-cohort review.
+
+Construction-only witness lengths are upper bounds, never verified optima. No extra-valid-move penalty is introduced, including when optimal metadata is available. See [validation, distributions and Preview thresholds](lock-validation.md) for evidence and rollback. No migration, production deployment or GitHub issue mutation is part of this work.

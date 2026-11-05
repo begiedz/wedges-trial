@@ -1,5 +1,6 @@
 const { timingSafeEqual, createHash, randomUUID } = require("node:crypto");
 const { performance } = require("node:perf_hooks");
+const { runSurvey } = require("./survey-locks.cjs");
 const { CHESTS, runBenchmark } = require("./benchmark-locks.cjs");
 
 function createHandler(engine, pool, engineSha256) {
@@ -29,7 +30,7 @@ function createHandler(engine, pool, engineSha256) {
       seed < 0 ||
       seed > 0xffffffff ||
       !CHESTS.includes(chest) ||
-      !["engine", "database"].includes(mode)
+      !["engine", "database", "survey"].includes(mode)
     )
       return res.status(400).json({ error: "Invalid benchmark request" });
     busy = true;
@@ -48,6 +49,8 @@ function createHandler(engine, pool, engineSha256) {
           databaseMs: performance.now() - start,
           databaseStartedAt: probe.rows[0].started_at,
         };
+      } else if (mode === "survey") {
+        result = runSurvey(engine, { chests: [chest], samples: 10, seed });
       } else
         result = runBenchmark(engine, {
           chests: [chest],

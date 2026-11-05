@@ -18,7 +18,11 @@ fs.writeFileSync(
 );
 const { source, hash } = buildEngineSource();
 fs.writeFileSync(path.join(destination, "engine.cjs"), source);
-for (const file of ["benchmark-locks.cjs", "benchmark-preview-handler.cjs"])
+for (const file of [
+  "benchmark-locks.cjs",
+  "benchmark-preview-handler.cjs",
+  "survey-locks.cjs",
+])
   fs.copyFileSync(path.join(__dirname, file), path.join(destination, file));
 fs.writeFileSync(
   path.join(destination, "api/benchmark.js"),

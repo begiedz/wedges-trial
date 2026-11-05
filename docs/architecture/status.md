@@ -125,3 +125,13 @@ Forty warm Preview database probes measured 76.67 ms median / 79.21 ms p95 insid
 Local tests and coverage each passed 290 tests, with 21 opt-in PostgreSQL integration tests skipped (`TEST_DATABASE_URL` unset). Type checking, lint, naming/architecture checks and the application production build passed; the existing cursor warning remains. The restricted build stalled and was stopped; the successful build, container benchmark and authorized Preview/Neon measurements ran outside the sandbox. No migration, browser end-to-end test or GitHub issue mutation was performed.
 
 All five temporary benchmark Previews were removed after measurement; the task-created protection bypass was revoked and private temporary fixture/environment/token files were deleted. No application Preview or production alias was assigned to the fixture.
+
+## Solver validation and difficulty survey (#50) — 2026-11-05
+
+Added explicit found/budget-exhausted/unsolvable solver outcomes, runtime legal path replay and ephemeral generation diagnostics with a construction witness. The existing generator selection, 12 attempts, 20,000-state search cap and deterministic-ore-v1 scoring are preserved; no optimum-based penalty is added. Exhaustive small-state reference checks and 12,000 seeded generated locks establish path/optimum agreement for that corpus. The survey exposes substantial late target shortfalls (92.7% at chest 1,000; 99.1% at chest 10,000); minima remain targets rather than guarantees, with future curve decisions under #48. See [full acceptance evidence, distributions, provenance and rollback](lock-validation.md).
+
+An isolated Vercel Preview measured 1,200 additional locks across all thresholds through chest 10,000: worst generation p95 83.70 ms, maximum 167.97 ms and process RSS 211.23 MiB, within the existing #28 investigation gates. This measures pure sequential engine work, not concurrent authoritative transactions or production readiness.
+
+Local verification: tests and coverage each passed all 318 tests, including all 21 PostgreSQL integration tests against disposable PostgreSQL 17. Type checking, lint, names/architecture checks and production build passed; the existing cursor CSS warning remains. The sandboxed build stalled and was stopped; database checks and successful build ran outside the sandbox. A 120-lock seeded comparison confirmed unchanged generated lock values against HEAD. No live browser/device verification, Neon/production migration, production deployment or GitHub mutation was performed.
+
+Cleanup completed: the alias-free benchmark Preview and task-created protection bypass were removed, temporary fixture/credentials deleted, and the disposable PostgreSQL container stopped/removed.

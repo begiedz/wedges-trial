@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { applyMoveToLock } from "@/game/apply-move";
 import { checkSolved } from "@/game/check-solved";
-import { createLock } from "@/game/create-lock";
+import { createLock, createLockWithDiagnostics } from "@/game/create-lock";
 import { getDifficultyForChest } from "@/game/progress-difficulty";
 import { solveLock } from "@/game/solver";
 import type { DifficultyConfig, RandomSource } from "@/game/types";
@@ -117,7 +117,9 @@ describe("createLock", () => {
 
   it("keeps a solvable bounded fallback when the solver exhausts its budget", async () => {
     const solver = await import("@/game/solver");
-    const search = vi.spyOn(solver, "solveLock").mockReturnValue(null);
+    const search = vi
+      .spyOn(solver, "solveLockDetailed")
+      .mockReturnValue({ kind: "budget-exhausted", visitedStates: 20_000 });
     const difficulty = getDifficultyForChest(49);
     let lock: ReturnType<typeof createLock>;
     try {
@@ -160,5 +162,71 @@ describe("createLock", () => {
     expect(() =>
       createLock({ ...config, minPosition: 3, maxPosition: 3 }),
     ).toThrow(RangeError);
+  });
+});
+
+describe("generation evidence", () => {
+  it("retains a legally replayable construction witness after every capped search", async () => {
+    const solver = await import("@/game/solver");
+    const search = vi
+      .spyOn(solver, "solveLockDetailed")
+      .mockReturnValue({ kind: "budget-exhausted", visitedStates: 20_000 });
+    try {
+      const { lock, diagnostics, solution } = createLockWithDiagnostics(
+        getDifficultyForChest(9999),
+        createSeededRandom(50),
+      );
+      expect(diagnostics).toMatchObject({
+        attempts: 12,
+        outcome: "unverified",
+        searches: { found: 0, budgetExhausted: 12 },
+      });
+      expect(lock.optimalMoves).toBeNull();
+      expect(solution.length).toBeLessThanOrEqual(diagnostics.target.max);
+      let current = lock;
+      for (const move of solution) {
+        const result = applyMoveToLock(current, move.pinId, move.direction);
+        expect(result.kind).toBe("valid");
+        current = result.lock;
+      }
+      expect(checkSolved(current)).toBe(true);
+      expect(
+        createLock(getDifficultyForChest(0), createSeededRandom(50)),
+      ).not.toHaveProperty("solution");
+    } finally {
+      search.mockRestore();
+    }
+  });
+
+  it("reports below-target difficulty without inventing an optimum or retrying forever", () => {
+    const { lock, diagnostics, solution } = createLockWithDiagnostics(
+      {
+        ...getDifficultyForChest(0),
+        tumblerCount: 1,
+        minSolutionLength: 50,
+        maxSolutionLength: 60,
+      },
+      createSeededRandom(50),
+    );
+    expect(diagnostics).toMatchObject({
+      attempts: 12,
+      outcome: "below-target",
+    });
+    expect(lock.optimalMoves).toBe(solution.length);
+    expect(solution.length).toBeLessThan(50);
+  });
+
+  it("fails closed on an impossible construction/solver disagreement", async () => {
+    const solver = await import("@/game/solver");
+    const search = vi
+      .spyOn(solver, "solveLockDetailed")
+      .mockReturnValue({ kind: "unsolvable", visitedStates: 2 });
+    try {
+      expect(() =>
+        createLock(getDifficultyForChest(0), createSeededRandom(50)),
+      ).toThrow("Constructed lock is unsolvable");
+    } finally {
+      search.mockRestore();
+    }
   });
 });

@@ -22,6 +22,7 @@ The domain engine remains **pure TypeScript** and is executed by the server for 
 | --- | --- |
 | [server-setup.md](server-setup.md) | Environment variables, migrations, local WebSockets and troubleshooting |
 | [lock-benchmarks.md](lock-benchmarks.md) | Reproducible Node/Preview engine timings, Neon recovery and Hobby resource assessment (#28) |
+| [lock-validation.md](lock-validation.md) | Explicit solver outcomes, legal witnesses, seeded difficulty/fallback distributions and Preview gates (#50) |
 | [status.md](status.md) | Present implementation, target, migration boundaries |
 | [decisions.md](decisions.md) | Approved decisions and open design questions |
 | [gameplay.md](gameplay.md) | Domain invariants, progression and reward design |
