@@ -4,7 +4,7 @@
 
 1. Read **root `AGENTS.md`** for stable requirements and constraints.
 2. Read **`docs/architecture/status.md`** to distinguish current code from planned functionality.
-3. Read [module boundaries and state ownership](../architecture/module-boundaries.md) when refactoring client/server orchestration. Pick exactly the skills relevant to your work from the registry below; open their `SKILL.md` files.
+3. Read [module boundaries and state ownership](../architecture/module-boundaries.md) when changing frontend features or client/server orchestration. Product-specific React code and tests belong in `src/features/<name>/`; routes use minimal feature public APIs, shared UI stays feature-independent, and `pnpm check:architecture` enforces dependency directions. Pick exactly the skills relevant to your work from the registry below; open their `SKILL.md` files.
 4. Read the appropriate architecture page and affected source/test files.
 5. Do small changes and follow `working-agreement.md` before finalizing.
 

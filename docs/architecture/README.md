@@ -41,3 +41,7 @@ The domain engine remains **pure TypeScript** and is executed by the server for 
 5. Retain pure puzzle functions and existing tests while keeping authoritative orchestration on the server.
 6. Prefer no new infrastructure beyond Vercel and Neon until measured need justifies it.
 7. Protect gameplay fairness while acknowledging server authority cannot stop every bot or automated solver.
+
+## Frontend features
+
+Product-specific React code belongs in `src/features/<name>/`. Gameplay owns its screen, hooks, dialogs and lock rendering; development inspection belongs to `features/lock-debug`. Routes consume their minimal public APIs. Shared primitives/site components stay in `components`, dictionaries in `i18n`, and the domain/client/server layers retain their existing roles. See [ownership, dependency rules and how to add a feature](module-boundaries.md). Run `pnpm check:architecture` for actionable dependency and cycle checks; lint, tests and CI enforce them.

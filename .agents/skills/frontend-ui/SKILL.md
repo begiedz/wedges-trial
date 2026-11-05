@@ -9,7 +9,7 @@ Read `AGENTS.md`, `docs/architecture/status.md` and relevant layout/components. 
 
 ## Procedure
 
-1. Reuse existing patterns in `src/components/game/GameClient.tsx`, `src/components/lock`, `src/components/general` and `src/i18n/`.
+1. Read `docs/architecture/module-boundaries.md`. Put product-specific React code and tests in its feature; expose minimal APIs for route composition and keep shared UI independent. Run `pnpm check:architecture`. Reuse existing patterns in `src/features/gameplay/components/game/GameClient.tsx`, `src/features/gameplay/components/lock`, `src/components/general` and `src/i18n/`.
 2. Use useGameSession and the game channel for server snapshots, ordered input, transient prediction and reconciliation. Keep resource/reward/terminal dialogs server-confirmed.
 3. Preserve rapid movement input without a per-move loading lock; deduplicate lifecycle submissions and model pending, invalid move, pick break, solved chest, failed run and stale conflict states clearly.
 4. Preserve A/D/W/S, arrow keys, manual reset, next chest and touch/click controls; avoid key events inside text inputs.

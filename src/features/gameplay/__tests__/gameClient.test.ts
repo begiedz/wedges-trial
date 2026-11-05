@@ -3,19 +3,19 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { RunDto } from "@/api/contracts";
-import { START_NEW_RUN_EVENT } from "@/components/game/events";
-import { GameClient } from "@/components/game/GameClient";
-import { useGameSession } from "@/components/game/useGameSession";
+import { GameClient } from "@/features/gameplay/components/game/GameClient";
+import { START_NEW_RUN_EVENT } from "@/features/gameplay/events";
+import { useGameSession } from "@/features/gameplay/hooks/useGameSession";
 import en from "@/i18n/dictionaries/en.json";
 import { I18nProvider } from "@/i18n/provider";
 
-vi.mock("@/components/game/useGameSession", () => ({
+vi.mock("@/features/gameplay/hooks/useGameSession", () => ({
   useGameSession: vi.fn(),
 }));
 vi.mock("next/image", () => ({
   default: (props: object) => createElement("img", props),
 }));
-vi.mock("@/components/lock", () => ({ default: () => null }));
+vi.mock("@/features/gameplay/components/lock", () => ({ default: () => null }));
 function wrapper({ children }: { children: ReactNode }) {
   return createElement(I18nProvider, {
     children,

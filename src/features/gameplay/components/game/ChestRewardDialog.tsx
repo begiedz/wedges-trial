@@ -2,13 +2,13 @@
 
 import LockPickIcon from "@/assets/images/icons/items/T_ItemIcon_ItKe_Lockpick.png";
 import OreNuggetIcon from "@/assets/images/icons/items/T_ItemIcon_ItMi_Orenugget.png";
-import ItemFrame from "@/components/general/molecules/item-frame";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
+import ItemFrame from "@/features/gameplay/components/game/item-frame";
 import type { ChestReward } from "@/game/types";
 import { useGameDictionary } from "@/i18n/provider";
 import { DialogAction } from "./GameDialog";

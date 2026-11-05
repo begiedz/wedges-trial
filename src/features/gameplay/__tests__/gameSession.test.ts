@@ -2,7 +2,7 @@
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { RunDto } from "@/api/contracts";
-import { useGameSession } from "@/components/game/useGameSession";
+import { useGameSession } from "@/features/gameplay/hooks/useGameSession";
 
 export function fixture(): RunDto {
   return {

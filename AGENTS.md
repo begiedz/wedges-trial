@@ -33,6 +33,7 @@
 ## Frontend, localization and audio
 
 - Current production route shape is `src/app/[lang]/` (**not `[locale]`**). Keep English, Polish, German and Russian (`en`, `pl`, `de`, `ru`); no hardcoded user-visible text.
+- Product-specific React presentation and tests belong in `src/features/<name>/`; routes compose minimal public feature APIs. Shared UI must remain feature-independent. Keep `src/game`, `src/client/game`, `src/api` and `src/server` in their existing layers; run `pnpm check:architecture` for dependency enforcement.
 - Reuse existing components and assets; keep keyboard, touch and responsive behavior accessible. Keep domain decisions out of UI components.
 - Music and SFX are optional user-controlled capabilities with **independent on/off and volume**. No unexpected autoplay; support browser playback restrictions. Audio state must not modify gameplay logic.
 - **Do not add or distribute extracted Gothic Remake music, audio, fonts or game assets without adequate usage and redistribution rights.** Noncommercial use is not an automatic license. Existing assets require a provenance audit; see `docs/architecture/audio-assets.md` and Issue #52.

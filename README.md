@@ -24,17 +24,17 @@ Manual reset restores the current lock’s starting layout. Starting a new run d
 
 ### Controls
 
-| Input | Action |
-| --- | --- |
-| Click / tap a tumbler | Select it |
-| `A` / `←` | Turn the selected tumbler left |
-| `D` / `→` | Turn the selected tumbler right |
-| `W` / `↑` | Select the previous tumbler |
-| `S` / `↓` | Select the next tumbler |
-| `R` | Reset the current lock |
-| `N` | Reopen a dismissed chest reward dialog |
-| `Space` in the reward dialog | Take all and advance |
-| `Esc` in the reward dialog | Close it without collecting |
+| Input                        | Action                                 |
+| ---------------------------- | -------------------------------------- |
+| Click / tap a tumbler        | Select it                              |
+| `A` / `←`                    | Turn the selected tumbler left         |
+| `D` / `→`                    | Turn the selected tumbler right        |
+| `W` / `↑`                    | Select the previous tumbler            |
+| `S` / `↓`                    | Select the next tumbler                |
+| `R`                          | Reset the current lock                 |
+| `N`                          | Reopen a dismissed chest reward dialog |
+| `Space` in the reward dialog | Take all and advance                   |
+| `Esc` in the reward dialog   | Close it without collecting            |
 
 Visible buttons provide the same gameplay actions on desktop and mobile. Gameplay shortcuts are blocked while a dialog is open.
 
@@ -65,31 +65,31 @@ Gameplay requires PostgreSQL. Direct and pooled URLs must reference the same dev
 
 English (`en`), Polish (`pl`), German (`de`), and Russian (`ru`) use the same route structure:
 
-| Route | Purpose |
-| --- | --- |
-| `/{lang}` | Home and introduction |
-| `/{lang}/game` | Play the trial |
-| `/{lang}/how-to-play` | Gameplay rules and controls |
-| `/{lang}/about` | Project background and inspiration |
-| `/{lang}/debug` | Development lock harness |
-| `/{lang}/solver` | Development solver information page |
+| Route                 | Purpose                             |
+| --------------------- | ----------------------------------- |
+| `/{lang}`             | Home and introduction               |
+| `/{lang}/game`        | Play the trial                      |
+| `/{lang}/how-to-play` | Gameplay rules and controls         |
+| `/{lang}/about`       | Project background and inspiration  |
+| `/{lang}/debug`       | Development lock harness            |
+| `/{lang}/solver`      | Development solver information page |
 
 Unprefixed page requests use browser language negotiation with English as the default fallback. The language menu switches between localized routes. The debug and solver pages return 404 in production builds.
 
 ## Development commands
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm dev` | Start Next.js with HTTP gameplay fallback |
-| `pnpm dev:ws` | Start Vercel CLI for native WebSocket development |
-| `pnpm db:generate` | Generate reviewable Drizzle migrations after schema changes |
-| `pnpm db:migrate` | Apply committed migrations to the configured database |
-| `pnpm test` | Run the Vitest suite |
-| `pnpm exec tsc --noEmit` | Check TypeScript types |
-| `pnpm lint` | Check formatting, imports and lint rules with Biome |
-| `pnpm format` | Apply formatting across the repository |
-| `pnpm build` | Create a production build |
-| `pnpm start` | Serve an existing production build locally |
+| Command                  | Purpose                                                     |
+| ------------------------ | ----------------------------------------------------------- |
+| `pnpm dev`               | Start Next.js with HTTP gameplay fallback                   |
+| `pnpm dev:ws`            | Start Vercel CLI for native WebSocket development           |
+| `pnpm db:generate`       | Generate reviewable Drizzle migrations after schema changes |
+| `pnpm db:migrate`        | Apply committed migrations to the configured database       |
+| `pnpm test`              | Run the Vitest suite                                        |
+| `pnpm exec tsc --noEmit` | Check TypeScript types                                      |
+| `pnpm lint`              | Check formatting, imports and lint rules with Biome         |
+| `pnpm format`            | Apply formatting across the repository                      |
+| `pnpm build`             | Create a production build                                   |
+| `pnpm start`             | Serve an existing production build locally                  |
 
 The app uses `next/font/google` for Noto Serif and a local heading font. A fresh build may need network access to fetch the Google font.
 
@@ -107,23 +107,22 @@ The current stack is **Next.js 16, React 19, strict TypeScript, Radix/shadcn UI,
 
 ```text
 src/
+  api/                  HTTP and WebSocket wire types
   app/[lang]/           Localized pages and layouts
+  app/api/              Gameplay HTTP handlers and socket upgrade
   app/globals.css       Shared theme tokens and base styling
-  components/game/      Game screen, session hook and dialogs
-  components/lock/      Tumbler and pin visualization
+  assets/               Fonts and images
+  client/game/          Ordered transport, prediction and reconciliation
   components/general/   Reusable UI and site navigation
   components/ui/        shadcn/Radix primitives
-  components/lock-debug/ Development inspection tools
+  features/gameplay/    Game screen, React adapters, dialogs and lock visualization
+  features/lock-debug/   Development inspection tools
   game/                 Pure puzzle engine, progression and reward functions
-  api/                  HTTP and WebSocket wire types
-  app/api/              Gameplay HTTP handlers and socket upgrade
-  client/game/          Ordered transport, prediction and reconciliation
-  server/               Validation, authoritative service and Drizzle persistence
   i18n/                 Dictionaries, locale types and React provider
-  assets/               Fonts and images
+  server/               Validation, authoritative service and Drizzle persistence
   proxy.ts              Locale routing
 
-tests/                  Engine and React regression tests
+tests/                  Domain, client, server and architecture regressions
 docs/architecture/      Current state, target design and API contract
 docs/agent/             Contribution workflow and agent documentation
 ```

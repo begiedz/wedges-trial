@@ -1,0 +1,1 @@
+export { TextLockTester } from "./LockTester";

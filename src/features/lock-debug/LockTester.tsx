@@ -1,22 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getNextPinId } from "@/client/game/pinSelection";
-
-import { ActionButton } from "@/components/lock-debug/atoms/ActionButton";
-import { MetricCard } from "@/components/lock-debug/atoms/MetricCard";
-import { SectionCard } from "@/components/lock-debug/atoms/SectionCard";
-import { PinControlCard } from "@/components/lock-debug/molecules/PinControlCard";
-import { PinTable } from "@/components/lock-debug/molecules/PinTable";
-import { PinVisualizerRow } from "@/components/lock-debug/molecules/PinVisualizerRow";
-import type { TextLockCopy } from "@/components/lock-debug/types";
+import { ActionButton } from "@/features/lock-debug/atoms/ActionButton";
+import { MetricCard } from "@/features/lock-debug/atoms/MetricCard";
+import { SectionCard } from "@/features/lock-debug/atoms/SectionCard";
+import { PinControlCard } from "@/features/lock-debug/molecules/PinControlCard";
+import { PinTable } from "@/features/lock-debug/molecules/PinTable";
+import { PinVisualizerRow } from "@/features/lock-debug/molecules/PinVisualizerRow";
+import type { TextLockCopy } from "@/features/lock-debug/types";
 import { applyMove } from "@/game/applyMove";
 import { createRun, openSolvedChest } from "@/game/createRun";
-
 import { cloneLockState, resetCurrentLock } from "@/game/resetLock";
 import { solveLock } from "@/game/solver";
 import type { ChestReward, Direction, LockState, RunState } from "@/game/types";
 import { useDebugDictionary } from "@/i18n/provider";
+import { getNextPinId } from "@/lib/pinSelection";
 
 const MAX_EVENT_LOG_ITEMS = 8;
 

@@ -22,7 +22,7 @@ Gameplay has migrated from browser-owned state to server-authoritative PostgreSQ
 
 ## Implementation entrypoints
 
-- UI: src/components/game/GameClient.tsx and useGameSession.ts.
+- UI: src/features/gameplay/components/game/GameClient.tsx and src/features/gameplay/hooks/useGameSession.ts.
 - Client lifecycle: src/client/game/session.ts; HTTP: api.ts and response.ts.
 - Client command synchronization: src/client/game/channel.ts and commandQueue.ts; prediction.ts and transport.ts own pure prediction and socket lifecycle.
 - HTTP and upgrade routes: src/app/api/.
@@ -63,3 +63,9 @@ Centralized the already-approved ore parameters and documented calculation detai
 Local #47 verification: all 198 tests passed with all 16 PostgreSQL integration tests enabled against disposable local PostgreSQL 17. Type checking, lint and production build passed; lint retains the existing custom-cursor `!important` warning. The sandboxed build stalled and was stopped; the build passed outside the sandbox. No Neon/production migration, deployment, browser end-to-end verification or GitHub issue mutation was performed.
 
 After the requested UI restoration, 177 tests passed and 16 opt-in PostgreSQL tests were skipped (TEST_DATABASE_URL unset). Type checking, lint and production build passed; the existing cursor warning remains. The reward dialog, dictionaries and wire contracts match their pre-#47 versions; the calculation is explained in the function comment. The earlier 198-test result above applies to the superseded breakdown implementation.
+
+## Feature-based frontend (#57) — 2026-11-05
+
+Gameplay React components, hooks, dialogs, controls and lock visualization now live in `src/features/gameplay/`, with colocated React tests and a minimal public API for route/layout composition. The existing debug tester belongs to `features/lock-debug`. Shared navigation takes an action slot; it no longer imports gameplay. The reused pin-selection helper belongs to `lib`. Domain, API, session controller and authoritative server behavior are unchanged; no database migration or runtime dependency was added.
+
+`pnpm check:architecture` enforces dependency directions, feature privacy, cycles and transitive server-only dependencies. Lint/tests invoke it in local development and existing CI. Local verification: 209 tests passed; 16 PostgreSQL tests skipped (`TEST_DATABASE_URL` unset; no working local server executable). Type checking, lint and production build passed; existing cursor CSS warning remains. The sandboxed build stalled and was stopped; the build passed outside the sandbox. No browser end-to-end, live database, migration, deployment or GitHub issue mutation was performed. See [criterion-by-criterion acceptance evidence](module-boundaries.md#issue-57-acceptance-evidence--2026-11-05), including the unverified environment-dependent PostgreSQL suite.

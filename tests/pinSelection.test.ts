@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getNextPinId } from "@/client/game/pinSelection";
+import { getNextPinId } from "@/lib/pinSelection";
 
 describe("pin selection shared by gameplay and debug UI", () => {
   it("wraps in both directions using pin IDs rather than array indices", () => {

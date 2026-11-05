@@ -3,9 +3,9 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ChestRewardDialog } from "@/components/game/ChestRewardDialog";
-import { RestartRunDialog } from "@/components/game/RestartRunDialog";
-import { RunFailedDialog } from "@/components/game/RunFailedDialog";
+import { ChestRewardDialog } from "@/features/gameplay/components/game/ChestRewardDialog";
+import { RestartRunDialog } from "@/features/gameplay/components/game/RestartRunDialog";
+import { RunFailedDialog } from "@/features/gameplay/components/game/RunFailedDialog";
 import de from "@/i18n/dictionaries/de.json";
 import en from "@/i18n/dictionaries/en.json";
 import pl from "@/i18n/dictionaries/pl.json";

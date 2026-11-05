@@ -3,14 +3,14 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { RunDto } from "@/api/contracts";
-import { GameClient } from "@/components/game/GameClient";
+import { GameClient } from "@/features/gameplay/components/game/GameClient";
 import en from "@/i18n/dictionaries/en.json";
 import { I18nProvider } from "@/i18n/provider";
 
 vi.mock("next/image", () => ({
   default: (props: object) => createElement("img", props),
 }));
-vi.mock("@/components/lock", () => ({ default: () => null }));
+vi.mock("@/features/gameplay/components/lock", () => ({ default: () => null }));
 function wrapper({ children }: { children: ReactNode }) {
   return createElement(I18nProvider, {
     children,
