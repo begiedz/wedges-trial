@@ -495,6 +495,115 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
     expect((await storedGame(run.id)).totalMetrics.moves).toBe(9);
   });
 
+  it.each(["http", "batch"] as const)(
+    "finalizes once through %s with rollback, concurrent retries and immutable ranking data",
+    async (transport) => {
+      const run = await seed();
+      // A nonzero earned score and previous chest totals must survive game over.
+      run.game.state.lockpicks = 1;
+      run.game.state.oreNuggets = 42;
+      run.game.openedChests = 3;
+      run.game.state.currentLock.invalidMovesOnCurrentPick = 2;
+      run.game.totalMetrics = { moves: 20, invalidMoves: 8, brokenPicks: 2 };
+      run.game.chestMetrics = { moves: 2, invalidMoves: 2, brokenPicks: 0 };
+      await pool.query("UPDATE runs SET game=$2 WHERE id=$1", [
+        run.id,
+        JSON.stringify(run.game),
+      ]);
+      const input = {
+        actionId: actionId(),
+        expectedVersion: 1,
+        pinId: 0,
+        direction: -1 as const,
+      };
+      const commit = () =>
+        transport === "http"
+          ? execute(ownerId, "move", run.id, input)
+          : executeMoveBatch(ownerId, run.id, [input]);
+      const before = await readRun(ownerId, run.id);
+      expect(await readEligibility(ownerId, run.id)).toEqual({
+        eligible: false,
+        reason: "invalid_run",
+      });
+      await pool.query(
+        `ALTER TABLE run_actions ADD CONSTRAINT finalization_failure CHECK (action_id <> '${input.actionId}'::uuid)`,
+      );
+      try {
+        await expect(commit()).rejects.toThrow();
+        expect(await readRun(ownerId, run.id)).toEqual(before);
+        expect(await storedGame(run.id)).toEqual(run.game);
+        expect(
+          (
+            await pool.query("SELECT 1 FROM run_actions WHERE action_id=$1", [
+              input.actionId,
+            ])
+          ).rowCount,
+        ).toBe(0);
+      } finally {
+        await pool.query(
+          "ALTER TABLE run_actions DROP CONSTRAINT finalization_failure",
+        );
+      }
+      const replies = await Promise.all([commit(), commit()]);
+      expect(replies[1]).toEqual(replies[0]);
+      const finished = await readRun(ownerId, run.id);
+      expect(finished).toMatchObject({
+        status: "finished",
+        version: 2,
+        lockpicks: 0,
+        reward: null,
+        result: {
+          oreNuggets: 42,
+          openedChests: 3,
+          reason: "lockpicks_exhausted",
+          finishedAt: expect.any(String),
+          totalMetrics: { moves: 21, invalidMoves: 9, brokenPicks: 3 },
+        },
+      });
+      expect(await readRun(ownerId)).toBeNull();
+      expect(await readEligibility(ownerId, run.id)).toMatchObject({
+        eligible: true,
+      });
+      expect((await readTopRuns()).map((r) => r.runId)).not.toContain(run.id);
+      for (const action of ["move", "reset", "continue", "abandon"] as const) {
+        await expect(
+          execute(ownerId, action, run.id, {
+            ...input,
+            actionId: actionId(),
+            expectedVersion: 2,
+          }),
+        ).rejects.toMatchObject({ code: "INVALID_RUN_STATUS", run: finished });
+      }
+      const [rejected] = await executeMoveBatch(ownerId, run.id, [
+        {
+          ...input,
+          actionId: actionId(),
+          expectedVersion: 2,
+        },
+      ]);
+      expect(rejected).toMatchObject({
+        failure: { code: "INVALID_RUN_STATUS" },
+      });
+      await expect(
+        pool.query(
+          "UPDATE runs SET game=jsonb_set(game,'{state,oreNuggets}','99999') WHERE id=$1",
+          [run.id],
+        ),
+      ).rejects.toMatchObject({ code: "23514" });
+      expect(await commit()).toEqual(replies[0]);
+      expect(await readRun(ownerId, run.id)).toEqual(finished);
+      const { rows } = await pool.query(
+        "SELECT finished_at,ore_nuggets,opened_chests FROM runs WHERE id=$1",
+        [run.id],
+      );
+      expect(rows[0]).toEqual({
+        finished_at: new Date(finished?.result?.finishedAt ?? ""),
+        ore_nuggets: "42",
+        opened_chests: 3,
+      });
+    },
+  );
+
   it("commits and replays a rapid burst over a real WebSocket connection", async () => {
     const run = await seed();
     const server = new WebSocketServer({ host: "127.0.0.1", port: 0 });
