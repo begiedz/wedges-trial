@@ -232,6 +232,118 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
     });
   });
 
+  it("preserves cumulative reward penalties through reload, racing solve/claim, replay and claim rollback", async () => {
+    const run = await seed();
+    let version = 1;
+    for (let i = 0; i < 4; i++) {
+      const move = {
+        actionId: actionId(),
+        expectedVersion: version++,
+        pinId: 0,
+        direction: -1 as const,
+      };
+      const original = await execute(ownerId, "move", run.id, move);
+      expect(await execute(ownerId, "move", run.id, move)).toEqual(original);
+      await execute(ownerId, "reset", run.id, {
+        actionId: actionId(),
+        expectedVersion: version++,
+      });
+    }
+    expect((await storedGame(run.id)).chestMetrics).toEqual({
+      moves: 4,
+      invalidMoves: 4,
+      brokenPicks: 1,
+    });
+    expect(
+      (await readRun(ownerId, run.id))?.currentLock.invalidMovesOnCurrentPick,
+    ).toBe(1);
+    await execute(ownerId, "move", run.id, {
+      actionId: actionId(),
+      expectedVersion: version++,
+      pinId: 0,
+      direction: 1,
+    });
+    const solveVersion = version++;
+    const solves = await Promise.allSettled(
+      [1, 2].map(() =>
+        execute(ownerId, "move", run.id, {
+          actionId: actionId(),
+          expectedVersion: solveVersion,
+          pinId: 0,
+          direction: 1,
+        }),
+      ),
+    );
+    expect(solves.filter((x) => x.status === "fulfilled")).toHaveLength(1);
+    expect(solves.find((x) => x.status === "rejected")).toMatchObject({
+      reason: { code: "VERSION_CONFLICT" },
+    });
+    const opened = await readRun(ownerId, run.id);
+    expect(opened?.reward?.oreNuggets).toBe(6);
+    expect(opened?.oreNuggets).toBe(0);
+    const pending = (await storedGame(run.id)).reward;
+    const claim = { actionId: actionId(), expectedVersion: version };
+    await pool.query(
+      `ALTER TABLE run_actions ADD CONSTRAINT reward_failure CHECK (action_id <> '${claim.actionId}'::uuid)`,
+    );
+    try {
+      await expect(
+        execute(ownerId, "continue", run.id, claim),
+      ).rejects.toThrow();
+      expect(await readRun(ownerId, run.id)).toEqual(opened);
+      expect((await storedGame(run.id)).reward).toEqual(pending);
+      expect(
+        (
+          await pool.query("SELECT 1 FROM run_actions WHERE action_id=$1", [
+            claim.actionId,
+          ])
+        ).rowCount,
+      ).toBe(0);
+    } finally {
+      await pool.query(
+        "ALTER TABLE run_actions DROP CONSTRAINT reward_failure",
+      );
+    }
+    const competingClaims = [claim, { ...claim, actionId: actionId() }];
+    const claims = await Promise.allSettled(
+      competingClaims.map((command) =>
+        execute(ownerId, "continue", run.id, command),
+      ),
+    );
+    expect(claims.filter((x) => x.status === "fulfilled")).toHaveLength(1);
+    expect(claims.find((x) => x.status === "rejected")).toMatchObject({
+      reason: { code: "VERSION_CONFLICT" },
+    });
+    const credited = await readRun(ownerId, run.id);
+    expect(credited?.oreNuggets).toBe(6);
+    expect(credited?.lockpicks).toBe(2 + (pending?.lockpicks ?? 0));
+    expect(credited?.currentLock.invalidMovesOnCurrentPick).toBe(1);
+    expect((await storedGame(run.id)).chestMetrics).toEqual({
+      moves: 0,
+      invalidMoves: 0,
+      brokenPicks: 0,
+    });
+    const winnerIndex = claims.findIndex(
+      (result) => result.status === "fulfilled",
+    );
+    const winner = claims[winnerIndex];
+    expect(winner.status).toBe("fulfilled");
+    if (winner.status === "fulfilled")
+      expect(
+        await execute(
+          ownerId,
+          "continue",
+          run.id,
+          competingClaims[winnerIndex],
+        ),
+      ).toEqual(winner.value);
+    expect(await readRun(ownerId, run.id)).toEqual(credited);
+    await execute(ownerId, "abandon", run.id, {
+      actionId: actionId(),
+      expectedVersion: version + 1,
+    });
+  });
+
   it("preserves mistakes and broken picks across refresh, repeated resets and final-action retries", async () => {
     const run = await seed();
     let version = 1;

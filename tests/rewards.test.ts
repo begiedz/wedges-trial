@@ -1,0 +1,45 @@
+import { describe, expect, it } from "vitest";
+import { getDeterministicOre, getLockpickReward } from "@/game/rewards";
+
+describe("deterministic-ore-v1 rewards", () => {
+  it.each([
+    [1, 0, 10],
+    [1, 1, 9],
+    [1, 2, 8],
+    [1, 3, 7],
+    [1, 4, 6],
+    [1, 6, 4],
+    [1, 100, 4],
+    [2, 1, 13],
+    [10, 2, 44],
+    [1000, 6, 2002],
+    [10000, 0, 50005],
+  ])("chest %i with %i mistakes gives %i ore", (chest, mistakes, expected) => {
+    expect(getDeterministicOre(chest, mistakes)).toBe(expected);
+  });
+  it("is monotonic through early and very late chests", () => {
+    for (const chest of [1, 2, 5, 10, 100, 1000, 10000, 100000]) {
+      expect(getDeterministicOre(chest + 1, 0)).toBeGreaterThan(
+        getDeterministicOre(chest, 0),
+      );
+      for (let mistakes = 0; mistakes < 30; mistakes++) {
+        expect(getDeterministicOre(chest, mistakes + 1)).toBeLessThanOrEqual(
+          getDeterministicOre(chest, mistakes),
+        );
+        expect(getDeterministicOre(chest, mistakes)).toBeGreaterThanOrEqual(
+          Math.floor((getDeterministicOre(chest, 0) * 4) / 10),
+        );
+      }
+    }
+  });
+  it.each([
+    [0, 0],
+    [0.58, 0],
+    [0.58001, 1],
+    [0.92, 1],
+    [0.92001, 2],
+    [0.99999, 2],
+  ])("preserves the approved pick roll boundary %f -> %i", (roll, expected) => {
+    expect(getLockpickReward(() => roll)).toBe(expected);
+  });
+});

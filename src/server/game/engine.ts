@@ -8,7 +8,7 @@ import {
   getDifficultyForChest,
 } from "@/game/progressDifficulty";
 import { cloneLockState, resetCurrentLock } from "@/game/resetLock";
-import { getChestReward, getDeterministicOre } from "@/game/rewards";
+import { getDeterministicOre, getLockpickReward } from "@/game/rewards";
 import { RULESET_VERSION } from "@/game/ruleset";
 import type { Direction } from "@/game/types";
 import { GameError } from "./errors";
@@ -138,7 +138,7 @@ function moveRun(
     run.status = "chest_opened";
     game.openedChests++;
     game.reward = {
-      ...getChestReward(game.state.chestIndex),
+      lockpicks: getLockpickReward(),
       oreNuggets: getDeterministicOre(
         game.state.chestIndex,
         game.chestMetrics.invalidMoves,
