@@ -1,6 +1,6 @@
 # Competitive ranking contract (#51)
 
-Approved by the task author on 2026-11-03: endless remains primary and TOP 100 ranks ore accumulation. This defines scoring and qualification, not a deployed leaderboard. `src/server/leaderboard/policy.ts` implements the pure policy; claims, SQL ordering, public reads and UI remain under #24, #34 and #46.
+Approved by the task author on 2026-11-03: endless remains primary and TOP 100 ranks ore accumulation. This defines scoring and qualification, not a deployed leaderboard. `src/server/leaderboard/policy.ts` implements the pure policy; SQL ordering/storage (#31) and authenticated atomic eligibility/claims (#33) are implemented; public reads and UI remain under #24, #34 and #46.
 
 ## Scoring and eligibility
 
@@ -26,7 +26,7 @@ Before competitive release, measure generation/solver costs and fallback rates a
 
 Retain server-recorded ore, opened chests, total/per-chest moves, invalid moves and broken picks. Valid moves can be derived as moves minus invalid moves. Do not persist or rank “extra moves” without a verified optimum; null solver output proves no optimum. Resets preserve penalties and continuation preserves partial pick damage.
 
-No new claim TTL or automatic deletion is introduced. Existing 30-day anonymous session expiry limits authenticated access; qualification does not extend it or reserve a place. Safe retention remains open: preserve active ownership, retry records, claimed-run references and one-claim history. A future claim-expiry policy must be explicit in the API/UI before enforcement.
+No new claim TTL or automatic deletion is introduced. Existing 30-day anonymous session expiry limits authenticated access; qualification does not extend it or reserve a place. The conservative manual retention policy under #31 preserves active runs, live-session retry/submission access, claimed-run references and one-claim history. A future claim-expiry policy must be explicit in the API/UI before enforcement.
 
 Keep deterministic-ore-v1 as the comparison cohort. Future score-affecting reward, replenishment, difficulty or run-limit changes require a version review, a new cohort for incomparable runs and an explicit rollout; never rewrite historical results. This policy needs no SQL migration or data backfill. Rollback removes the unused policy and documentation; it does not alter stored gameplay or rewards.
 
@@ -39,4 +39,4 @@ Keep deterministic-ore-v1 as the comparison cohort. Future score-affecting rewar
 | #46 | Public reads return claimed runs from one cohort with stable snapshot pagination; private eligibility reserves nothing; claim accepts nickname/action ID only and enforces ownership, origin and transaction guarantees. |
 | #47 | deterministic-ore-v1 remains approved; no excess-valid-move penalty. Random pick replacement remains open and would require cohort review. |
 
-This table aligns local implementation guidance with the linked backlog without editing those GitHub issues. `tests/server/leaderboard/policy.test.ts` covers ordering, chronological timestamp comparison, cutoff sizes, ties, duplicate claims, multiple runs per owner, invalid states, ruleset isolation and a changed-cutoff recheck. Existing engine tests cover deterministic ore, preserved damage/penalties and reward-once transitions. Database claim races and API/UI tests remain required by #24/#34/#46; pure tests are not evidence of atomic claims or deployment.
+This table aligns local implementation guidance with the linked backlog without editing those GitHub issues. `tests/server/leaderboard/policy.test.ts` covers ordering, chronological timestamp comparison, cutoff sizes, ties, duplicate claims, multiple runs per owner, invalid states, ruleset isolation and a changed-cutoff recheck. Existing engine tests cover deterministic ore, preserved damage/penalties and reward-once transitions. Real PostgreSQL/API tests under #33 now cover ownership, expiry/revocation, snapshot cutoff loss, concurrent claims, exact replay and rollback. Public pagination/UI tests remain #24/#34/#46; local tests do not establish deployment.

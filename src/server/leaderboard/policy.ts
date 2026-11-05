@@ -1,3 +1,4 @@
+import type { LeaderboardQualification } from "@/api/contracts";
 import { RULESET_VERSION } from "@/game/ruleset";
 import type { StoredRun } from "@/server/game/types";
 
@@ -48,16 +49,7 @@ export function compareRankedRuns(a: RankedRun, b: RankedRun): number {
   );
 }
 
-export type Qualification =
-  | { eligible: true; rank: number }
-  | {
-      eligible: false;
-      reason:
-        | "invalid_run"
-        | "unsupported_ruleset"
-        | "already_claimed"
-        | "below_cutoff";
-    };
+export type Qualification = LeaderboardQualification;
 
 /**
  * Snapshot only: caller must authorize ownership and repeat this check inside

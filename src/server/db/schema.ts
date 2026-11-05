@@ -117,6 +117,8 @@ export const runActions = pgTable(
         run: import("@/api/contracts").RunDto;
         outcome: string;
         claimedReward?: import("@/game/types").ChestReward;
+        entry?: import("@/api/contracts").LeaderboardEntryDto;
+        qualification?: import("@/api/contracts").LeaderboardQualification;
       }>()
       .notNull(),
     statusCode: integer("status_code").notNull(),

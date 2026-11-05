@@ -2,9 +2,14 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { NextRequest } from "next/server";
 import { Pool } from "pg";
+import { GET as getEligibility } from "@/app/api/runs/[id]/leaderboard-eligibility/route";
+import { POST as postClaim } from "@/app/api/runs/[id]/leaderboard-entry/route";
+import { COOKIE_NAME, handle } from "@/server/game/http";
 import { executeMoveBatch } from "@/server/game/move-batch";
 import { bindGameSocket } from "@/server/game/socket";
+import { claimEntry, readEligibility } from "@/server/leaderboard/service";
 
 const { WebSocket, WebSocketServer } = createRequire(import.meta.url)("ws");
 
@@ -125,6 +130,100 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
       [session?.id],
     );
     expect(await findSession(result.token ?? undefined)).toBeNull();
+  });
+  it("shares an owner on refresh and across tabs, isolates browsers and replaces expired cookies", async () => {
+    const request = (path: string, token?: string, body?: object) =>
+      new NextRequest(`https://trial.test${path}`, {
+        method: body ? "POST" : "GET",
+        headers: {
+          origin: "https://trial.test",
+          "content-type": "application/json",
+          ...(token ? { cookie: `${COOKIE_NAME}=${token}` } : {}),
+        },
+        ...(body ? { body: JSON.stringify(body) } : {}),
+      });
+    const first = await handle(
+      request("/api/players/session", undefined, {}),
+      "session",
+    );
+    const token = first.cookies.get(COOKIE_NAME)?.value;
+    expect(token).toMatch(/^[a-f0-9]{64}$/);
+    expect(await first.json()).toEqual({ ready: true });
+    const owner = await findSession(token);
+    if (!owner || !token) throw new Error("Missing anonymous owner");
+    const tabRequests = await Promise.all(
+      [1, 2].map(() =>
+        handle(request("/api/players/session", token, {}), "session"),
+      ),
+    );
+    for (const response of tabRequests) {
+      expect(response.status).toBe(200);
+      expect(response.headers.get("set-cookie")).toBeNull();
+    }
+    const key = actionId();
+    const starts = await Promise.all(
+      [1, 2].map(async () => {
+        const response = await handle(
+          request("/api/runs", token, { actionId: key }),
+          "create",
+        );
+        expect(response.status).toBe(201);
+        return response.json();
+      }),
+    );
+    expect(starts[0]).toEqual(starts[1]);
+    const runId = starts[0].run.id;
+    for (const path of ["/api/runs/current", `/api/runs/${runId}`]) {
+      const refreshed = await handle(
+        request(path, token),
+        "read",
+        path.endsWith("current") ? undefined : runId,
+      );
+      expect((await refreshed.json()).run.id).toBe(runId);
+    }
+    const foreign = await bootstrap(undefined);
+    const other = await findSession(foreign.token ?? undefined);
+    expect(other?.id).not.toBe(owner.id);
+    expect(
+      (
+        await handle(
+          request(`/api/runs/${runId}`, foreign.token ?? undefined),
+          "read",
+          runId,
+        )
+      ).status,
+    ).toBe(404);
+    for (const invalid of [undefined, "bad", "f".repeat(64)]) {
+      expect(
+        (await handle(request("/api/runs/current", invalid), "read")).status,
+      ).toBe(401);
+    }
+    await pool.query(
+      "UPDATE sessions SET expires_at=now() - interval '1 second' WHERE id=$1",
+      [owner.id],
+    );
+    expect(
+      (await handle(request("/api/runs/current", token), "read")).status,
+    ).toBe(401);
+    await expect(
+      execute(owner.id, "reset", runId, {
+        actionId: actionId(),
+        expectedVersion: 1,
+      }),
+    ).rejects.toMatchObject({ code: "SESSION_REQUIRED" });
+    const replacement = await handle(
+      request("/api/players/session", token, {}),
+      "session",
+    );
+    const nextToken = replacement.cookies.get(COOKIE_NAME)?.value;
+    expect(nextToken).not.toBe(token);
+    expect(
+      (await handle(request(`/api/runs/${runId}`, nextToken), "read", runId))
+        .status,
+    ).toBe(404);
+    expect(
+      (await pool.query("SELECT id FROM runs WHERE id=$1", [runId])).rowCount,
+    ).toBe(1);
   });
   it("serializes create retries and prevents concurrent active runs", async () => {
     const owner = randomUUID();
@@ -607,6 +706,158 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
     ).rejects.toThrow();
   });
 
+  it("authorizes finished-run eligibility and claims, replays across tabs and rolls back failed claims", async () => {
+    const credential = await bootstrap(undefined);
+    const owner = await findSession(credential.token ?? undefined);
+    if (!owner) throw new Error("Missing owner");
+    const run = newRun(randomUUID(), owner.id);
+    const active = structuredClone(run);
+    run.status = "finished";
+    run.game.state.lockpicks = 0;
+    run.game.state.currentLock.isFailed = true;
+    run.game.finishedAt = new Date().toISOString();
+    await db.insert(schema.runs).values(run);
+    active.id = randomUUID();
+    await db.insert(schema.runs).values(active);
+    expect(await readEligibility(owner.id, run.id)).toMatchObject({
+      eligible: true,
+    });
+    const context = { params: Promise.resolve({ id: run.id }) };
+    const privateRequest = (token: string | null, body?: object) =>
+      new NextRequest(
+        `https://trial.test/api/runs/${run.id}/leaderboard-entry`,
+        {
+          method: body ? "POST" : "GET",
+          headers: {
+            origin: "https://trial.test",
+            "content-type": "application/json",
+            cookie: `${COOKIE_NAME}=${token}`,
+          },
+          ...(body ? { body: JSON.stringify(body) } : {}),
+        },
+      );
+    const eligibility = await getEligibility(
+      privateRequest(credential.token),
+      context,
+    );
+    expect(eligibility.status).toBe(200);
+    expect(eligibility.headers.get("cache-control")).toBe("no-store");
+    expect(await eligibility.json()).toMatchObject({ eligible: true });
+    expect(
+      (
+        await postClaim(
+          privateRequest(credential.token, {
+            actionId: actionId(),
+            nickname: "Wedge",
+            score: 999,
+          }),
+          context,
+        )
+      ).status,
+    ).toBe(400);
+    const foreign = await bootstrap(undefined);
+    expect(
+      (await getEligibility(privateRequest(foreign.token), context)).status,
+    ).toBe(404);
+    expect(
+      (
+        await postClaim(
+          privateRequest(foreign.token, {
+            actionId: actionId(),
+            nickname: "Wedge",
+          }),
+          context,
+        )
+      ).status,
+    ).toBe(404);
+
+    const input = { actionId: actionId(), nickname: "  Клин  " };
+    for (const operation of [
+      () => readEligibility(otherId, run.id),
+      () => claimEntry(otherId, run.id, input),
+    ]) {
+      await expect(operation()).rejects.toMatchObject({
+        code: "RUN_NOT_FOUND",
+        status: 404,
+      });
+    }
+    expect(
+      (
+        await claimEntry(owner.id, active.id, {
+          ...input,
+          actionId: actionId(),
+        })
+      ).body,
+    ).toMatchObject({
+      outcome: "leaderboard_not_qualified",
+      qualification: { reason: "invalid_run" },
+    });
+    await pool.query(
+      `ALTER TABLE run_actions ADD CONSTRAINT claim_failure CHECK (action_id <> '${input.actionId}'::uuid)`,
+    );
+    try {
+      await expect(claimEntry(owner.id, run.id, input)).rejects.toThrow();
+      expect(
+        (
+          await pool.query(
+            "SELECT run_id FROM leaderboard_entries WHERE run_id=$1",
+            [run.id],
+          )
+        ).rowCount,
+      ).toBe(0);
+      expect(
+        (
+          await pool.query(
+            "SELECT action_id FROM run_actions WHERE action_id=$1",
+            [input.actionId],
+          )
+        ).rowCount,
+      ).toBe(0);
+    } finally {
+      await pool.query("ALTER TABLE run_actions DROP CONSTRAINT claim_failure");
+    }
+    const replies = await Promise.all(
+      [1, 2].map(() => claimEntry(owner.id, run.id, input)),
+    );
+    expect(replies[0]).toEqual(replies[1]);
+    const httpReplay = await postClaim(
+      privateRequest(credential.token, input),
+      context,
+    );
+    expect(httpReplay.status).toBe(200);
+    expect(await httpReplay.json()).toEqual(replies[0].body);
+    expect(replies[0].body).toMatchObject({
+      outcome: "leaderboard_claimed",
+      entry: { runId: run.id, displayName: "Клин", oreNuggets: 0 },
+    });
+    expect(JSON.stringify(replies[0])).not.toMatch(
+      /tokenHash|ownerId|initialLock|optimalMoves/,
+    );
+    await expect(
+      claimEntry(owner.id, run.id, { ...input, nickname: "Different" }),
+    ).rejects.toMatchObject({ code: "ACTION_ID_REUSED" });
+    await expect(
+      execute(owner.id, "create", undefined, { actionId: input.actionId }),
+    ).rejects.toMatchObject({ code: "ACTION_ID_REUSED" });
+    expect(await readEligibility(owner.id, run.id)).toEqual({
+      eligible: false,
+      reason: "already_claimed",
+    });
+    expect(
+      (await claimEntry(owner.id, run.id, { ...input, actionId: actionId() }))
+        .body,
+    ).toMatchObject({ qualification: { reason: "already_claimed" } });
+    await pool.query("UPDATE sessions SET revoked_at=now() WHERE id=$1", [
+      owner.id,
+    ]);
+    await expect(readEligibility(owner.id, run.id)).rejects.toMatchObject({
+      code: "SESSION_REQUIRED",
+    });
+    await expect(claimEntry(owner.id, run.id, input)).rejects.toMatchObject({
+      code: "SESSION_REQUIRED",
+    });
+  });
+
   it("stores multiple immutable finished runs per owner and one durable claim per run", async () => {
     const finished = Array.from({ length: 2 }, () => {
       const run = newRun(randomUUID(), otherId);
@@ -681,6 +932,89 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
         .slice(0, 100),
     );
     expect(top.every((r) => r.oreNuggets === 1000)).toBe(true);
+  });
+
+  it("rechecks cutoff after a snapshot loses qualification and serializes cross-owner claims", async () => {
+    const credentials = await Promise.all(
+      [1, 2].map(() => bootstrap(undefined)),
+    );
+    const owners = await Promise.all(
+      credentials.map((c) => findSession(c.token ?? undefined)),
+    );
+    const candidates = owners.map((owner, index) => {
+      if (!owner) throw new Error("Missing owner");
+      const run = newRun(randomUUID(), owner.id);
+      run.status = "finished";
+      run.game.state.lockpicks = 0;
+      run.game.state.currentLock.isFailed = true;
+      run.game.finishedAt = new Date().toISOString();
+      run.game.state.oreNuggets = 2000 + index;
+      return run;
+    });
+    // Fill 99 slots above both candidates; existing 1000-ore entries sit below them.
+    const fillers = Array.from({ length: 99 }, () => {
+      const run = structuredClone(candidates[0]);
+      run.id = randomUUID();
+      run.game.state.oreNuggets = 3000;
+      return run;
+    });
+    await db.insert(schema.runs).values([...fillers, ...candidates]);
+    await db
+      .insert(schema.leaderboardEntries)
+      .values(fillers.map((r) => ({ runId: r.id, nickname: "Filler" })));
+    const [weak, strong] = candidates;
+    expect(await readEligibility(weak.ownerId, weak.id)).toEqual({
+      eligible: true,
+      rank: 100,
+    });
+    const strongInput = { actionId: actionId(), nickname: "Strong" };
+    expect(
+      (await claimEntry(strong.ownerId, strong.id, strongInput)).body.outcome,
+    ).toBe("leaderboard_claimed");
+    const weakInput = { actionId: actionId(), nickname: "Weak" };
+    const replies = await Promise.all([
+      claimEntry(weak.ownerId, weak.id, weakInput),
+      claimEntry(strong.ownerId, strong.id, strongInput),
+    ]);
+    expect(replies[0].body).toMatchObject({
+      outcome: "leaderboard_not_qualified",
+      qualification: { reason: "below_cutoff" },
+    });
+    expect(await claimEntry(weak.ownerId, weak.id, weakInput)).toEqual(
+      replies[0],
+    );
+    expect((await readTopRuns()).map((r) => r.runId)).toContain(strong.id);
+    expect(
+      (
+        await pool.query(
+          "SELECT run_id FROM leaderboard_entries WHERE run_id=$1",
+          [weak.id],
+        )
+      ).rowCount,
+    ).toBe(0);
+    const racers = candidates.map((candidate, index) => {
+      const run = structuredClone(candidate);
+      run.id = randomUUID();
+      run.game.state.oreNuggets = 2100 + index;
+      return run;
+    });
+    await db.insert(schema.runs).values(racers);
+    const raced = await Promise.all(
+      racers.map((r) =>
+        claimEntry(r.ownerId, r.id, {
+          actionId: actionId(),
+          nickname: "Racer",
+        }),
+      ),
+    );
+    expect(raced[1].body.outcome).toBe("leaderboard_claimed");
+    expect(raced[0].body.outcome).toMatch(
+      /^leaderboard_(claimed|not_qualified)$/,
+    );
+    const ranked = (await readTopRuns()).map((r) => r.runId);
+    expect(ranked).toContain(racers[1].id);
+    expect(ranked).not.toContain(racers[0].id);
+    expect(ranked).not.toContain(strong.id);
   });
 
   it("cleans only expired old unclaimed terminal runs, preserving live recovery, recent replay, active runs and claims", async () => {

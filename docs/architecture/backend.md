@@ -1,6 +1,6 @@
 # Backend and transport
 
-Gameplay is implemented in one Next.js application on Vercel, using Neon PostgreSQL, Drizzle and the pg driver. [Deployment evidence](status.md) is tracked separately from implementation. The [API contract](api-contract.md) defines wire shapes and retry rules; leaderboard endpoints remain planned.
+Gameplay is implemented in one Next.js application on Vercel, using Neon PostgreSQL, Drizzle and the pg driver. [Deployment evidence](status.md) is tracked separately from implementation. The [API contract](api-contract.md) defines wire shapes and retry rules; public leaderboard reads remain planned.
 
 ## Layers
 
@@ -25,6 +25,8 @@ Gameplay is implemented in one Next.js application on Vercel, using Neon Postgre
 | POST | /api/runs/:id/reset | Restore positions, preserve damage and penalties |
 | POST | /api/runs/:id/continue | Credit pending reward once and generate next chest |
 | POST | /api/runs/:id/abandon | End active run, discard pending reward |
+| GET | /api/runs/:id/leaderboard-eligibility | Owned qualification snapshot; no reservation |
+| POST | /api/runs/:id/leaderboard-entry | Owned, validated, retry-safe nickname claim; atomic cutoff recheck |
 | GET (upgrade) | /api/game/socket?run=:id | Authenticated same-origin WebSocket bound to one owned run |
 
 Reset/continue/abandon bodies contain only actionId and expectedVersion. Strict schemas reject client state and scores. All private responses use no-store. Session bootstrap, lifecycle and recovery use HTTP; the client sends rapid moves over WebSocket, with queued HTTP fallback when upgrade is unavailable. Lifecycle controls wait for pending moves to settle.
@@ -37,9 +39,11 @@ WebSocket input is ordered and adjacent moves can be coalesced (up to 32) into o
 
 The client predicts pin movement and damage immediately. Resources, rewards, terminal status and dialogs follow committed snapshots. Reconnect retries unknown actions with their original IDs/versions; stale-version conflicts clear queued predictions and refetch the owned run. Prediction never supplies trusted state.
 
-## Planned ranking
+## Ranking integration
 
-/api/leaderboard and the eligibility/name-claim endpoints are not implemented. The approved target is arcade TOP 100 of claimed finished runs, with ownership validation, one claim per run and an atomic cutoff recheck. Nicknames are presentation only. Ordering and snapshot qualification are implemented as pure policy under #51; see [competitive ranking](competitive-ranking.md). Claim storage and a bounded internal TOP 100 read are implemented under #31; authenticated atomic claims and public reads remain planned.
+Private eligibility and claim endpoints are implemented under #33. They use the gameplay cookie, live owner lock and action replay namespace; claims serialize across owners with a cohort advisory transaction lock before querying the bounded TOP 100. Claim and replay insertion commit atomically. See the [claim contract](api-contract.md#post-run-arcade-claims-implemented-under-33). No profile is created and nicknames are labels only.
+
+Public `/api/leaderboard` reads, snapshot pagination and nickname UI remain #24/#34/#46 work. Pure ordering/qualification (#51), claim storage and internal bounded reads (#31) underpin the private service.
 
 For environments, migrations, local WebSocket testing and diagnostics, see [server setup](server-setup.md). Distributed rate limits, production monitoring and late-game compute budgets remain release work.
 

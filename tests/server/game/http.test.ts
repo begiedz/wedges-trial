@@ -2,7 +2,13 @@ import { NextRequest } from "next/server";
 import { describe, expect, it, vi } from "vitest";
 import { failureReason } from "@/server/game/diagnostics";
 import { checkOrigin, handle, validateCommand } from "@/server/game/http";
-import { bootstrap } from "@/server/game/service";
+import { bootstrap, findSession } from "@/server/game/service";
+import { claimEntry, readEligibility } from "@/server/leaderboard/service";
+
+vi.mock("@/server/leaderboard/service", () => ({
+  claimEntry: vi.fn(),
+  readEligibility: vi.fn(),
+}));
 
 vi.mock("@/server/game/service", () => ({
   bootstrap: vi.fn(),
@@ -134,5 +140,87 @@ describe("safe server failure diagnostics", () => {
     expect(failureReason({ code: "private-token", message: "password" })).toBe(
       "UNKNOWN_SERVER_FAILURE",
     );
+  });
+});
+
+describe("anonymous session HTTP contract", () => {
+  const request = (body = "{}") =>
+    new NextRequest("https://trial.test/api/players/session", {
+      method: "POST",
+      headers: {
+        origin: "https://trial.test",
+        "content-type": "application/json",
+      },
+      body,
+    });
+  it("sets a protected expiring cookie and exposes only readiness", async () => {
+    vi.mocked(bootstrap).mockResolvedValueOnce({ token: "a".repeat(64) });
+    const response = await handle(request(), "session");
+    expect(await response.json()).toEqual({ ready: true });
+    const cookie = response.cookies.get("wedges_session");
+    expect(cookie).toMatchObject({
+      value: "a".repeat(64),
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      path: "/",
+      maxAge: 2592000,
+    });
+    expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+  it("restores without extending the absolute cookie lifetime", async () => {
+    vi.mocked(bootstrap).mockResolvedValueOnce({ token: null });
+    const response = await handle(request(), "session");
+    expect(response.headers.get("set-cookie")).toBeNull();
+    expect(await response.json()).toEqual({ ready: true });
+  });
+  it("rejects profile, nickname and ownership fields at bootstrap", async () => {
+    for (const body of [
+      { nickname: "Wedge" },
+      { ownerId: actionId },
+      { displayName: "Wedge" },
+    ]) {
+      expect(
+        (await handle(request(JSON.stringify(body)), "session")).status,
+      ).toBe(400);
+    }
+  });
+  it.each(["eligibility", "claim"] as const)(
+    "authenticates private %s before dispatch",
+    async (operation) => {
+      vi.mocked(findSession).mockResolvedValueOnce(null);
+      const response = await handle(
+        new NextRequest(
+          `https://trial.test/api/runs/${actionId}/leaderboard-entry`,
+          {
+            method: operation === "claim" ? "POST" : "GET",
+            headers: { origin: "https://trial.test" },
+          },
+        ),
+        operation,
+        actionId,
+      );
+      expect(response.status).toBe(401);
+      expect(response.headers.get("cache-control")).toBe("no-store");
+    },
+  );
+  it("protects post-run claims from cross-site requests", async () => {
+    vi.mocked(claimEntry).mockClear();
+    for (const origin of [undefined, "https://evil.test"]) {
+      const response = await handle(
+        new NextRequest(
+          `https://trial.test/api/runs/${actionId}/leaderboard-entry`,
+          {
+            method: "POST",
+            headers: origin ? { origin } : {},
+          },
+        ),
+        "claim",
+        actionId,
+      );
+      expect(response.status).toBe(403);
+    }
+    expect(claimEntry).not.toHaveBeenCalled();
+    expect(readEligibility).not.toHaveBeenCalled();
   });
 });

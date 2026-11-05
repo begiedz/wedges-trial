@@ -5,7 +5,7 @@ import { type Action, publicRun } from "./engine";
 import { GameError } from "./errors";
 import type { Command, StoredRun } from "./types";
 
-type Transaction = Parameters<
+export type Transaction = Parameters<
   Parameters<ReturnType<typeof getDatabase>["transaction"]>[0]
 >[0];
 export type ReplayRecord = typeof runActions.$inferInsert;

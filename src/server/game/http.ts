@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { type NextRequest, NextResponse } from "next/server";
+import { claimEntry, readEligibility } from "@/server/leaderboard/service";
 import { failureReason } from "./diagnostics";
 import type { Action } from "./engine";
 import { GameError } from "./errors";
@@ -44,7 +45,7 @@ async function boundedJson(request: Request) {
 }
 export async function handle(
   request: NextRequest,
-  operation: Action | "create" | "read" | "session",
+  operation: Action | "create" | "read" | "session" | "eligibility" | "claim",
   id?: string,
 ) {
   const headers = { "Cache-Control": "no-store" };
@@ -77,6 +78,19 @@ export async function handle(
     if (!session) throw new GameError("SESSION_REQUIRED", 401);
     if (id !== undefined && !isUuid(id))
       throw new GameError("INVALID_REQUEST", 400);
+    if (operation === "eligibility" || operation === "claim") {
+      if (!id) throw new GameError("INVALID_REQUEST", 400);
+      if (operation === "eligibility")
+        return NextResponse.json(await readEligibility(session.id, id), {
+          headers,
+        });
+      const result = await claimEntry(
+        session.id,
+        id,
+        await boundedJson(request),
+      );
+      return NextResponse.json(result.body, { status: result.status, headers });
+    }
     if (operation === "read")
       return NextResponse.json(
         { run: await readRun(session.id, id) },

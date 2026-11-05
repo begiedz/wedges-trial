@@ -1,4 +1,4 @@
-/** Gameplay wire contract. Leaderboard endpoints remain planned. */
+/** Gameplay and private post-run claim wire contracts. */
 import type { MAX_INVALID_MOVES_PER_PICK } from "@/game/constants";
 import type {
   ChestReward,
@@ -136,3 +136,24 @@ export type LeaderboardResponse = {
   entries: LeaderboardEntryDto[];
   nextCursor: string | null;
 };
+
+export type LeaderboardQualification =
+  | { eligible: true; rank: number }
+  | {
+      eligible: false;
+      reason:
+        | "invalid_run"
+        | "unsupported_ruleset"
+        | "already_claimed"
+        | "below_cutoff";
+    };
+
+export type LeaderboardClaimRequest = { actionId: string; nickname: string };
+export type LeaderboardClaimResponse = RunResponse &
+  (
+    | { outcome: "leaderboard_claimed"; entry: LeaderboardEntryDto }
+    | {
+        outcome: "leaderboard_not_qualified";
+        qualification: LeaderboardQualification;
+      }
+  );

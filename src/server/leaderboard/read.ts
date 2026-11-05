@@ -2,11 +2,14 @@ import { and, asc, desc, eq } from "drizzle-orm";
 import { RULESET_VERSION } from "@/game/ruleset";
 import { getDatabase } from "@/server/db";
 import { leaderboardEntries, runs } from "@/server/db/schema";
+import type { Transaction } from "@/server/game/persistence";
 import { LEADERBOARD_SIZE } from "./policy";
 
-/** Internal bounded read; public routes and atomic claims are separate work. */
-export async function readTopRuns() {
-  return getDatabase()
+/** Bounded read usable within the claim transaction; public pagination is separate work. */
+export async function readTopRuns(
+  db: Transaction | ReturnType<typeof getDatabase> = getDatabase(),
+) {
+  return db
     .select({
       runId: runs.id,
       nickname: leaderboardEntries.nickname,

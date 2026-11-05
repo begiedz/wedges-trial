@@ -1,11 +1,11 @@
 # Gameplay API contract — v1
 
-This is the v1 gameplay contract. Session/gameplay HTTP endpoints and WebSockets are implemented; leaderboard sections are approved target contracts, not available endpoints. See [status](status.md) for verification boundaries. Shared wire types live in [contracts.ts](../../src/api/contracts.ts) and [realtime.ts](../../src/api/realtime.ts); runtime validation lives in src/server/game/validation.ts.
+This is the v1 gameplay contract. Session/gameplay HTTP endpoints, WebSockets and private leaderboard eligibility/claims are implemented; the public leaderboard read remains an approved target. See [status](status.md) for verification boundaries. Shared wire types live in [contracts.ts](../../src/api/contracts.ts) and [realtime.ts](../../src/api/realtime.ts); runtime validation lives in src/server/game/validation.ts.
 
 ## Transport and identity
 
 - Same-origin HTTPS JSON under `/api`, outside the localized `/{lang}` page tree. Requests with bodies use `Content-Type: application/json`; responses use `application/json`.
-- All run endpoints require a valid anonymous session cookie. POST /api/players/session accepts exactly {} and returns { "ready": true }, setting a Secure, HttpOnly, SameSite=Strict cookie when needed. The session has a fixed 30-day expiry; only the token hash is stored. No gameplay endpoint implicitly creates a session. Nickname claims remain planned (#34).
+- All run endpoints require a valid anonymous session cookie. POST /api/players/session accepts exactly {} and returns { "ready": true }, setting a Secure, HttpOnly, SameSite=Strict cookie when needed. The session has a fixed 30-day expiry; only the token hash is stored. No gameplay endpoint implicitly creates a session. Post-run claim endpoints use the same owner; nickname UI remains #34.
 - Every mutation requires an allowed same-origin `Origin`; missing or disallowed origins return `403 ORIGIN_FORBIDDEN`. Non-browser callers must supply the same origin and valid session. All private reads and mutations check ownership.
 - Missing, expired or revoked sessions return `401 SESSION_REQUIRED`. An unknown run and a run belonging to someone else both return `404 RUN_NOT_FOUND`, without disclosing its status, version or owner. UUIDs are identifiers, not authorization.
 - Run responses and errors use `Cache-Control: no-store`. Public leaderboard reads do not require a session and also use `no-store` in v1.
@@ -26,6 +26,8 @@ The path `:id` is a run UUID. `RunActionRequest` means **exactly** `{ actionId, 
 | POST | `/api/runs/:id/reset` | `RunActionRequest` | `200 ResetRunResponse` |
 | POST | `/api/runs/:id/continue` | `RunActionRequest` | `200 ContinueRunResponse` |
 | POST | `/api/runs/:id/abandon` | `RunActionRequest` | `200 AbandonRunResponse` |
+| GET | `/api/runs/:id/leaderboard-eligibility` | No body or query | `200 LeaderboardQualification` |
+| POST | `/api/runs/:id/leaderboard-entry` | Exactly `{ actionId, nickname }` | `200 LeaderboardClaimResponse` |
 | GET (planned) | `/api/leaderboard` | `limit`, `cursor` query parameters | `200 LeaderboardResponse` |
 
 The by-ID read and abandon mutation complete the requested lifecycle: `/current` cannot reload a finished result, and starting a run must not silently abandon another one.
@@ -304,6 +306,16 @@ A last-pick-breaking move returns `200` with `outcome: "run_finished"`, the same
 - #24/#46: snapshot-stable, ruleset-aware ranking query and cursor validation.
 - Test exact replay before stale-version/status checks, key reuse with changed payload, two different actions at one version, simultaneous start/claim/finalization, cross-player IDs, missing/bad origins, third invalid move, reset preserving penalties, failure rollback, abandoned reward exclusion and terminal reads. Contract/types alone do not establish any of these server guarantees.
 
-## Post-run arcade claim extension (approved target; not yet implemented)
+## Post-run arcade claims (implemented under #33)
 
-This extension supersedes first-visit nickname onboarding and player-best-run assumptions above. No nickname is required for session bootstrap or `POST /api/runs`. `GET /api/runs/:id/leaderboard-eligibility` is an authenticated read of a finished owned run's current TOP 100 eligibility; it reserves nothing. `POST /api/runs/:id/leaderboard-entry` accepts a validated `nickname` plus idempotency `actionId` (final request schema to be incorporated into `src/api/contracts.ts` and runtime validators). It accepts **no score**. Require cookie ownership, origin/CSRF checks, finished status, unique claim per run and a transactional recheck of current TOP 100 cutoff. Return verified entry/rank on success or a typed no-longer-qualified outcome on cutoff race. Public leaderboard rows contain the nickname and server-derived score, not session/player credentials. Names may repeat. Expiration and cleanup of non-qualifying runs must preserve idempotent retries and claimed results. API implementation and DTO update tracked in #29, #34 and #46.
+No nickname is required for bootstrap or starting gameplay. Both private endpoints authenticate the same anonymous cookie, reject query fields, authorize the owned run and return `no-store`. Expiry/revocation is rechecked under the owner-row lock; foreign and missing runs return the same 404.
+
+`GET /api/runs/:id/leaderboard-eligibility` returns `{ eligible: true, rank }` or `{ eligible: false, reason }`. Reasons are `invalid_run` (including active/abandoned), `unsupported_ruleset`, `already_claimed` and `below_cutoff`. This read reserves nothing.
+
+`POST /api/runs/:id/leaderboard-entry` accepts exactly `{ actionId, nickname }`; no version or score. Nicknames are trimmed, 1–24 Unicode code points, with control characters and unpaired surrogates rejected. Names may repeat and must be rendered as plain text. Malformed requests return `400 INVALID_REQUEST`. The existing same-origin and 2 KiB body requirements apply.
+
+Success is `200 { outcome: "leaderboard_claimed", run, entry }`, where `entry` is a `LeaderboardEntryDto` derived exclusively from the finished run and normalized name. Its rank is the rank at commit, not a reserved future place. A cutoff loss or otherwise ineligible run returns `200 { outcome: "leaderboard_not_qualified", run, qualification: { eligible: false, reason } }`. Both outcomes are recorded for exact retry under the owner/action ID, across gameplay and claim endpoints. Retrying a rejected snapshot with a fresh action ID is a new attempt; replaying the old ID returns the original outcome. Reusing an action ID for a different run/name/operation returns `409 ACTION_ID_REUSED`. Authentication and ownership precede replay.
+
+The transaction locks the owner, then a transaction-scoped PostgreSQL advisory lock shared by all claims in the active cohort. Under READ COMMITTED, cutoff queries after this lock see the preceding claimant's commit. Bounded TOP 100 reads plus a separate durable claim lookup prevent displaced runs from reclaiming. Claim insertion and replay storage commit together; failure rolls both back. Accepted claims do not change the immutable run/version. All application claim writers must use this service and lock; raw SQL insertion bypasses cutoff orchestration.
+
+The public read/cursor and nickname UI remain #24/#34/#46 work. Existing retention preserves claims permanently and all replay/eligible submission access for the full live session; see [data model](data-model.md#conservative-retention-policy-31).

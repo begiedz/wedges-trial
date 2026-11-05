@@ -6,11 +6,11 @@ Gameplay has migrated from browser-owned state to server-authoritative PostgreSQ
 | --- | --- | --- |
 | Gameplay | Server generation, moves, reset, rewards, continue, abandon and finalization | Difficulty calibration and late-game performance measurements |
 | Persistence | Neon/PostgreSQL, Drizzle migrations, atomic versioned actions and replay records | Scheduling/monitoring of conservative manual retention |
-| Identity | Anonymous hashed-token sessions; Secure, HttpOnly, SameSite=Strict cookie | Leaderboard eligibility and nickname claims |
+| Identity | Anonymous hashed-token sessions; protected cookie; authenticated private eligibility and nickname claims | Nickname claim UI and deployed expiry/reconnect checks |
 | Transport | Vercel-native WebSocket, ordered inputs, immediate visual prediction and reconciliation; HTTP recovery/fallback | Deployed WebSocket performance and reconnect verification |
 | Client | React adapter over a framework-independent session controller; no gameplay localStorage/sessionStorage | Ranking UI |
 | Balance | Approved deterministic ore; reset and continuation preserve pick damage; endless ore ranking approved under #51 | Pick replenishment calibration and release abuse controls |
-| Ranking | Finished runs and metrics persisted; pure ordering and snapshot qualification policy tested under #51 | Public endpoints, atomic qualification and claim orchestration (schema/internal reads now implemented under #31) |
+| Ranking | Finished runs/metrics, ordering policy, claim storage, internal TOP 100 reads and atomic private eligibility/claim orchestration | Public read/cursor endpoints and nickname UI |
 | Audio/assets | Existing visual assets | Provenance audit; optional music/SFX controls |
 
 ## Verification boundaries
@@ -75,3 +75,17 @@ Gameplay React components, hooks, dialogs, controls and lock visualization now l
 Project-owned source/test filenames now use lowercase kebab-case independently of TypeScript symbols. All tests live under `tests/`, with matching source directories/basenames and explicit multi-module integration suites; this supersedes #57's temporary feature test colocation and coordinates #58's placement convention. Framework/tooling names, third-party assets and generated migration files are preserved. `pnpm check:names` enforces naming and mirroring through lint/CI and regression tests. Vitest discovers the centralized tests and provides V8 coverage through one matching development-only provider. CI adds coverage and production-build checks.
 
 Local verification on a copied, case-sensitive Linux filesystem (Node 22): `pnpm test` and `pnpm test:coverage` each passed all 237 tests, including all 16 PostgreSQL integration tests against disposable PostgreSQL 17. Typecheck, lint and production build passed; the existing cursor CSS warning remains. Coverage maps to renamed sources (62.67% statements/lines, 87.92% branches, 78.51% functions). Syntax comparison of all 127 existing source/test modules confirmed only path/import-order changes. No gameplay, API, stored-data or symbol-naming change; no Neon/production migration, deployment, live browser check or GitHub mutation. See [criterion-by-criterion evidence and rollback](../agent/file-naming.md#issue-59-acceptance-evidence--2026-11-05).
+
+## Anonymous sessions and private claims (#33) — 2026-11-05
+
+Retained the existing cryptographically random 256-bit credentials, hash-only storage and fixed 30-day Secure/HttpOnly/SameSite=Strict cookie. Added private eligibility and nickname-claim routes using the same owner, Origin checks and shared action ID namespace. Owner-row locking rechecks expiry/revocation; a cohort advisory transaction lock serializes cutoff checks across sessions. Claim insertion and original replay response commit together. No score is accepted from the browser, no public profile is created, and terminal gameplay remains immutable. See [API contract](api-contract.md#post-run-arcade-claims-implemented-under-33) and [session lifecycle](security.md#anonymous-session-lifecycle-33).
+
+| Issue #33 acceptance criterion | Status | Evidence |
+| --- | --- | --- |
+| Starting gameplay never asks for nickname | PASS | Bootstrap/create HTTP tests accept `{}` / actionId only; reject nickname/profile fields. Existing React/client lifecycle tests start anonymous gameplay. No UI change. |
+| Session owns runs and post-run claims securely; foreign sessions cannot claim | PASS | Real PostgreSQL and route tests reject foreign eligibility/claim requests with 404; owner can claim, replay across tabs and resume reads. Tests cover revoked owners, Origin/CSRF, forged scores, one claim, cross-operation action-ID reuse, changed-cutoff loss, concurrent owners and rollback after replay-write failure. |
+| Tests cover cookie expiry, invalid token, refresh, multiple tabs and browser isolation | PASS | Protected cookie flags/lifetime and non-sliding restore tested at HTTP boundary; database-backed HTTP tests cover expired/malformed/unknown/missing credentials, repeated bootstrap/refresh, concurrent tab starts, isolated owner cookies and replacement after expiry without transferring the old run. |
+
+No SQL migration is needed: claim replay metadata extends the existing JSONB TypeScript shape only. Application rollback can retain schema, claims and action records; do not delete durable claims or replay history. Existing manual retention protects active runs, live-session recovery/submission and claimed results; this work adds no cleanup job, TTL or production maintenance.
+
+Local verification: all 262 tests passed, including all 19 PostgreSQL integration tests against disposable local PostgreSQL 17; coverage, type checking, lint, naming/architecture checks and production build passed. The sandbox blocked localhost database access and stalled Turbopack; database checks and the successful build ran outside the sandbox. Lint retains the existing cursor CSS warning. No live browser end-to-end, Neon/production migration, deployment or GitHub issue mutation was performed. Public leaderboard pagination and nickname UI remain #24/#34/#46 work.

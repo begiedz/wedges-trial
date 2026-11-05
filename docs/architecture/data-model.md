@@ -22,9 +22,9 @@ No browser save is imported. No automatic cleanup is scheduled. The manual `clea
 
 ## Ranking storage and reads (#31)
 
-`leaderboard_entries` contains labels only. `readTopRuns()` joins claims to immutable finished runs, filters deterministic-ore-v1, orders ore DESC, opened chests DESC, finished_at ASC, UUID ASC and limits to 100. Displaced claims remain durable. Generated numeric columns derive exclusively from game JSONB; the run trigger derives the indexed timestamp from game.finishedAt. No caller-supplied score is stored in a claim.
+`leaderboard_entries` contains labels only. `readTopRuns()` joins claims to immutable finished runs, filters deterministic-ore-v1, orders ore DESC, opened chests DESC, finished_at ASC, UUID ASC and limits to 100. Displaced claims remain durable. Generated numeric columns derive exclusively from game JSONB; the run trigger derives the indexed timestamp from game.finishedAt. No caller-supplied score is stored in a claim. Private claims reuse run_actions JSONB with additional entry/qualification fields; this is a TypeScript extension, with no SQL migration or rewrite of historical replies.
 
-This is internal storage/read infrastructure, not a public endpoint or claim service. Ownership, Origin, nickname normalization, action replay and the atomic cutoff recheck must be implemented together in #24/#46 before exposing insertion. Database constraints enforce finished status and one claim per run, but do not independently enforce TOP 100 qualification. See [competitive ranking](competitive-ranking.md).
+The private claim service (#33) now combines ownership, Origin, nickname normalization, shared action replay and the atomic cutoff recheck before insertion. Public read/cursor infrastructure remains #24/#46. Database constraints enforce finished status and one claim per run, but do not independently enforce TOP 100 qualification. See [competitive ranking](competitive-ranking.md).
 
 ## Conservative retention policy (#31)
 
