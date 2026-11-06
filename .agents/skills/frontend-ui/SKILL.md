@@ -14,7 +14,7 @@ Read `AGENTS.md`, `docs/architecture/status.md` and relevant layout/components. 
 3. Preserve rapid movement input without a per-move loading lock; deduplicate lifecycle submissions and model pending, invalid move, pick break, solved chest, failed run and stale conflict states clearly.
 4. Preserve A/D/W/S, arrow keys, manual reset, next chest and touch/click controls; avoid key events inside text inputs.
 5. Keep UI accessible and screen-reader friendly; don't rely only on sound/color.
-6. Never hardcode copy; update en/pl/de/ru dictionaries.
+6. Never hardcode copy; update en/pl/de/ru dictionaries. Follow the [plate/pin glossary](../../../docs/architecture/gameplay.md#lock-component-terminology-60) in visible controls, accessible labels and debug UI: select/slide plates, keep pins stationary, align middle holes. Up/down selects plates. Preserve existing component paths, translation keys and `pinId`/`selectedPinId` identifiers unless a separate refactor is authorized.
 7. For audio, connect UI to a separate opt-in provider; never call audio from the pure engine.
 
 ## Done when

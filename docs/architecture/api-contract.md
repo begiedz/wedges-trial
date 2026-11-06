@@ -2,6 +2,8 @@
 
 This is the v1 gameplay contract. Session/gameplay HTTP endpoints, WebSockets and private leaderboard eligibility/claims are implemented; the public leaderboard read remains an approved target. See [status](status.md) for verification boundaries. Shared wire types live in [contracts.ts](../../src/api/contracts.ts) and [realtime.ts](../../src/api/realtime.ts); runtime validation lives in src/server/game/validation.ts.
 
+Product explanations use [plates for moving elements and pins for fixed indicators](gameplay.md#lock-component-terminology-60). Existing wire fields (`pins`, `pinId`, position/target/range and movement rules) encode plate alignment and retain their names. No DTO or persisted-state rename is implied.
+
 ## Transport and identity
 
 - Same-origin HTTPS JSON under `/api`, outside the localized `/{lang}` page tree. Requests with bodies use `Content-Type: application/json`; responses use `application/json`.
@@ -51,36 +53,36 @@ Every run response includes the entire confirmed public snapshot, not a patch:
 | `openedChests` | Number of solved locks; increments on solving, not on claim/retry |
 | `oreNuggets`, `lockpicks` | Credited resources only; pending rewards are excluded |
 | `difficulty` | Server-derived display band: 1, 2, 3 or 4 |
-| `currentLock` | Visible pins (`id`, `position`, `target`, `min`, `max`), current pick damage and literal `maxInvalidMovesPerPick: 3` |
+| `currentLock` | Visible plate alignment in `pins` (`id`, `position`, `target`, `min`, `max`), current pick damage and literal `maxInvalidMovesPerPick: 3` |
 | `reward` | Non-null only in `chest_opened`: fixed pending `{ oreNuggets, lockpicks }` |
 | `result` | Non-null only in `finished`: immutable final ore, solved-chest count, cumulative `totalMetrics: { moves, invalidMoves, brokenPicks }`, finish time and `reason: "lockpicks_exhausted"` |
 | `createdAt`, `updatedAt` | Server timestamps; `updatedAt` changes with committed mutations |
 
 Final statistics include every processed valid/invalid move and all broken picks across chests and resets. They are read-only server projections, not accepted mutation fields. Historical stored action replies can omit `result.totalMetrics`; replay them unchanged and show unavailable statistics until a fresh owned read supplies totals. Current-pick damage is durability, not cumulative mistake history.
 
-Use `status` instead of redundant `isSolved`/`isFailed` flags. Optional currentLock.moveRules exposes public movement mechanics to the owner for visual prediction. Generation seed, initial lock, solver path/optimum and session/player credentials are never serialized. Changed pin highlights can be derived by comparing public snapshots. Terminal snapshots retain the last visible lock for display. Scores from old local saves are never imported into this API.
+Use `status` instead of redundant `isSolved`/`isFailed` flags. Optional currentLock.moveRules exposes public movement mechanics to the owner for visual prediction. Generation seed, initial lock, solver path/optimum and session/player credentials are never serialized. Changed plate highlights can be derived by comparing public snapshots. Terminal snapshots retain the last visible lock for display. Scores from old local saves are never imported into this API.
 
-`playing` requires at least one pick and an unsolved lock. `chest_opened` requires all pins on target and at least one pick. `finished` requires zero picks and matching run/result totals. `openedChests === chestIndex - 1` while playing/finished; it equals `chestIndex` in `chest_opened`. An abandoned run preserves its last chest/solved count, including a solved-but-unclaimed chest. All pin positions and targets remain within their declared bounds.
+`playing` requires at least one pick and an unsolved lock. `chest_opened` requires all plates aligned with their targets and at least one pick. `finished` requires zero picks and matching run/result totals. `openedChests === chestIndex - 1` while playing/finished; it equals `chestIndex` in `chest_opened`. An abandoned run preserves its last chest/solved count, including a solved-but-unclaimed chest. All plate alignment positions and targets remain within their declared bounds.
 
 ### Moves, rewards and reset
 
 `MoveRequest` adds a nonnegative integer `pinId` and literal `direction: -1 | 1`. An ID absent from the owned current lock returns `400 INVALID_PIN`. Direction follows engine deltas, not screen orientation; the UI adapts its controls.
 
-An out-of-bounds move is a **successful gameplay action**, `200` with `outcome: "invalid_move"`, rather than an HTTP validation error. It preserves all pin positions, adds damage and increments the version. The third invalid move consumes exactly one pick and resets current-pick damage to 0. Return `pick_broken` if picks remain, or `run_finished` if none remain. No pin reset occurs. Valid moves return `moved`, or `chest_opened` when all targets are reached. Outcome precedence is therefore `run_finished` over `pick_broken` over `invalid_move`, and `chest_opened` over `moved`.
+An out-of-bounds move is a **successful gameplay action**, `200` with `outcome: "invalid_move"`, rather than an HTTP validation error. It preserves all plate positions, adds damage and increments the version. The third invalid move consumes exactly one pick and resets current-pick damage to 0. Return `pick_broken` if picks remain, or `run_finished` if none remain. No plate reset occurs. Valid moves return `moved`, or `chest_opened` when all targets are reached. Outcome precedence is therefore `run_finished` over `pick_broken` over `invalid_move`, and `chest_opened` over `moved`.
 
 The solving move increments `openedChests`, calculates and persists a pending reward and changes status to `chest_opened` in one transaction. The reward is shown immediately and is stable across reads, refreshes and retries. It is **not yet credited** to resource totals. Approved deterministic-ore-v1 awards floor((10 + 5 * (chestNumber - 1)) * max(4, 10 - invalidMovesOnChest) / 10). Pick replenishment retains its previous probabilities; further tuning remains open. Example snapshots are illustrative.
 
 `/continue` is allowed only in `chest_opened`. In one transaction, it credits the stored reward exactly once, generates the next solvable lock, increments `chestIndex`, resets per-chest counters and changes status to `playing` with `reward: null`. It returns the credited amounts separately as `claimedReward` for feedback. It preserves current-pick damage unless a future explicit gameplay decision changes that rule. If lock generation or persistence fails, no part is committed; the pending reward and version stay unchanged. Do not generate or award anything in the browser.
 
-`/reset` is allowed only in `playing`. It restores initial pin positions, preserving pick damage, spent picks, ore, run totals and cumulative per-chest move/invalid/broken-pick penalties. It cannot erase performance penalties, reroll a lock or reward, or reset a solved/terminal chest. A reset is an accepted versioned action even when pins are already in their initial positions.
+`/reset` is allowed only in `playing`. It restores initial plate positions, preserving pick damage, spent picks, ore, run totals and cumulative per-chest move/invalid/broken-pick penalties. It cannot erase performance penalties, reroll a lock or reward, or reset a solved/terminal chest. A reset is an accepted versioned action even when plates are already in their initial positions.
 
 ### Lifecycle and terminal states
 
 | Before | Action | After | Atomic effects |
 | --- | --- | --- | --- |
 | No active run | Create | `playing` | New ID, version 1, server lock/resources |
-| `playing` | Valid unsolved move | `playing` | Update affected pins and counters |
-| `playing` | Invalid move, picks remain | `playing` | Damage/break a pick; preserve pin positions |
+| `playing` | Valid unsolved move | `playing` | Update affected plate positions and counters |
+| `playing` | Invalid move, picks remain | `playing` | Damage/break a pick; preserve plate positions |
 | `playing` | Solve | `chest_opened` | Record pending reward, increment opened count |
 | `playing` | Reset | `playing` | Restore positions only |
 | `chest_opened` | Continue | `playing` | Credit once and advance chest |
@@ -93,7 +95,7 @@ All other action/status combinations return `409 INVALID_RUN_STATUS` without mut
 
 1. Every mutation has a caller-generated `actionId`; the client retains the exact request until the outcome is known. Scope action IDs uniquely **per player across all mutation endpoints**, including create. Reusing an ID for a different route/run/body returns `409 ACTION_ID_REUSED`.
 2. Authenticate, validate schema/origin and authorize access before serving a replay. Within the transaction, check the action record **before** checking the current version or lifecycle. An exact duplicate of a committed request returns its original status code and JSON, including the original snapshot/version, even after the run has advanced or finished. It never creates another lock, credits again, or increments version. Creation retries return the same `201` and ID.
-3. A new action on an existing run requires `expectedVersion === current version`. Mismatch returns `409 VERSION_CONFLICT` with authorized `runId`, `currentVersion`, `currentStatus`. No pins, damage, resources, metrics, reward or action success record changes.
+3. A new action on an existing run requires `expectedVersion === current version`. Mismatch returns `409 VERSION_CONFLICT` with authorized `runId`, `currentVersion`, `currentStatus`. No plate positions, damage, resources, metrics, reward or action success record changes.
 4. For matching versions, verify legal status and action, then atomically commit state, counters, version `+1`, and replay record. Successful invalid moves and resets also consume a version. Errors consume no version and do not reserve action IDs. Concurrent identical requests wait/re-read the one committed result; concurrent different requests from one version allow at most one commit.
 5. Action deduplication and state changes require a database transaction/constraints, not an in-memory map. Keep successful replay records for as long as the run is available; retention/tombstones must prevent old IDs from executing again. The implemented composite primary key (owner_id, action_id) covers creation and cross-run reuse. A committed creation action references the newly generated run ID; the caller need not know that ID to retry creation.
 6. After timeout, network loss, `429` or `5xx`, retry the **same** action ID/body (respecting `Retry-After`). Do not generate a fresh ID while commit status is unknown. A crash after commit but before response must still replay the committed result.
@@ -178,7 +180,7 @@ Each cursor binds the initial read's **frozen ordered TOP 1000 result set**, cur
 
 ## Sample requests and confirmed responses
 
-Values are illustrative, not balance decisions. A one-pin lock keeps the examples readable; production generation follows the domain difficulty configuration.
+Values are illustrative, not balance decisions. A one-plate lock (`pins` has one entry) keeps the examples readable; production generation follows the domain difficulty configuration.
 
 Start request, `POST /api/runs`:
 

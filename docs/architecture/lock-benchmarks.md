@@ -2,9 +2,11 @@
 
 The harness measures the current engine without changing generation, solver budgets, difficulty, rewards or persistence. This is a performance investigation, not a gameplay migration or production release.
 
+Product terminology follows the [plate/pin glossary](gameplay.md#lock-component-terminology-60). Historical raw benchmark fields retain their existing names; pin counts in that data count the sliding plates represented by the `Pin` model. Measurements and source hashes are unchanged.
+
 ## Method
 
-Chest numbers in this report are **1-based**; generation receives `chest - 1`. The corpus covers both sides of all pin-count thresholds, six-pin locks and very late endless indices: 1, 4, 5, 10, 11, 18, 19, 25, 50, 100, 1000, 10000. Each operation has 100 measured samples per chest (except continuation into chest 1, which does not exist). Seed is 28; sample RNG seed is `(28 + chest * 100003 + sample) >>> 0`, using the documented LCG in the harness. The corpus is reproducible; timings vary with load and runtime.
+Chest numbers in this report are **1-based**; generation receives `chest - 1`. The corpus covers both sides of all plate-count thresholds, six-plate locks and very late endless indices: 1, 4, 5, 10, 11, 18, 19, 25, 50, 100, 1000, 10000. Each operation has 100 measured samples per chest (except continuation into chest 1, which does not exist). Seed is 28; sample RNG seed is `(28 + chest * 100003 + sample) >>> 0`, using the documented LCG in the harness. The corpus is reproducible; timings vary with load and runtime.
 
 `createLock()` includes its internal solver and retries. `solveLock()` independently measures solving that generated lock with the default 20,000-state budget; results are replayed legally outside the timer. `openSolvedChest()` receives a legitimately solved predecessor prepared outside the timer and generates the destination chest. It rolls legacy rewards as implemented; authoritative server continuation now calls `createLock()` directly and credits an existing reward, so the legacy helper is not a database transaction benchmark. Preparation is excluded from per-operation timings but included in whole-harness duration and memory.
 
@@ -16,7 +18,7 @@ Node v22.23.4, Linux ARM64 in Docker, `--cpus=1 --memory=2g`, Apple M1 host. Thi
 
 All timing columns are milliseconds. Each operation cell is **p50 / p95 / max**.
 
-| Chest | Pins | createLock | solveLock | openSolvedChest | Below requested minimum |
+| Chest | Plates | createLock | solveLock | openSolvedChest | Below requested minimum |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | 1 | 3 | 0.47 / 1.57 / 3.62 | 0.11 / 0.29 / 6.15 | — | 0/100 |
 | 4 | 3 | 0.32 / 1.03 / 2.12 | 0.06 / 0.33 / 0.79 | 0.28 / 0.93 / 1.43 | 0/100 |
@@ -147,7 +149,7 @@ Only benchmark tooling, raw evidence and documentation are added. There is no ga
 | Criterion | Status | Evidence |
 | --- | --- | --- |
 | Reproducible commands and results checked into documentation | PASS | Local CLI, bounded Linux container and branch-scoped Preview instructions above; retained raw samples, runtime/source metadata, nearest-rank summaries and seeded corpus. |
-| Slowest difficulty bands tested in Vercel-like Node and deployed Preview | PASS | Linux Node 22 with one CPU/2 GiB limits, plus actual Hobby Node 22 x64 Preview: 100 samples per operation per chest, six-pin thresholds through chest 10,000; legal solution replay. |
+| Slowest difficulty bands tested in Vercel-like Node and deployed Preview | PASS | Linux Node 22 with one CPU/2 GiB limits, plus actual Hobby Node 22 x64 Preview: 100 samples per operation per chest, six-plate thresholds through chest 10,000; legal solution replay. |
 | Function latency and free-plan resource risks documented | PASS | Separate handler/client/query measurements, warm and idle-recovery observations, restart evidence, RSS, Hobby resource limits and CPU/memory/concurrency caveats; full gameplay transactions remain outside this benchmark. |
 | Clear go/no-go for server-side generation | PASS | GO at measured difficulties/sequential load against the stated engineering budget; no game-rule change or production-readiness claim. Conditional latency optimization follow-up is not triggered. |
 

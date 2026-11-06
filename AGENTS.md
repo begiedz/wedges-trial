@@ -13,9 +13,9 @@
 ## Gameplay invariants (preserve unless explicitly changed)
 
 - Primary mode: **endless**. Each chest has a randomly constructed, solvable lock; difficulty generally increases with progress.
-- Each pin has a bounded integer position and a target. Moving one pin may move other pins according to fixed per-lock dependency rules; both directions have inverse effects.
-- An **invalid move** would push at least one affected pin outside its legal range; it changes no pin positions.
-- A lockpick **breaks after exactly three invalid moves on that pick**. Breaking it does **not** reset the lock. A separate manual reset button restores pin positions; **reset must not restore spent picks, clear accumulated per-chest scoring penalties, or grant free durability**. Preserve regression coverage for partial damage across reset and chest continuation.
+- Players select and slide **plates** left/right beneath stationary **pins**. Each plate has seven holes and seven bounded integer positions; the middle hole is the target. Sliding one plate may slide connected plates, sometimes in the opposite direction; both directions have inverse effects.
+- An **invalid move** would push at least one affected plate outside its legal position range; it changes no plate positions.
+- A lockpick **breaks after exactly three invalid moves on that pick**. Breaking it does **not** reset the lock. A separate manual reset button restores plate positions; **reset must not restore spent picks, clear accumulated per-chest scoring penalties, or grant free durability**. Preserve regression coverage for partial damage across reset and chest continuation.
 - Player resources: **lockpicks and ore nuggets only**. Ore is the score resource. Do not silently introduce XP, energy, lives or currencies.
 - Pure, deterministic *given inputs* domain functions belong in `src/game/`, independent of React, database, network and sound.
 - Randomness in **lock generation** remains. **Ore rewards are deterministic** under approved deterministic-ore-v1: floor((10 + 5 * (chestNumber - 1)) * max(4, 10 - invalidMovesOnChest) / 10). Endless ore ranking is approved (ore DESC, opened chests DESC, finished time ASC, run UUID ASC); further efficiency tuning and lockpick replenishment remain **open balancing decisions**; see `docs/architecture/decisions.md` and GitHub Issues #47, #51.
@@ -33,6 +33,7 @@
 ## Frontend, localization and audio
 
 - Current production route shape is `src/app/[lang]/` (**not `[locale]`**). Keep English, Polish, German and Russian (`en`, `pl`, `de`, `ru`); no hardcoded user-visible text.
+- Use plate/pin terminology in help, controls, accessibility, debug UI and docs: **plate / płytka / Platte / пластина** moves; **pin / zapadka / Stift / штифт** stays fixed. Describe sliding, not rotation. See [terminology and compatibility](docs/architecture/gameplay.md#lock-component-terminology-60). Existing `Pin`, `PinId`, `PinEffect`, `MoveRule`, `tumblerCount`, `pinId`, `selectedPinId`, `sourcePinId`, translation keys and component paths retain their technical names; copy corrections do not authorize an internal, API or persisted-state rename.
 - Product-specific React presentation belongs in `src/features/<name>/`; tests belong in `tests/` mirroring source paths and basenames. Routes compose minimal public feature APIs. Shared UI must remain feature-independent. Keep `src/game`, `src/client/game`, `src/api` and `src/server` in their existing layers; run `pnpm check:architecture` for dependency enforcement.
 - Reuse existing components and assets; keep keyboard, touch and responsive behavior accessible. Keep domain decisions out of UI components.
 - Music and SFX are optional user-controlled capabilities with **independent on/off and volume**. No unexpected autoplay; support browser playback restrictions. Audio state must not modify gameplay logic.

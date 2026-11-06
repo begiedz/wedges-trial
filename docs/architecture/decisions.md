@@ -2,6 +2,10 @@
 
 This is the **decision ledger**. Do not upgrade a proposal into an invariant without an explicit product decision and updated tests.
 
+## Lock component terminology — 2026-11-06 (#60)
+
+Use **plate** for the horizontally sliding element and **pin** for the stationary indicator. Align the middle of seven holes with each fixed pin; connected plates may slide together or in opposite directions. The [four-language glossary and technical compatibility rules](gameplay.md#lock-component-terminology-60) govern help, controls, accessibility, debug UI and documentation. Existing engine identifiers, translation keys, component filenames, wire fields and persisted state retain their names. This corrects terminology without changing mechanics, visuals, difficulty, rewards or `deterministic-ore-v1`; no migration or deployment is implied.
+
 ## Decided target (accepted)
 
 | Decision | Meaning | Related issues |

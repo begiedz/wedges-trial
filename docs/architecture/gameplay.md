@@ -2,12 +2,31 @@
 
 The pure TypeScript engine lives in src/game/. Authoritative orchestration is in src/server/game/engine.ts; the browser uses public movement rules only for temporary rendering prediction.
 
+## Lock component terminology (#60)
+
+Players select and slide a **plate** left or right beneath a **stationary pin**. Each plate has seven holes and seven permitted positions. The lock opens when the middle hole of every plate aligns with its fixed pin. A plate dependency can slide connected plates as well, sometimes in the opposite direction. An invalid slide would put at least one affected plate outside its permitted position range and leaves every plate in place.
+
+| Component / action | English | Polish | German | Russian |
+| --- | --- | --- | --- | --- |
+| Moving element | Plate | Płytka | Platte | Пластина |
+| Fixed indicator | Pin | Zapadka | Stift | Штифт |
+| Movement | Slide | Przesuń | Verschieben | Сдвинуть |
+| Connection | Plate dependency | Zależność płytek | Plattenabhängigkeit | Связь пластин |
+
+Use this distinction in player help, About, visible controls, accessible labels, debug UI and explanatory documentation. Up/down controls select the previous/next plate; they do not move the stationary indicator. Describe horizontal sliding rather than turning or rotation.
+
+### Existing technical names
+
+The implementation retains `Pin`, `PinId`, `PinEffect`, `MoveRule`, `tumblerCount`, `pinId`, `selectedPinId`, `sourcePinId`, `LockState`, `DifficultyConfig` and `createLock()`. The `pins` array and its position/target/range fields encode plate alignment; they do not imply that the physical indicator moves. Existing translation keys such as `selectNextPin` and `debug.labels.pin` now display plate wording. `tumbler.tsx` renders the sliding plate; `pin.tsx` renders the fixed indicator. Do not rename these types, keys, files, DTO fields or persisted state as part of a terminology correction. Technical examples, historical evidence and raw benchmark fields may retain those identifiers.
+
+This is a localization/accessibility correction only. It changes no mechanics, visuals, solver behavior, difficulty, rewards, resources, API, storage or ranking cohort; no migration or ruleset change is required.
+
 ## Implemented rules
 
 - New runs start at chest 1 with 0 ore and 3 lockpicks. Locks are randomly generated from solved layouts through legal moves, with increasing progression settings.
-- Each bounded integer pin has a target; fixed dependencies apply inverse effects for opposite directions. An out-of-bounds move changes no pin positions.
+- Each plate has a bounded integer alignment position and a target; fixed plate dependencies apply inverse effects for opposite directions. An out-of-bounds slide changes no plate positions.
 - Exactly three invalid moves on one pick break it. Valid moves do not heal damage; a broken pick does not reset positions. The last pick breaking atomically finishes the run.
-- Manual reset restores initial pin positions, preserving partial damage, spent picks, ore and accumulated chest/run metrics. Continuing to another chest also preserves partial pick damage.
+- Manual reset restores initial plate positions, preserving partial damage, spent picks, ore and accumulated chest/run metrics. Continuing to another chest also preserves partial pick damage.
 - Server metrics record moves, invalid moves and broken picks per chest and for the run. Reset does not clear them. Continue begins new chest metrics while retaining run totals.
 - Solving records a stable pending reward and increments openedChests. Continue credits that reward exactly once and generates the next lock in one transaction. Abandoning an opened chest discards its pending reward.
 - Difficulty display uses the same zero-based progression input as generation. Further calibration remains open.
@@ -34,7 +53,7 @@ Playing -> Last pick breaks -> Finished
 Playing / Chest opened -> Abandon -> Abandoned
 ~~~
 
-Pins/damage render immediately through client prediction; score, rewards, resources and terminal dialogs wait for server confirmation. Moves are buffered without blocking each input on a round trip. Refresh restores committed server state, including damage and penalties.
+Plate positions/damage render immediately through client prediction; score, rewards, resources and terminal dialogs wait for server confirmation. Moves are buffered without blocking each input on a round trip. Refresh restores committed server state, including damage and penalties.
 
 ## Solver and remaining balance work
 
@@ -44,7 +63,7 @@ Measure early, threshold and high-chest generation, fallbacks and difficulty bef
 
 ## Statistics contract (#49)
 
-`StoredGame.chestMetrics` contains `moves`, `invalidMoves` and `brokenPicks` for the current chest; `totalMetrics` contains the corresponding run totals. These are the implemented equivalents of moves/invalid moves/broken picks on the current chest, kept in server-owned state rather than duplicated in `RunState`. A processed valid or out-of-bounds move increments moves once; invalid moves also increment mistakes, and every third invalid action on the pick increments broken picks. Durability (`invalidMovesOnCurrentPick`) resets on a break; cumulative mistakes do not. Unknown pins, ignored moves, terminal moves, conflicts and exact replays add no metrics. Reset is not a move and preserves every counter; continue clears only chest counters. Reward calculation continues to use all chest mistakes.
+`StoredGame.chestMetrics` contains `moves`, `invalidMoves` and `brokenPicks` for the current chest; `totalMetrics` contains the corresponding run totals. These are the implemented equivalents of moves/invalid moves/broken picks on the current chest, kept in server-owned state rather than duplicated in `RunState`. A processed valid or out-of-bounds move increments moves once; invalid moves also increment mistakes, and every third invalid action on the pick increments broken picks. Durability (`invalidMovesOnCurrentPick`) resets on a break; cumulative mistakes do not. Unknown plate IDs (`pinId`), ignored moves, terminal moves, conflicts and exact replays add no metrics. Reset is not a move and preserves every counter; continue clears only chest counters. Reward calculation continues to use all chest mistakes.
 
 Counters and action replay records commit together in PostgreSQL, including socket batches. The final immutable run retains totals, projected as `result.totalMetrics` and shown in Game Over in en/pl/de/ru. Historical action replies are replayed unchanged; a legacy reply without totals displays localized “Unavailable”, while a fresh by-ID read projects totals from the stored run. No metric or optimum is accepted from the client, and optima remain private. This adds no efficiency penalty, score rule, ranking change or replenishment decision.
 

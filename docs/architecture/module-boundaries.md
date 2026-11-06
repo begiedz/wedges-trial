@@ -8,7 +8,7 @@ The #56 responsibility boundaries are retained. The #57 frontend refactor moves 
 | --- | --- | --- |
 | `components/game/` components, dialogs, events | `features/gameplay/components/game/`, private `events.ts` | Game route and internal gameplay presentation |
 | `components/game/useGame*` | `features/gameplay/hooks/` | React adapter, dialogs and keyboard handling; `GameSession` stays in `client/game` |
-| `components/lock/` | `features/gameplay/components/lock/` | Gameplay-only tumbler and pin rendering |
+| `components/lock/` | `features/gameplay/components/lock/` | Gameplay-only sliding plate (`tumbler.tsx`) and stationary pin (`pin.tsx`) rendering |
 | General `difficulty`, `movement`, `item-frame` | `features/gameplay/components/game/` | Only game screen/reward dialog use them; no demonstrated site-wide reuse |
 | `components/lock-debug/` | `features/lock-debug/` | Existing development-only debug route, separate from trusted gameplay |
 | `client/game/pinSelection.ts` | `lib/pin-selection.ts` | Pure presentation helper reused by gameplay and debug; no session responsibility |
@@ -60,9 +60,9 @@ The DB driver imports `server-only`; client code imports contracts/domain code, 
 
 `CommandQueue.confirmed` owns the latest accepted server snapshot while the session has a channel. Older or foreign snapshots cannot replace it. Pending commands retain their original action IDs and expected versions until ordered acknowledgement or conflict recovery. A reconnect snapshot may include unacknowledged commits: those intents remain eligible for exact replay, but are excluded from prediction. Even an older replay reply drains its matching command without regressing confirmed state or leaving lifecycle waiters unresolved.
 
-`predictRun()` derives pins and current-pick damage using the same pure `applyMove()` rules as the server. It uses temporary pick counts only to stop prediction at exhaustion. Displayed resources, ore, rewards, result, status and version always come from confirmed state. A predicted solve/exhaustion blocks further moves but cannot open a terminal dialog.
+`predictRun()` derives plate alignment (the existing `pins` model) and current-pick damage using the same pure `applyMove()` rules as the server. It uses temporary pick counts only to stop prediction at exhaustion. Displayed resources, ore, rewards, result, status and version always come from confirmed state. A predicted solve/exhaustion blocks further moves but cannot open a terminal dialog.
 
-`GameSession` exposes one immutable rendering snapshot through subscribe/getSnapshot. It reads authoritative state from its channel for lifecycle commands; its detached snapshot exists for bootstrap and channel disposal/restart. React has no second confirmed-state ref. `useGameSession` adapts that store with `useSyncExternalStore`, synchronizes the run URL and combines UI-only dialogs. Dialog dismissal and selected pins are presentation state. No gameplay state is saved in browser storage.
+`GameSession` exposes one immutable rendering snapshot through subscribe/getSnapshot. It reads authoritative state from its channel for lifecycle commands; its detached snapshot exists for bootstrap and channel disposal/restart. React has no second confirmed-state ref. `useGameSession` adapts that store with `useSyncExternalStore`, synchronizes the run URL and combines UI-only dialogs. Dialog dismissal and selected plates (`selectedPinId`) are presentation state. No gameplay state is saved in browser storage.
 
 ## Main flows
 
@@ -73,7 +73,7 @@ The DB driver imports `server-only`; client code imports contracts/domain code, 
 
 ## Domain and transaction guarantees
 
-`evaluateRule()` evaluates final bounds atomically and returns unchanged pins on missing effects or invalid moves. Generation uses it without runtime solved/failed guards because mixing starts from solved pins. Runtime `evaluateMove()` adds those guards and applies damage once. The server consumes the classified result without evaluating movement again. The solver retains its specialized indexed search representation and budget semantics.
+`evaluateRule()` evaluates final bounds atomically and returns unchanged plate alignment (`pins`) on missing effects or invalid moves. Generation uses it without runtime solved/failed guards because mixing starts from solved plate positions. Runtime `evaluateMove()` adds those guards and applies damage once. The server consumes the classified result without evaluating movement again. The solver retains its specialized indexed search representation and budget semantics.
 
 `transition()` remains the single authoritative action entry point, dispatching focused move/continue/abandon functions and reset, then incrementing version and constructing the response. Single actions and move batches still own their original transaction boundaries. Both lock the owner before ownership/replay/version checks and use the same fingerprint and write helpers. Batches retain individual replay responses/versions and write the final run once; no reply is sent before commit.
 

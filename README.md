@@ -2,7 +2,7 @@
 
 An endless browser lockpicking puzzle inspired by Gothic Remake’s lock mechanics and [Fingers Challenge](https://fingerschallenge.com).
 
-Open a chest, collect its ore, and face a harder lock. Connected tumblers turn each move into a small logic puzzle: shifting one pin can move several others. Your goal is to gather as many **ore nuggets** as possible before your last lockpick breaks.
+Open a chest, collect its ore, and face a harder lock. Connected plates make each move a small logic puzzle: sliding one plate can slide several others, sometimes in the opposite direction. Your goal is to gather as many **ore nuggets** as possible before your last lockpick breaks.
 
 ## Project status
 
@@ -12,13 +12,13 @@ The global leaderboard, TOP 100 qualification and nickname claims remain planned
 
 ## How to play
 
-1. Select a tumbler by clicking or tapping it.
-2. Turn it left or right. Its pin—and pins on connected tumblers—may move.
-3. Align every pin with its target to open the chest.
+1. Select a plate by clicking or tapping it.
+2. Slide it left or right beneath its stationary pin. Connected plates may slide too.
+3. Align the middle hole of every plate with its stationary pin to open the chest. Each plate has seven holes and seven permitted positions.
 4. Choose **Take all** to collect the reward and advance to the next lock.
 5. Keep going until you run out of lockpicks.
 
-A move is invalid when any affected pin would leave its allowed range. Invalid moves leave every pin in place and damage the current lockpick. **Exactly three invalid moves on that pick break it.** Breaking a pick does not reset the lock. The run ends when the last pick breaks.
+A move is invalid when any affected plate would leave its permitted position range. Invalid moves leave every plate in place and damage the current lockpick. **Exactly three invalid moves on that pick break it.** Breaking a pick does not reset the lock. The run ends when the last pick breaks.
 
 Manual reset restores the current lock’s starting layout. Starting a new run during an active trial requires confirmation; starting after Game Over does not.
 
@@ -26,11 +26,11 @@ Manual reset restores the current lock’s starting layout. Starting a new run d
 
 | Input                        | Action                                 |
 | ---------------------------- | -------------------------------------- |
-| Click / tap a tumbler        | Select it                              |
-| `A` / `←`                    | Turn the selected tumbler left         |
-| `D` / `→`                    | Turn the selected tumbler right        |
-| `W` / `↑`                    | Select the previous tumbler            |
-| `S` / `↓`                    | Select the next tumbler                |
+| Click / tap a plate          | Select it                              |
+| `A` / `←`                    | Slide the selected plate left          |
+| `D` / `→`                    | Slide the selected plate right         |
+| `W` / `↑`                    | Select the previous plate              |
+| `S` / `↓`                    | Select the next plate                  |
 | `R`                          | Reset the current lock                 |
 | `N`                          | Reopen a dismissed chest reward dialog |
 | `Space` in the reward dialog | Take all and advance                   |
@@ -95,7 +95,7 @@ The app uses `next/font/google` for Noto Serif and a local heading font. A fresh
 
 ### Tests and quality checks
 
-Tests cover pin dependencies, valid and invalid moves, pick damage and breakage, generated lock solvability, difficulty progression, solver behavior, server persistence, authorization, idempotency, concurrency, rollback and reset behavior. WebSocket tests cover burst input, prediction and reconnect/replay. Set TEST_DATABASE_URL explicitly to enable the isolated-schema PostgreSQL suite; otherwise it is skipped. React tests cover reward claims, duplicate inputs, dialog interactions, keyboard handling and restart flows.
+Tests cover plate dependencies, valid and invalid moves, pick damage and breakage, generated lock solvability, difficulty progression, solver behavior, server persistence, authorization, idempotency, concurrency, rollback and reset behavior. WebSocket tests cover burst input, prediction and reconnect/replay. Set TEST_DATABASE_URL explicitly to enable the isolated-schema PostgreSQL suite; otherwise it is skipped. React tests cover reward claims, duplicate inputs, dialog interactions, keyboard handling and restart flows.
 
 Run tests, type checking, lint and a production build before submitting relevant code changes. GitHub Actions runs coverage tests, type checking, lint (including naming and architecture guards) and a production build on Ubuntu for pushes and pull requests targeting `development` and `master`.
 
@@ -131,7 +131,7 @@ Project-owned filenames and directories use **lowercase kebab-case**; TypeScript
 
 ### Puzzle generation
 
-Locks start from a solved configuration. The generator creates symmetric move rules, then mixes the pins using legal moves. Reversing those moves provides a solution by construction. Difficulty grows through tumbler count, dependency density and solution-length targets.
+Locks start from a solved configuration. The generator creates symmetric move rules, then mixes the plate positions using legal slides. Reversing those moves provides a solution by construction. Difficulty grows through plate count, dependency density and solution-length targets. Existing code identifiers such as `Pin`, `pins`, `pinId` and `tumblerCount` remain unchanged; see [terminology and compatibility](docs/architecture/gameplay.md#lock-component-terminology-60).
 
 The solver uses a bounded search. Exhausting its budget does not prove a lock unsolvable or establish an optimal solution. Difficulty calibration and scoring against verified solutions remain active work.
 

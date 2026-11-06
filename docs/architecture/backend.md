@@ -37,7 +37,7 @@ Each mutation uses a PostgreSQL transaction and locks the session row with FOR U
 
 WebSocket input is ordered and adjacent moves can be coalesced (up to 32) into one transaction. Each accepted move still increments version and metrics once and has its own replay record/result. The final run is written once per batch; replies follow commit. Unexpected persistence failure rolls back the whole batch. Database state, rather than a socket-local map, coordinates tabs and function instances.
 
-The client predicts pin movement and damage immediately. Resources, rewards, terminal status and dialogs follow committed snapshots. Reconnect retries unknown actions with their original IDs/versions; stale-version conflicts clear queued predictions and refetch the owned run. Prediction never supplies trusted state.
+The client predicts plate movement and damage immediately (using the existing `pins`/`pinId` model; see [terminology](gameplay.md#lock-component-terminology-60)). Resources, rewards, terminal status and dialogs follow committed snapshots. Reconnect retries unknown actions with their original IDs/versions; stale-version conflicts clear queued predictions and refetch the owned run. Prediction never supplies trusted state.
 
 ## Ranking integration
 

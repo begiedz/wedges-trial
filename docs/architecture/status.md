@@ -135,3 +135,20 @@ An isolated Vercel Preview measured 1,200 additional locks across all thresholds
 Local verification: tests and coverage each passed all 318 tests, including all 21 PostgreSQL integration tests against disposable PostgreSQL 17. Type checking, lint, names/architecture checks and production build passed; the existing cursor CSS warning remains. The sandboxed build stalled and was stopped; database checks and successful build ran outside the sandbox. A 120-lock seeded comparison confirmed unchanged generated lock values against HEAD. No live browser/device verification, Neon/production migration, production deployment or GitHub mutation was performed.
 
 Cleanup completed: the alias-free benchmark Preview and task-created protection bypass were removed, temporary fixture/credentials deleted, and the disposable PostgreSQL container stopped/removed.
+
+
+## Sliding plate terminology (#60) — 2026-11-06
+
+EN/PL/DE/RU help, About, controls, accessible movement labels and debug copy now distinguish sliding plates from stationary pins. The [canonical glossary](gameplay.md#lock-component-terminology-60), root agent rules, relevant skills, README and architecture explanations use the same distinction. Existing identifiers, translation keys, DTOs and persisted state remain compatible; no mechanics, visuals, difficulty, scoring, schema or ruleset changed.
+
+| Acceptance criterion | Status | Evidence |
+| --- | --- | --- |
+| Four locales distinguish plates and pins | PASS | All four dictionaries use the glossary; fixed indicators remain pins. |
+| Horizontal movement replaces rotation | PASS | Instructions and movement/debug labels describe sliding plates. |
+| Help, About, controls, accessibility and debug agree | PASS | Applicable dictionary values updated; existing consumers retain their keys. |
+| Seven positions, middle-hole target and connected behavior | PASS | Four-language mechanism/steps explain seven holes/positions, fixed pins and opposite-direction dependencies. |
+| Mechanics, visuals, model, API and difficulty unchanged | PASS | Runtime changes are limited to dictionary values; documentation explicitly preserves technical names. |
+| Translation structure compatible | PASS | Compared each dictionary with HEAD and all four with each other: keys, value types and array lengths match. |
+| Typecheck, lint and relevant tests pass | PASS | `pnpm typecheck`, `pnpm lint`, `pnpm test` and `pnpm test:coverage` pass; both test runs passed 297 tests, skipping 21 opt-in PostgreSQL tests because `TEST_DATABASE_URL` was unset. |
+
+`pnpm build --webpack` passed with network access after the restricted build could not fetch the existing Google font. Lint retains the existing cursor CSS warning. No live browser/device visual check, database migration, deployment or GitHub issue mutation was performed. The subsequent agent/documentation updates change Markdown only; they do not require repeating runtime tests or the build.

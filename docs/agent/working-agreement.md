@@ -19,7 +19,7 @@
 - Separate pure game engine from persistence, HTTP and UI. Keep code readable; don't add patterns solely to look architectural.
 - Guard authoritative state with server validation and DB transactions, never front-end conditionals alone.
 - Follow current actual paths (`[lang]`, existing components) rather than outdated scaffold examples.
-- Keep i18n, accessibility, keyboard controls, responsive display and error states.
+- Keep i18n, accessibility, keyboard controls, responsive display and error states. Follow the [plate/pin glossary](../architecture/gameplay.md#lock-component-terminology-60): moving plates slide under fixed pins; up/down selects plates. Preserve existing technical names and translation keys when correcting copy.
 - Use `src/features/<name>/` for product-specific frontend code; keep tests in `tests/` mirroring source directories and basenames; compose public APIs in routes and run `pnpm check:architecture` (also included in lint/tests/CI). See `docs/architecture/module-boundaries.md` for ownership and exceptions.
 - Reuse existing tests; add regression coverage for any bug fixed or contract changed.
 - No secrets, unlicensed media or accidental generated artifacts in diffs.
