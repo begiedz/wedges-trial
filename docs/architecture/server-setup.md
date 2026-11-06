@@ -47,6 +47,8 @@ Development Neon migration and Preview HTTPS session/run flows were verified. Na
 
 ## Migrations and rollback
 
+For #46, apply `0003_charming_the_fury.sql` before using the leaderboard endpoints; otherwise admission fails closed with 503. Optional `LEADERBOARD_*_PER_MINUTE` settings and their defaults are listed in `.env.example` and the [API contract](api-contract.md#leaderboard-admission-and-caching-46). Use the same settings across function instances. Public quotas are global and may need adjustment for real traffic; release calibration remains #43. A 429 includes `Retry-After`; retry the original claim action after that interval. A 503 with valid DB connectivity can indicate a missing migration or invalid budget override. Rollback retains the additive budget table and all ranking/gameplay data.
+
 Keep drizzle/ SQL, meta/_journal.json and snapshots in Git. SQL is reviewable schema history, the journal orders migrations, and snapshots support incremental generation. Run pnpm db:generate when the schema changes, review and commit the result, then explicitly migrate the intended environment. Do not regenerate/edit already-applied migrations. The migration runner uses Drizzle ORM with a direct connection, target validation, timeout and sanitized failures.
 
 On an application rollback, retain tables/data for recovery. Do not drop tables or import editable old browser saves. No automatic retention cleanup is scheduled. A manual, transaction-safe helper now exists; review the conservative [retention policy](data-model.md) before any maintenance. Clearing/expiring the anonymous cookie loses access; a nickname cannot recover ownership.

@@ -177,3 +177,17 @@ export const leaderboardSnapshots = pgTable(
     ),
   ],
 );
+
+/** Shared short-lived request budgets, independent of gameplay transactions. */
+export const leaderboardRequestBudgets = pgTable(
+  "leaderboard_request_budgets",
+  {
+    key: text("key").primaryKey(),
+    requests: integer("requests").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    index("leaderboard_request_budgets_expiry").on(table.expiresAt),
+    check("leaderboard_request_budgets_positive", sql`${table.requests} > 0`),
+  ],
+);

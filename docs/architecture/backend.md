@@ -67,7 +67,7 @@ Results and action replays remain available throughout the live owning session, 
 
 The runtime contract was already implemented by the gameplay migration and #31/#33; #39 adds focused transaction regression coverage and documents the integrated behavior. No schema, wire format, ruleset, UI or retention change is required. Application rollback retains immutable results, claims and action replays; no migration or data rewrite is needed.
 
-For environments, migrations, local WebSocket testing and diagnostics, see [server setup](server-setup.md). Distributed rate limits, production monitoring and late-game compute budgets remain release work.
+For environments, migrations, local WebSocket testing and diagnostics, see [server setup](server-setup.md). Leaderboard HTTP request budgets are implemented under #46 in PostgreSQL, with separate global public traversal/page budgets and per-session private budgets. They return 429/Retry-After before ranking work, without changing replay/cutoff transactions. See [admission and caching](api-contract.md#leaderboard-admission-and-caching-46). Broader abuse controls, calibrated release limits, production monitoring and late-game compute budgets remain release work.
 
 For concrete dependency directions, state ownership, flows and replay-storage growth, see [module boundaries](module-boundaries.md).
 

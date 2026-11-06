@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { NextRequest } from "next/server";
 import { Pool } from "pg";
 import {
   afterAll,
@@ -12,9 +13,13 @@ import {
   vi,
 } from "vitest";
 import { GET } from "@/app/api/leaderboard/route";
+import { GET as getEligibility } from "@/app/api/runs/[id]/leaderboard-eligibility/route";
+import { POST as postClaim } from "@/app/api/runs/[id]/leaderboard-entry/route";
 import * as schema from "@/server/db/schema";
 import { newRun } from "@/server/game/engine";
+import { bootstrap, findSession } from "@/server/game/service";
 import { readLeaderboard } from "@/server/leaderboard/pagination";
+import { limitLeaderboard } from "@/server/leaderboard/rate-limit";
 import { claimEntry, readEligibility } from "@/server/leaderboard/service";
 
 let db: ReturnType<typeof drizzle<typeof schema>>;
@@ -26,7 +31,7 @@ let pool: Pool;
 const ownerId = randomUUID();
 const otherId = randomUUID();
 const template = newRun(randomUUID(), ownerId);
-function finished(ore = 100, owner = ownerId) {
+function finished(ore = 100, owner: string = ownerId) {
   const run = structuredClone(template);
   run.id = randomUUID();
   run.ownerId = owner;
@@ -73,7 +78,7 @@ describe.skipIf(!url)("durable public leaderboard PostgreSQL", () => {
   });
   beforeEach(async () => {
     await pool.query(
-      "TRUNCATE sessions, runs, run_actions, leaderboard_entries, leaderboard_snapshots CASCADE",
+      "TRUNCATE sessions, runs, run_actions, leaderboard_entries, leaderboard_snapshots, leaderboard_request_budgets CASCADE",
     );
     await db.insert(schema.sessions).values(
       [ownerId, otherId].map((id) => ({
@@ -82,6 +87,182 @@ describe.skipIf(!url)("durable public leaderboard PostgreSQL", () => {
         expiresAt: new Date(Date.now() + 3600000),
       })),
     );
+  });
+  it("shares atomic budgets across adapters, bounds counts, isolates owners and resets expired windows", async () => {
+    vi.stubEnv("LEADERBOARD_CLAIMS_PER_MINUTE", "2");
+    try {
+      const attempts = await Promise.allSettled(
+        Array.from({ length: 12 }, () =>
+          limitLeaderboard({ operation: "claim", ownerId }),
+        ),
+      );
+      expect(attempts.filter((r) => r.status === "fulfilled")).toHaveLength(2);
+      for (const result of attempts) {
+        if (result.status === "rejected") {
+          expect(result.reason).toMatchObject({
+            code: "RATE_LIMITED",
+            status: 429,
+            retryAfter: expect.any(Number),
+          });
+          expect(result.reason.retryAfter).toBeGreaterThanOrEqual(1);
+          expect(result.reason.retryAfter).toBeLessThanOrEqual(60);
+        }
+      }
+      db = drizzle(pool, { schema });
+      await expect(
+        limitLeaderboard({ operation: "claim", ownerId }),
+      ).rejects.toMatchObject({ retryAfter: expect.any(Number) });
+      await limitLeaderboard({ operation: "claim", ownerId: otherId });
+      await limitLeaderboard({ operation: "eligibility", ownerId });
+      const { rows } = await pool.query(
+        "SELECT requests FROM leaderboard_request_budgets WHERE key=$1",
+        [`claim:${ownerId}`],
+      );
+      expect(rows[0].requests).toBe(3);
+      await pool.query(
+        "UPDATE leaderboard_request_budgets SET expires_at=now()-interval '1 second'",
+      );
+      await limitLeaderboard({ operation: "claim", ownerId });
+      const remaining = await pool.query(
+        "SELECT key, requests FROM leaderboard_request_budgets",
+      );
+      expect(remaining.rows).toEqual([
+        { key: `claim:${ownerId}`, requests: 1 },
+      ]);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+  it("bounds anonymous snapshot creation independently of spoofed headers and cursor pages", async () => {
+    vi.stubEnv("LEADERBOARD_SNAPSHOTS_PER_MINUTE", "1");
+    vi.stubEnv("LEADERBOARD_PAGES_PER_MINUTE", "1");
+    try {
+      await seedClaims(30);
+      const first = await GET(
+        new Request("https://trial.test/api/leaderboard"),
+      );
+      expect(first.status).toBe(200);
+      const { nextCursor } = await first.json();
+      const blocked = await GET(
+        new Request("https://trial.test/api/leaderboard", {
+          headers: {
+            "x-forwarded-for": "1.2.3.4",
+            cookie: "wedges_session=forged",
+          },
+        }),
+      );
+      expect(blocked.status).toBe(429);
+      expect(Number(blocked.headers.get("retry-after"))).toBeGreaterThanOrEqual(
+        1,
+      );
+      expect(Number(blocked.headers.get("retry-after"))).toBeLessThanOrEqual(
+        60,
+      );
+      expect(
+        (await pool.query("SELECT count(*) FROM leaderboard_snapshots")).rows[0]
+          .count,
+      ).toBe("1");
+      expect(
+        (
+          await GET(
+            new Request(
+              `https://trial.test/api/leaderboard?cursor=${nextCursor}`,
+            ),
+          )
+        ).status,
+      ).toBe(200);
+      expect(
+        (
+          await GET(
+            new Request(
+              `https://trial.test/api/leaderboard?cursor=${nextCursor}`,
+            ),
+          )
+        ).status,
+      ).toBe(429);
+      await pool.query(
+        "UPDATE leaderboard_request_budgets SET expires_at=now()-interval '1 second'",
+      );
+      expect(
+        (await GET(new Request("https://trial.test/api/leaderboard"))).status,
+      ).toBe(200);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+  it("preserves claim replay and immutable nickname after throttling, refresh and conflicting duplicates", async () => {
+    vi.stubEnv("LEADERBOARD_CLAIMS_PER_MINUTE", "1");
+    try {
+      const { token } = await bootstrap(undefined);
+      const owner = await findSession(token ?? undefined);
+      if (!owner) throw new Error("Missing session");
+      const run = finished(123, owner.id);
+      await db.insert(schema.runs).values(run);
+      const context = { params: Promise.resolve({ id: run.id }) };
+      const input = { actionId: randomUUID(), nickname: "Клин" };
+      const request = (body?: object) =>
+        new NextRequest(
+          `https://trial.test/api/runs/${run.id}/leaderboard-entry`,
+          {
+            method: body ? "POST" : "GET",
+            headers: {
+              origin: "https://trial.test",
+              "content-type": "application/json",
+              cookie: `wedges_session=${token}`,
+            },
+            ...(body ? { body: JSON.stringify(body) } : {}),
+          },
+        );
+      const first = await postClaim(request(input), context);
+      expect(first.status).toBe(200);
+      const original = await first.json();
+      expect(original.entry).toMatchObject({
+        oreNuggets: 123,
+        displayName: "Клин",
+        rank: 1,
+      });
+      const blocked = await postClaim(request(input), context);
+      expect(blocked.status).toBe(429);
+      expect(blocked.headers.get("cache-control")).toBe("no-store");
+      const expire = () =>
+        pool.query(
+          "UPDATE leaderboard_request_budgets SET expires_at=now()-interval '1 second'",
+        );
+      await expire();
+      db = drizzle(pool, { schema });
+      expect(await (await postClaim(request(input), context)).json()).toEqual(
+        original,
+      );
+      const qualification = await getEligibility(request(), context);
+      expect(await qualification.json()).toEqual({
+        eligible: false,
+        reason: "already_claimed",
+      });
+      await expire();
+      const conflict = await postClaim(
+        request({ ...input, nickname: "Different" }),
+        context,
+      );
+      expect(conflict.status).toBe(409);
+      expect((await conflict.json()).error.code).toBe("ACTION_ID_REUSED");
+      const publicResult = await (
+        await GET(new Request("https://trial.test/api/leaderboard"))
+      ).json();
+      expect(publicResult.entries).toEqual([original.entry]);
+      expect(JSON.stringify(publicResult)).not.toMatch(
+        /ownerId|tokenHash|initialLock|optimalMoves|cursorKey/,
+      );
+      expect(
+        (
+          await pool.query(
+            "SELECT count(*) FROM leaderboard_entries WHERE run_id=$1",
+            [run.id],
+          )
+        ).rows[0].count,
+      ).toBe("1");
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
   afterAll(async () => {
     await pool?.end();

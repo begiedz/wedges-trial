@@ -3,7 +3,17 @@ import { describe, expect, it, vi } from "vitest";
 import { failureReason } from "@/server/game/diagnostics";
 import { checkOrigin, handle, validateCommand } from "@/server/game/http";
 import { bootstrap, findSession } from "@/server/game/service";
+import {
+  LeaderboardRateLimitError,
+  limitLeaderboard,
+} from "@/server/leaderboard/rate-limit";
 import { claimEntry, readEligibility } from "@/server/leaderboard/service";
+
+vi.mock("@/server/db", () => ({ getDatabase: vi.fn() }));
+vi.mock("@/server/leaderboard/rate-limit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/server/leaderboard/rate-limit")>()),
+  limitLeaderboard: vi.fn(),
+}));
 
 vi.mock("@/server/leaderboard/service", () => ({
   claimEntry: vi.fn(),
@@ -144,6 +154,40 @@ describe("safe server failure diagnostics", () => {
 });
 
 describe("anonymous session HTTP contract", () => {
+  it.each(["eligibility", "claim"] as const)(
+    "limits private %s by authenticated owner before service work",
+    async (operation) => {
+      vi.mocked(findSession).mockResolvedValueOnce({
+        id: actionId,
+      } as NonNullable<Awaited<ReturnType<typeof findSession>>>);
+      vi.mocked(claimEntry).mockClear();
+      vi.mocked(readEligibility).mockClear();
+      vi.mocked(limitLeaderboard).mockRejectedValueOnce(
+        new LeaderboardRateLimitError(15),
+      );
+      const response = await handle(
+        new NextRequest(
+          `https://trial.test/api/runs/${actionId}/leaderboard-entry`,
+          {
+            method: operation === "claim" ? "POST" : "GET",
+            headers: { origin: "https://trial.test" },
+          },
+        ),
+        operation,
+        actionId,
+      );
+      expect(limitLeaderboard).toHaveBeenLastCalledWith({
+        operation,
+        ownerId: actionId,
+      });
+      expect(response.status).toBe(429);
+      expect(response.headers.get("retry-after")).toBe("15");
+      expect(response.headers.get("cache-control")).toBe("no-store");
+      expect((await response.json()).error.code).toBe("RATE_LIMITED");
+      expect(claimEntry).not.toHaveBeenCalled();
+      expect(readEligibility).not.toHaveBeenCalled();
+    },
+  );
   const request = (body = "{}") =>
     new NextRequest("https://trial.test/api/players/session", {
       method: "POST",

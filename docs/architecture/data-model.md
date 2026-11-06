@@ -16,6 +16,8 @@ The game document contains current RunState, initial lock, pending reward, opene
 
 ## Transactions and recovery
 
+`leaderboard_request_budgets` (#46, migration `0003_charming_the_fury.sql`) stores an operation/session-or-global key, positive capped request count and indexed expiry. It contains no credential, IP, score or gameplay state. Admission upserts commit independently before leaderboard work, including denials, so transaction rollback does not bypass throttling. Each admission removes at most 100 expired keys with row locks and `SKIP LOCKED`; idle expired rows may remain until later traffic. See [budgets and defaults](api-contract.md#leaderboard-admission-and-caching-46). Apply this additive migration before enabling #46 handlers; rollback reverts application code and retains the table plus all existing claims, results and snapshots. No data rewrite or remote migration is implied.
+
 Mutations lock the owner session row, recheck expiry, authorize the run and check replay before version/status. Run changes and original responses commit together. Batched WebSocket moves preserve individual action records and versions within one transaction. Finished/abandoned gameplay is immutable; reading it does not resume an active run.
 
 No browser save is imported. No automatic cleanup is scheduled. The manual `cleanupExpiredRuns()` transaction is described below. Expiry and revocation are checked again under the mutation owner lock.

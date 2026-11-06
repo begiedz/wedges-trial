@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { type NextRequest, NextResponse } from "next/server";
+import {
+  LeaderboardRateLimitError,
+  limitLeaderboard,
+} from "@/server/leaderboard/rate-limit";
 import { claimEntry, readEligibility } from "@/server/leaderboard/service";
 import { failureReason } from "./diagnostics";
 import type { Action } from "./engine";
@@ -48,7 +52,7 @@ export async function handle(
   operation: Action | "create" | "read" | "session" | "eligibility" | "claim",
   id?: string,
 ) {
-  const headers = { "Cache-Control": "no-store" };
+  const headers: Record<string, string> = { "Cache-Control": "no-store" };
   try {
     if (new URL(request.url).search)
       throw new GameError("INVALID_REQUEST", 400);
@@ -80,6 +84,7 @@ export async function handle(
       throw new GameError("INVALID_REQUEST", 400);
     if (operation === "eligibility" || operation === "claim") {
       if (!id) throw new GameError("INVALID_REQUEST", 400);
+      await limitLeaderboard({ operation, ownerId: session.id });
       if (operation === "eligibility")
         return NextResponse.json(await readEligibility(session.id, id), {
           headers,
@@ -100,6 +105,8 @@ export async function handle(
     const result = await execute(session.id, operation, id, input);
     return NextResponse.json(result.body, { status: result.status, headers });
   } catch (error) {
+    if (error instanceof LeaderboardRateLimitError)
+      headers["Retry-After"] = String(error.retryAfter);
     const known = error instanceof GameError;
     const code = known ? error.code : "SERVICE_UNAVAILABLE";
     const requestId = randomUUID();
