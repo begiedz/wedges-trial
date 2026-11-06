@@ -1,6 +1,6 @@
 # Backend and transport
 
-Gameplay is implemented in one Next.js application on Vercel, using Neon PostgreSQL, Drizzle and the pg driver. [Deployment evidence](status.md) is tracked separately from implementation. The [API contract](api-contract.md) defines wire shapes and retry rules; public leaderboard reads remain planned.
+Gameplay is implemented in one Next.js application on Vercel, using Neon PostgreSQL, Drizzle and the pg driver. [Deployment evidence](status.md) is tracked separately from implementation. The [API contract](api-contract.md) defines wire shapes and retry rules; public leaderboard reads are implemented under #24.
 
 ## Layers
 
@@ -27,6 +27,7 @@ Gameplay is implemented in one Next.js application on Vercel, using Neon Postgre
 | POST | /api/runs/:id/abandon | End active run, discard pending reward |
 | GET | /api/runs/:id/leaderboard-eligibility | Owned qualification snapshot; no reservation |
 | POST | /api/runs/:id/leaderboard-entry | Owned, validated, retry-safe nickname claim; atomic cutoff recheck |
+| GET | /api/leaderboard | Public frozen TOP 1000 pagination; no session, default 25/max 100 rows |
 | GET (upgrade) | /api/game/socket?run=:id | Authenticated same-origin WebSocket bound to one owned run |
 
 Reset/continue/abandon bodies contain only actionId and expectedVersion. Strict schemas reject client state and scores. All private responses use no-store. Session bootstrap, lifecycle and recovery use HTTP; the client sends rapid moves over WebSocket, with queued HTTP fallback when upgrade is unavailable. Lifecycle controls wait for pending moves to settle.
@@ -43,7 +44,7 @@ The client predicts plate movement and damage immediately (using the existing `p
 
 Private eligibility and claim endpoints are implemented under #33. They use the gameplay cookie, live owner lock and action replay namespace; claims serialize across owners with a cohort advisory transaction lock before querying the bounded TOP 1000. Claim and replay insertion commit atomically. See the [claim contract](api-contract.md#post-run-arcade-claims-implemented-under-33). No profile is created and nicknames are labels only.
 
-Public `/api/leaderboard` reads and snapshot pagination remain #24/#46 work. Localized Game Over nickname entry is implemented under #34. Pure ordering/qualification (#51), claim storage and internal bounded reads (#31) underpin the private service.
+Public `/api/leaderboard` reads now freeze the bounded query in PostgreSQL for 15 minutes, with signed, ruleset-bound cursors and stable ranks across pages (#24). Localized Game Over nickname entry is implemented under #34. Pure ordering/qualification (#51), claim storage and internal bounded reads (#31) underpin the private service.
 
 ## Terminal results and eligibility (#39)
 
@@ -51,7 +52,7 @@ The final pick's fourth invalid move sets `finished` and `game.finishedAt`, incr
 
 Exact final-action retries return the original response before version/status checks, including after refresh. A new move/reset/continue/abandon action against a finished run returns a conflict; socket batches use the same guards. Finished and abandoned runs are absent from the current-active-run lookup but remain readable by their owner while the session is valid.
 
-The owner may query `/api/runs/:id/leaderboard-eligibility` after finish. This server-derived snapshot does not reserve a place or publish a score. Only accepted nickname claims enter ranking reads, and submission rechecks the current cutoff atomically. Playing, chest-opened and abandoned runs cannot qualify. Public ranking pagination remains separate work; no first-visit name is required.
+The owner may query `/api/runs/:id/leaderboard-eligibility` after finish. This server-derived snapshot does not reserve a place or publish a score. Only accepted nickname claims enter ranking reads, and submission rechecks the current cutoff atomically. Playing, chest-opened and abandoned runs cannot qualify. Public ranking pagination uses durable snapshots under #24; no first-visit name is required.
 
 Results and action replays remain available throughout the live owning session, with no earlier claim deadline. After session expiry/revocation, private access ends; manual cleanup may remove unclaimed terminal runs only after the run and all its actions pass the 30-day grace period. Claims, including displaced claims, remain durable. See [retention](data-model.md#conservative-retention-policy-31).
 
@@ -86,4 +87,4 @@ Changed cutoff and already-claimed replies remove the form. Expired/unavailable 
 | Non-qualifying, changed cutoff, expired session and network errors | PASS | Component tests exercise all qualification reasons, submission cutoff loss, expired reads/submissions, qualification retry and unknown-commit retry. Existing PostgreSQL tests verify the cutoff race and credential isolation/expiry. |
 | EN/PL/DE/RU UI and tests | PASS | Four dictionaries provide matching claim keys; parameterized component tests render every localized label/help text. Input has an associated label, validation state/help and a live status; existing dialog retains its bounded scrollable layout and keyboard behavior. |
 
-No SQL/API/ruleset change or migration is needed. Rollback reverts the UI/client sources and dictionaries while preserving claims/results/replay records. Public ranking reads, pagination and the ranking screen remain #24/#46 work. Browser/device visual verification and deployed end-to-end verification were not performed.
+No SQL/API/ruleset change or migration is needed. Rollback reverts the UI/client sources and dictionaries while preserving claims/results/replay records. Public ranking reads and pagination are implemented under #24; the ranking screen remains #25 work. Browser/device visual verification and deployed end-to-end verification were not performed.

@@ -156,3 +156,24 @@ export const leaderboardEntries = pgTable(
     ),
   ],
 );
+
+/** Short-lived public projections; never contains ownership or gameplay secrets. */
+export const leaderboardSnapshots = pgTable(
+  "leaderboard_snapshots",
+  {
+    id: uuid("id").primaryKey(),
+    rulesetVersion: text("ruleset_version").notNull(),
+    cursorKey: text("cursor_key").notNull(),
+    entries: jsonb("entries")
+      .$type<import("@/api/contracts").LeaderboardEntryDto[]>()
+      .notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    index("leaderboard_snapshots_expiry").on(table.expiresAt),
+    check(
+      "leaderboard_snapshots_bounded",
+      sql`jsonb_typeof(${table.entries}) = 'array' and jsonb_array_length(${table.entries}) between 1 and 1000`,
+    ),
+  ],
+);

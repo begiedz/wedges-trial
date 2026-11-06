@@ -5,7 +5,7 @@ import { leaderboardEntries, runs } from "@/server/db/schema";
 import type { Transaction } from "@/server/game/persistence";
 import { LEADERBOARD_SIZE } from "./policy";
 
-/** Bounded read usable within the claim transaction; public pagination is separate work. */
+/** Shared bounded projection for claim qualification and public snapshot creation. */
 export async function readTopRuns(
   db: Transaction | ReturnType<typeof getDatabase> = getDatabase(),
 ) {

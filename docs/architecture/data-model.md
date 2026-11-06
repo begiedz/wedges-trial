@@ -24,7 +24,15 @@ No browser save is imported. No automatic cleanup is scheduled. The manual `clea
 
 `leaderboard_entries` contains labels only. `readTopRuns()` joins claims to immutable finished runs, filters the main `deterministic-ore-v1` ranking, orders ore DESC, opened chests DESC, finished_at ASC, UUID ASC and limits to 1000. Displaced claims remain durable. Generated numeric columns derive exclusively from game JSONB; the run trigger derives the indexed timestamp from game.finishedAt. No caller-supplied score is stored in a claim. Private claims reuse run_actions JSONB with additional entry/qualification fields; this is a TypeScript extension, with no SQL migration or rewrite of historical replies.
 
-The private claim service (#33) now combines ownership, Origin, nickname normalization, shared action replay and the atomic cutoff recheck before insertion. Public read/cursor infrastructure remains #24/#46. Database constraints enforce finished status and one claim per run, but do not independently enforce TOP 1000 qualification. See [competitive ranking](competitive-ranking.md).
+The private claim service (#33) now combines ownership, Origin, nickname normalization, shared action replay and the atomic cutoff recheck before insertion. Public read/cursor infrastructure is implemented under #24 in `leaderboard_snapshots`. Database constraints enforce finished status and one claim per run, but do not independently enforce TOP 1000 qualification. See [competitive ranking](competitive-ranking.md).
+
+## Public ranking snapshots (#24)
+
+Migration `0002_graceful_wolfpack.sql` adds `leaderboard_snapshots`: random UUID, ruleset, server-only per-snapshot cursor signing key, bounded public entry JSONB and indexed expiry. Snapshot creation reads TOP 1000 in one SQL statement; rows, labels and ranks are frozen even if an earlier-timestamped claim commits later. No session/game/solver data is stored in snapshots. Claims and source scores remain immutable and authoritative; snapshot data is only a short-lived public projection.
+
+Snapshots live for 15 minutes by the database clock. New cursorless reads delete up to 100 expired snapshots using `FOR UPDATE SKIP LOCKED`; deletion and optional new snapshot insertion share a transaction, so an insertion failure rolls cleanup back. Continuations read only a live snapshot from the active ruleset and verify the signed offset. Empty/single-page results need no stored snapshot. Expired records may remain until another cursorless read; no background cleanup is scheduled. Distributed rate/storage limits remain #43 release work.
+
+Apply migrations with `pnpm db:migrate` against the explicitly selected development/Preview database before enabling the endpoint. Test fresh and upgrade paths first. This task applies no remote migrations. Roll back application code while retaining the additive table and all durable claims/results; snapshots expire naturally. No score, cohort or historical data rewrite is required.
 
 ## Conservative retention policy (#31)
 

@@ -1,6 +1,6 @@
 # Gameplay API contract — v1
 
-This is the v1 gameplay contract. Session/gameplay HTTP endpoints, WebSockets and private leaderboard eligibility/claims are implemented; the public leaderboard read remains an approved target. See [status](status.md) for verification boundaries. Shared wire types live in [contracts.ts](../../src/api/contracts.ts) and [realtime.ts](../../src/api/realtime.ts); runtime validation lives in src/server/game/validation.ts.
+This is the v1 gameplay contract. Session/gameplay HTTP endpoints, WebSockets and private leaderboard eligibility/claims are implemented; the public leaderboard read is implemented under #24. See [status](status.md) for verification boundaries. Shared wire types live in [contracts.ts](../../src/api/contracts.ts) and [realtime.ts](../../src/api/realtime.ts); runtime validation lives in src/server/game/validation.ts.
 
 Product explanations use [plates for moving elements and pins for fixed indicators](gameplay.md#lock-component-terminology-60). Existing wire fields (`pins`, `pinId`, position/target/range and movement rules) encode plate alignment and retain their names. No DTO or persisted-state rename is implied.
 
@@ -30,7 +30,7 @@ The path `:id` is a run UUID. `RunActionRequest` means **exactly** `{ actionId, 
 | POST | `/api/runs/:id/abandon` | `RunActionRequest` | `200 AbandonRunResponse` |
 | GET | `/api/runs/:id/leaderboard-eligibility` | No body or query | `200 LeaderboardQualification` |
 | POST | `/api/runs/:id/leaderboard-entry` | Exactly `{ actionId, nickname }` | `200 LeaderboardClaimResponse` |
-| GET (planned) | `/api/leaderboard` | `limit`, `cursor` query parameters | `200 LeaderboardResponse` |
+| GET | `/api/leaderboard` | `limit`, `cursor` query parameters | `200 LeaderboardResponse` |
 
 The by-ID read and abandon mutation complete the requested lifecycle: `/current` cannot reload a finished result, and starting a run must not silently abandon another one.
 
@@ -151,15 +151,17 @@ Transport/platform failures may not be JSON. Clients treat malformed/non-JSON fa
 
 The API is locale-neutral: do not require a `locale` mutation field or change payloads with `Accept-Language`. The frontend maps every known error code, outcome and status to dictionary keys for **en/pl/de/ru**, with English fallback and a generic fallback for unknown codes. Nicknames are rendered as plain text. Language switching never creates a run or repeats a mutation. Localized API feedback is implemented in the four dictionaries.
 
-## Planned leaderboard read contract
+## Public leaderboard read contract (#24)
 
 `GET /api/leaderboard?limit=25&cursor=...` accepts a decimal integer `limit` from 1 to 100 (default 25) and an optional opaque server-issued cursor. Unknown query fields, duplicate parameters and invalid limits return `400 INVALID_REQUEST`; malformed/tampered/expired cursors return `400 INVALID_CURSOR`. A rejected cursor is restarted with a cursorless read.
 
-Use #24's arcade ranking contract: one entry per **claimed finished run**, not one per player, ordered under the approved #51 decision by `oreNuggets DESC`, then `openedChests DESC`, `finishedAt ASC`, stable `runId ASC`. Rank all claimed eligible run entries globally, capped at 1000; multiple runs from one anonymous session may appear. Only the server's current eligible `rulesetVersion` appears in a response. The main ranking uses `deterministic-ore-v1`. Future score-affecting changes require a ruleset review and separate cohorts for incomparable results. See [competitive ranking](competitive-ranking.md); private claim services/endpoints are implemented, while these public reads remain planned.
+Use #24's arcade ranking contract: one entry per **claimed finished run**, not one per player, ordered under the approved #51 decision by `oreNuggets DESC`, then `openedChests DESC`, `finishedAt ASC`, stable `runId ASC`. Rank all claimed eligible run entries globally, capped at 1000; multiple runs from one anonymous session may appear. Only the server's current eligible `rulesetVersion` appears in a response. The main ranking uses `deterministic-ore-v1`. Future score-affecting changes require a ruleset review and separate cohorts for incomparable results. See [competitive ranking](competitive-ranking.md); private claim services/endpoints and these public reads are implemented.
 
-The planned leaderboard screen displays 25 entries per page by default (up to 40 pages for a full TOP 1000), with previous/next navigation within one snapshot. Page length is independent of qualification capacity: ranks 1–1000 may qualify, not just entries on the first page. New traversal/refresh captures the current ranking; moving between pages retains its frozen ranks. No public read endpoint or ranking screen is implemented by this contract update.
+The planned leaderboard screen displays 25 entries per page by default (up to 40 pages for a full TOP 1000), with previous/next navigation within one snapshot. Page length is independent of qualification capacity: ranks 1–1000 may qualify, not just entries on the first page. New traversal/refresh captures the current ranking; moving between pages retains its frozen ranks. The public endpoint is implemented; the ranking screen remains #25 work.
 
-Each cursor binds the initial read's **frozen ordered TOP 1000 result set**, current ruleset and last emitted row/rank. Later finishes cannot reorder that traversal, replace a claimed run or change its displayed nickname between pages. Rank is the 1-based position within that snapshot. #24/#32 must implement durable snapshot semantics (for example, persisting the bounded selected rows) rather than a process-local map; a timestamp cutoff alone is insufficient when transactions can commit later with earlier timestamps. The snapshot storage/retention mechanism is an implementation detail; an expired snapshot returns `INVALID_CURSOR`. Return `nextCursor: null` at the end, including empty results and the TOP 1000 boundary; the last page may be shorter than `limit`. Cursors are opaque to the browser; do not expose session or player credentials. A cursor for a retired ruleset is invalid rather than mixing score systems.
+Each cursor binds the initial read's **frozen ordered TOP 1000 result set**, current ruleset and last emitted row/rank. Later finishes cannot reorder that traversal, replace a claimed run or change its displayed nickname between pages. Rank is the 1-based position within that snapshot. #24 persists the bounded selected rows in PostgreSQL rather than a process-local map; a timestamp cutoff alone is insufficient when transactions can commit later with earlier timestamps. The snapshot storage/retention mechanism is an implementation detail; an expired snapshot returns `INVALID_CURSOR`. Return `nextCursor: null` at the end, including empty results and the TOP 1000 boundary; the last page may be shorter than `limit`. Cursors are opaque to the browser; do not expose session or player credentials. A cursor for a retired ruleset is invalid rather than mixing score systems.
+
+Snapshots expire 15 minutes after creation according to the database clock. Signed cursors bind snapshot ID, ruleset and row offset; the per-snapshot signing key never leaves the server. Page size may change within the traversal. Reusing a cursor returns the same rows/ranks for that page size while the snapshot is live. Cursorless reads reclaim at most 100 expired snapshots transactionally and persist a new snapshot only if another page exists. No session is required or created, and all responses (including errors) use `Cache-Control: no-store`. The endpoint projects only `LeaderboardEntryDto` fields; it does not expose ownership, internal game state or cursor keys. Distributed request/storage abuse limits remain #43 release work.
 
 ```json
 {
@@ -307,7 +309,7 @@ A last-pick-breaking move returns `200` with `outcome: "run_finished"`, the same
 - #31–#33: session ownership, one-active-run constraint, player-scoped action identity including create, atomic replay/version storage and retention.
 - #35–#39: generate/restore, versioned moves, safe reset, stored pending reward and atomic claim, final result and abandonment.
 - #40–#42: full-snapshot rendering, retry identity, stale-response protection, four-language feedback, integration/concurrency tests; remove legacy saves only when server flow works.
-- #24/#46: snapshot-stable, ruleset-aware ranking query and cursor validation.
+- #24: snapshot-stable, ruleset-aware ranking query and cursor validation are implemented; deployed verification remains separate.
 - Test exact replay before stale-version/status checks, key reuse with changed payload, two different actions at one version, simultaneous start/claim/finalization, cross-player IDs, missing/bad origins, fourth invalid move, reset preserving penalties, failure rollback, abandoned reward exclusion and terminal reads. Contract/types alone do not establish any of these server guarantees.
 
 ## Post-run arcade claims (implemented under #33)
@@ -322,4 +324,4 @@ Success is `200 { outcome: "leaderboard_claimed", run, entry }`, where `entry` i
 
 The transaction locks the owner, then a transaction-scoped PostgreSQL advisory lock shared by all claims in the active cohort. Under READ COMMITTED, cutoff queries after this lock see the preceding claimant's commit. Bounded TOP 1000 reads plus a separate durable claim lookup prevent displaced runs from reclaiming. Claim insertion and replay storage commit together; failure rolls both back. Accepted claims do not change the immutable run/version. All application claim writers must use this service and lock; raw SQL insertion bypasses cutoff orchestration.
 
-The public read/cursor remains #24/#46 work. Game Over nickname entry is implemented under #34. Existing retention preserves claims permanently and all replay/eligible submission access for the full live session; see [data model](data-model.md#conservative-retention-policy-31).
+The public read/cursor is implemented under #24. Game Over nickname entry is implemented under #34. Existing retention preserves claims permanently and all replay/eligible submission access for the full live session; see [data model](data-model.md#conservative-retention-policy-31).
