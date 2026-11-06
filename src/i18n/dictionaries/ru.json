@@ -177,12 +177,12 @@
         "moveLeft": "Сдвинуть влево",
         "moveRight": "Сдвинуть вправо",
         "reset": "Сбросить текущий замок",
-        "selectNextPin": "Выбрать следующую пластину",
-        "selectPreviousPin": "Выбрать предыдущую пластину"
+        "selectNextPin": "Выбрать следующий штифт",
+        "selectPreviousPin": "Выбрать предыдущий штифт"
       },
       "labels": {
-        "moveHorizontal": "Сдвиг влево/вправо",
-        "moveVertical": "Выбор предыдущей/следующей пластины",
+        "moveHorizontal": "Движение влево/вправо",
+        "moveVertical": "Движение вверх/вниз",
         "next": "Далее",
         "reset": "Сброс"
       }

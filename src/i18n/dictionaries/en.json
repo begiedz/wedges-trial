@@ -174,15 +174,15 @@
     "movement": {
       "actions": {
         "continueToNextChest": "Continue to next chest",
-        "moveLeft": "Slide left",
-        "moveRight": "Slide right",
+        "moveLeft": "Move left",
+        "moveRight": "Move right",
         "reset": "Reset current lock",
-        "selectNextPin": "Select next plate",
-        "selectPreviousPin": "Select previous plate"
+        "selectNextPin": "Select next pin",
+        "selectPreviousPin": "Select previous pin"
       },
       "labels": {
-        "moveHorizontal": "Slide left/right",
-        "moveVertical": "Select previous/next plate",
+        "moveHorizontal": "Move left/right",
+        "moveVertical": "Move up/down",
         "next": "Next",
         "reset": "Reset"
       }

@@ -177,12 +177,12 @@
         "moveLeft": "Przesuń w lewo",
         "moveRight": "Przesuń w prawo",
         "reset": "Zresetuj bieżący zamek",
-        "selectNextPin": "Wybierz następną płytkę",
-        "selectPreviousPin": "Wybierz poprzednią płytkę"
+        "selectNextPin": "Wybierz następny pin",
+        "selectPreviousPin": "Wybierz poprzedni pin"
       },
       "labels": {
-        "moveHorizontal": "Przesuwanie w lewo/prawo",
-        "moveVertical": "Wybór poprzedniej/następnej płytki",
+        "moveHorizontal": "Ruch w lewo/prawo",
+        "moveVertical": "Ruch w górę/dół",
         "next": "Dalej",
         "reset": "Reset"
       }

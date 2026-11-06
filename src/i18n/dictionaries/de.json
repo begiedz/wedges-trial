@@ -174,15 +174,15 @@
     "movement": {
       "actions": {
         "continueToNextChest": "Zur nächsten Truhe weiter",
-        "moveLeft": "Nach links verschieben",
-        "moveRight": "Nach rechts verschieben",
+        "moveLeft": "Nach links bewegen",
+        "moveRight": "Nach rechts bewegen",
         "reset": "Aktuelles Schloss zurücksetzen",
-        "selectNextPin": "Nächste Platte auswählen",
-        "selectPreviousPin": "Vorherige Platte auswählen"
+        "selectNextPin": "Nächsten Stift auswählen",
+        "selectPreviousPin": "Vorherigen Stift auswählen"
       },
       "labels": {
-        "moveHorizontal": "Links/rechts verschieben",
-        "moveVertical": "Vorherige/nächste Platte auswählen",
+        "moveHorizontal": "Links/rechts bewegen",
+        "moveVertical": "Hoch/runter bewegen",
         "next": "Weiter",
         "reset": "Zurücksetzen"
       }
