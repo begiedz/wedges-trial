@@ -9,7 +9,7 @@ vi.mock("@/game/create-lock", () => ({
     pins: [{ id: 0, min: 0, max: 6, target: 3, position: 2 }],
     rules: [],
     invalidMovesOnCurrentPick: 0,
-    maxInvalidMovesPerPick: 3,
+    maxInvalidMovesPerPick: 4,
     isSolved: false,
     isFailed: false,
   })),
@@ -30,7 +30,7 @@ describe("run progression", () => {
       random,
     );
 
-    for (let chestIndex = 2; chestIndex <= 20; chestIndex += 1) {
+    for (let chestIndex = 2; chestIndex <= 26; chestIndex += 1) {
       run = openSolvedChest(
         { ...run, currentLock: { ...run.currentLock, isSolved: true } },
         random,
@@ -48,7 +48,11 @@ describe("run progression", () => {
     const initial = createRun(() => 0.5);
     const solved = {
       ...initial,
-      currentLock: { ...initial.currentLock, isSolved: true },
+      currentLock: {
+        ...initial.currentLock,
+        isSolved: true,
+        invalidMovesOnCurrentPick: 3,
+      },
     };
     const next = openSolvedChest(solved, () => 0.5);
 
@@ -56,6 +60,7 @@ describe("run progression", () => {
     expect(next.reward.oreNuggets).toBeGreaterThan(0);
     expect(next.lockpicks).toBe(initial.lockpicks + next.reward.lockpicks);
     expect(next.currentLock.isSolved).toBe(false);
+    expect(next.currentLock.invalidMovesOnCurrentPick).toBe(3);
     expect(solved.chestIndex).toBe(1);
     expect(solved.oreNuggets).toBe(0);
   });

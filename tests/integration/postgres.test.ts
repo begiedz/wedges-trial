@@ -45,7 +45,7 @@ async function seed() {
       effects: [{ pinId: 0, delta: direction as 1 | -1 }],
     })),
     invalidMovesOnCurrentPick: 0,
-    maxInvalidMovesPerPick: 3,
+    maxInvalidMovesPerPick: 4,
     isSolved: false,
     isFailed: false,
   };
@@ -334,7 +334,7 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
   it("preserves cumulative reward penalties through reload, racing solve/claim, replay and claim rollback", async () => {
     const run = await seed();
     let version = 1;
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       const move = {
         actionId: actionId(),
         expectedVersion: version++,
@@ -349,8 +349,8 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
       });
     }
     expect((await storedGame(run.id)).chestMetrics).toEqual({
-      moves: 4,
-      invalidMoves: 4,
+      moves: 5,
+      invalidMoves: 5,
       brokenPicks: 1,
     });
     expect(
@@ -378,7 +378,7 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
       reason: { code: "VERSION_CONFLICT" },
     });
     const opened = await readRun(ownerId, run.id);
-    expect(opened?.reward?.oreNuggets).toBe(6);
+    expect(opened?.reward?.oreNuggets).toBe(5);
     expect(opened?.oreNuggets).toBe(0);
     const pending = (await storedGame(run.id)).reward;
     const claim = { actionId: actionId(), expectedVersion: version };
@@ -414,7 +414,7 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
       reason: { code: "VERSION_CONFLICT" },
     });
     const credited = await readRun(ownerId, run.id);
-    expect(credited?.oreNuggets).toBe(6);
+    expect(credited?.oreNuggets).toBe(5);
     expect(credited?.lockpicks).toBe(2 + (pending?.lockpicks ?? 0));
     expect(credited?.currentLock.invalidMovesOnCurrentPick).toBe(1);
     expect((await storedGame(run.id)).chestMetrics).toEqual({
@@ -446,7 +446,7 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
   it("preserves mistakes and broken picks across refresh, repeated resets and final-action retries", async () => {
     const run = await seed();
     let version = 1;
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 12; i++) {
       const command = {
         actionId: actionId(),
         expectedVersion: version,
@@ -457,7 +457,7 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
       expect(await execute(ownerId, "move", run.id, command)).toEqual(result);
       version++;
       expect((await readRun(ownerId, run.id))?.version).toBe(version);
-      if (i < 8) {
+      if (i < 11) {
         for (let reset = 0; reset < 2; reset++) {
           await execute(ownerId, "reset", run.id, {
             actionId: actionId(),
@@ -469,19 +469,19 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
       const expected = {
         moves: i + 1,
         invalidMoves: i + 1,
-        brokenPicks: Math.floor((i + 1) / 3),
+        brokenPicks: Math.floor((i + 1) / 4),
       };
       expect(game.chestMetrics).toEqual(expected);
       expect(game.totalMetrics).toEqual(expected);
       expect(game.state.currentLock.invalidMovesOnCurrentPick).toBe(
-        (i + 1) % 3,
+        (i + 1) % 4,
       );
     }
     const finished = await readRun(ownerId, run.id);
     expect(finished?.status).toBe("finished");
     expect(finished?.result?.totalMetrics).toEqual({
-      moves: 9,
-      invalidMoves: 9,
+      moves: 12,
+      invalidMoves: 12,
       brokenPicks: 3,
     });
     await expect(
@@ -492,7 +492,7 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
         direction: -1,
       }),
     ).rejects.toMatchObject({ code: "INVALID_RUN_STATUS" });
-    expect((await storedGame(run.id)).totalMetrics.moves).toBe(9);
+    expect((await storedGame(run.id)).totalMetrics.moves).toBe(12);
   });
 
   it.each(["http", "batch"] as const)(
@@ -503,7 +503,7 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
       run.game.state.lockpicks = 1;
       run.game.state.oreNuggets = 42;
       run.game.openedChests = 3;
-      run.game.state.currentLock.invalidMovesOnCurrentPick = 2;
+      run.game.state.currentLock.invalidMovesOnCurrentPick = 3;
       run.game.totalMetrics = { moves: 20, invalidMoves: 8, brokenPicks: 2 };
       run.game.chestMetrics = { moves: 2, invalidMoves: 2, brokenPicks: 0 };
       await pool.query("UPDATE runs SET game=$2 WHERE id=$1", [

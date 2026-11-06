@@ -48,8 +48,8 @@ describe("getDifficultyForChest", () => {
   it("keeps tumbler counts within the allowed range", () => {
     for (const chestIndex of [0, 4, 10, 18, 30]) {
       const config = getDifficultyForChest(chestIndex);
-      expect(config.tumblerCount).toBeGreaterThanOrEqual(3);
-      expect(config.tumblerCount).toBeLessThanOrEqual(6);
+      expect(config.tumblerCount).toBeGreaterThanOrEqual(4);
+      expect(config.tumblerCount).toBeLessThanOrEqual(7);
     }
   });
 
@@ -100,14 +100,19 @@ describe("getDifficultyForChest", () => {
 
   it("adds tumblers at the expected display chest thresholds", () => {
     for (const [index, count] of [
-      [3, 3],
+      [0, 4],
       [4, 4],
-      [9, 4],
-      [10, 5],
-      [17, 5],
-      [18, 6],
+      [5, 5],
+      [11, 5],
+      [12, 6],
+      [23, 6],
+      [24, 7],
+      [99, 7],
+      [999, 7],
+      [9999, 7],
     ]) {
       expect(getDifficultyForChest(index).tumblerCount).toBe(count);
+      expect(getDifficultyBand(index)).toBe(count - 3);
     }
   });
 });

@@ -47,7 +47,7 @@ Public `/api/leaderboard` reads and snapshot pagination remain #24/#46 work. Loc
 
 ## Terminal results and eligibility (#39)
 
-The final pick's third invalid move sets `finished` and `game.finishedAt`, increments final counters, and persists the run together with its original action response. The timestamp is assigned once by the server, not by an eligibility read or claim. Credited ore, opened chests and total metrics form the safe terminal result; pending rewards are never supplied by the caller. The database freezes terminal rows and derives indexed score/timestamp projections from the stored game.
+The final pick's fourth invalid move sets `finished` and `game.finishedAt`, increments final counters, and persists the run together with its original action response. The timestamp is assigned once by the server, not by an eligibility read or claim. Credited ore, opened chests and total metrics form the safe terminal result; pending rewards are never supplied by the caller. The database freezes terminal rows and derives indexed score/timestamp projections from the stored game.
 
 Exact final-action retries return the original response before version/status checks, including after refresh. A new move/reset/continue/abandon action against a finished run returns a conflict; socket batches use the same guards. Finished and abandoned runs are absent from the current-active-run lookup but remain readable by their owner while the session is valid.
 

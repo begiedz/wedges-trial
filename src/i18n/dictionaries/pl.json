@@ -136,7 +136,7 @@
         "rules": [
           "Ruch jest nieprawidłowy, jeśli wypchnąłby którąkolwiek objętą nim płytkę poza dozwolony zakres pozycji.",
           "Nieprawidłowy ruch nie zmienia położenia płytek i uszkadza bieżący wytrych.",
-          "Wytrych łamie się dokładnie po 3 nieprawidłowych ruchach.",
+          "Wytrych łamie się dokładnie po 4 nieprawidłowych ruchach.",
           "Złamany wytrych nie resetuje zamka ani pozycji płytek.",
           "Ręczny reset przywraca początkowy układ bieżącego zamka.",
           "Gra kończy się po złamaniu ostatniego wytrycha."

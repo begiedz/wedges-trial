@@ -47,3 +47,9 @@ The domain engine remains **pure TypeScript** and is executed by the server for 
 ## Frontend features
 
 Product-specific React code belongs in `src/features/<name>/`. Gameplay owns its screen, hooks, dialogs and lock rendering; development inspection belongs to `features/lock-debug`. Routes consume their minimal public APIs. Shared primitives/site components stay in `components`, dictionaries in `i18n`, and the domain/client/server layers retain their existing roles. See [ownership, dependency rules and how to add a feature](module-boundaries.md). Run `pnpm check:architecture` for actionable dependency and cycle checks; lint, tests and CI enforce them.
+
+## Current and historical engine measurements
+
+- [Current post-#61 performance](lock-benchmarks.md) and [difficulty/resource sustain](lock-validation.md).
+- [2026-11-05 performance](archive/2026-11-05-lock-benchmarks.md) and [2026-11-05 validation](archive/2026-11-05-lock-validation.md).
+- [Archive checksums and source snapshot](../../benchmarks/results/archive/manifest.json). Historical raw files are byte-for-byte copies; only relative report links were repaired.

@@ -49,7 +49,7 @@ function fixture(): RunDto {
     currentLock: {
       pins: [{ id: 0, position: 0, min: 0, max: 6, target: 4 }],
       invalidMovesOnCurrentPick: 0,
-      maxInvalidMovesPerPick: 3,
+      maxInvalidMovesPerPick: 4,
       moveRules: [
         { sourcePinId: 0, direction: 1, effects: [{ pinId: 0, delta: 1 }] },
         { sourcePinId: 0, direction: -1, effects: [{ pinId: 0, delta: -1 }] },

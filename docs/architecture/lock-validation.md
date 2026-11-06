@@ -1,86 +1,106 @@
-# Lock validation and difficulty evidence (#50)
+# Lock validation and difficulty — post-#61 (2026-11-06)
 
-## Implemented contract
+Current 4–7-plate engine and four-mistake durability. [Historical #50 report](archive/2026-11-05-lock-validation.md), [historical #28 report](archive/2026-11-05-lock-benchmarks.md) and [archive manifest](../../benchmarks/results/archive/manifest.json) preserve the earlier 3–6-plate/three-mistake evidence. Raw bytes and measurement/provenance text are preserved; only relative report links were repaired.
 
-`solveLockDetailed()` distinguishes `found`, `budget-exhausted` and `unsolvable`. Only exhausting a reachable frontier proves that no path exists. Complete bidirectional BFS layers establish shortest distance; reconstruction is replayed with the same atomic movement evaluator used by gameplay before returning `found`. The default cap remains 20,000 stored search nodes across both frontiers. The compatibility `solveLock()` returns a path/null for existing debug/test callers; null remains ambiguous and authoritative generation no longer uses it.
+## Contract and provenance
 
-`createLockWithDiagnostics()` exposes private, ephemeral generation evidence for offline tooling: attempt count, found/capped candidate searches, target range and `target-met` / `below-target` / `unverified` outcome. It also retains a legal solution witness, including the inverse mixing walk for construction-only fallbacks. Every returned witness is replayed. `createLock()` returns only the existing lock shape; paths/diagnostics are neither persisted nor added to public DTOs. Owner-visible dependency rules remain necessary for prediction; optima remain private.
+Final post-#61 engine, measured 2026-11-06T20:58:30.734Z (UTC). Source SHA256 over sorted `src/game/*.ts` names/contents: `a50822e29d6880fbab1f5bb275020ab6a7faf172c3cf4441ed635fcf8134e528`. Emitted engine SHA256: `29913a3930c8d5c6aa76cb54f9cd9693e26f9ceb84bd20d689285832ee195662`. Base commit: `b2ca1f826af1b2e0eb8899cbcd8e44f065c2924a` plus uncommitted #61 changes; the source hash, not the base commit alone, identifies the measured engine.
 
-At most 12 candidate searches are performed, each with the same state cap. The random walk is still bounded to four times the configured scramble length. No retry-until-success loop or larger BFS cap is introduced. A generated-but-proven-unreachable candidate is an invariant violation and fails closed, rather than being treated as a weak puzzle.
+Runtime: v22.23.4, Linux arm64, cached `node:22-bookworm-slim` image in Docker on Apple M1, `--network=none --cpus=1 --memory=2g`. Runs are sequential, after final code/tests/typecheck/lint/build, with no competing test/build work. The benchmark, survey and simulation execute successively in one Node process; later RSS is the cumulative process high-water mark, including earlier work and untimed validation. This is a bounded local environment, not Vercel hardware or deployed throughput. No current Preview/Neon measurement, production deployment or migration was performed. Historical Preview/database results are archived and do not measure this engine.
 
-## Difficulty policy and compatibility
+`solveLockDetailed` retains found/budget-exhausted/unsolvable outcomes, complete BFS layers, legal path replay and a 20,000-state cap. Generation retains 12 attempts, bounded mixing and a verified construction witness. Construction-only fallback stores null optimum; requested minima remain targets. No solver cap/retry change or extra-valid-move penalty is introduced.
 
-Retain the existing bounded fallback for this cohort: prefer the longest verified candidate within the maximum, otherwise use the first construction-bounded layout with `optimalMoves: null`. The requested minimum is a target, not a guaranteed property. This preserves the approved ruleset and random selection behavior; the measurements below expose shortfalls rather than quietly changing difficulty or claiming all late chests satisfy their targets. Stricter rejection, revised late targets, milestone tiers and human difficulty calibration remain product decisions under #48. Larger budgets are not justified merely by an unattainable minimum.
+The #50 seeded survey runs 1,000 locks at each of ten chests (10,000 total): 1, 5, 6, 12, 13, 24, 25, 100, 1,000, 10,000. Seed 50; sample RNG seed `(50 + chest * 100003 + sample) >>> 0`. No discarded warmups. Every construction witness is replayed through actual movement; independent final-layout BFS checks optimum agreement. Independent solving and action replay are outside generation timing. See [benchmark reproduction and latency gates](lock-benchmarks.md).
 
-A found shortest path may be shortened by following its prefix; the remaining suffix retains proven shortest distance. Construction witness length is only an upper bound and never fills `optimalMoves`. Neither verified nor unavailable optima incur extra-valid-move penalties: deterministic-ore-v1 still uses cumulative invalid moves only. No reward, replenishment, public contract, stored shape, schema, migration or ranking cohort change is introduced. Rollback reverts code/tooling while retaining existing runs, metrics, results and replay history.
+## Actual difficulty and fallbacks
 
-## Reproduction
+Each row has 1,000 locks. Shortest lengths include only independently found optima; unavailable optimum is never guessed. Capped searches count internal candidate searches, not unsolvable locks.
 
-`node scripts/survey-locks.cjs 1000 /tmp/lock-survey-local.json` runs 1,000 seeds at each of the 12 existing benchmark chests (12,000 generated locks). It uses the #28 transpiled engine harness and LCG: `sampleSeed = (50 + chest * 100003 + sample) >>> 0`. Node startup/transpilation, independent final-layout BFS and actual gameplay action replay are outside generation timing. No timing warmups are discarded; retain raw timings and source hash. Reported RSS is the whole-process high-water mark, including untimed validation, rather than per-lock allocation.
+| Chest | Plates | Target | Verified length min / p50 / p95 / max | Below target | Unverified fallback | Capped candidates | Attempts max | Repeated layouts / rules | Independent locks | Mean cross effects/rule |
+| --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 4 | 2–4 | 2 / 4 / 4 / 4 | 0.0% | 0 | 0 | 1 | 14 / 504 | 0 | 0.64 |
+| 5 | 4 | 5–7 | 5 / 6 / 7 / 7 | 0.0% | 0 | 0 | 10 | 4 / 156 | 0 | 1.09 |
+| 6 | 5 | 5–8 | 5 / 8 / 8 / 8 | 0.0% | 0 | 0 | 6 | 0 / 0 | 0 | 1.54 |
+| 12 | 5 | 7–10 | 6 / 10 / 10 / 10 | 0.4% | 0 | 0 | 12 | 0 / 0 | 0 | 2.08 |
+| 13 | 6 | 8–10 | 8 / 10 / 10 / 10 | 0.0% | 0 | 1 | 12 | 0 / 0 | 0 | 2.72 |
+| 24 | 6 | 10–13 | 8 / 12 / 13 / 13 | 0.7% | 0 | 0 | 12 | 0 / 0 | 0 | 3.35 |
+| 25 | 7 | 10–13 | 8 / 12 / 13 / 13 | 0.3% | 0 | 25 | 12 | 0 / 0 | 0 | 4.11 |
+| 100 | 7 | 16–19 | 9 / 16 / 19 / 19 | 49.6% | 0 | 44 | 12 | 0 / 0 | 0 | 5.26 |
+| 1000 | 7 | 25–28 | 9 / 17 / 24 / 28 | 95.3% | 0 | 106 | 12 | 0 / 0 | 0 | 5.24 |
+| 10000 | 7 | 35–38 | 9 / 17 / 25 / 35 | 99.9% | 0 | 155 | 12 | 0 / 0 | 0 | 5.24 |
 
-Each report contains target/actual shortest-distance summaries, fallback/search-cap counts, attempt distributions, mean non-source effects per rule, fully independent locks and repeated layouts/rule sets. A repeated layout means identical ordered initial positions and rules within that chest's corpus, not mathematical equivalence under pin permutations. Rule hashes allow reproducibility checks without retaining solutions. Finite samples cannot establish collision-free randomness or human difficulty.
+| Chest | Generation wall p50 / p95 / max (ms) | CPU p50 / p95 / max (ms) | Final searches found / capped | Max final search states |
+| --- | ---: | ---: | ---: | ---: |
+| 1 | 0.10 / 0.23 / 0.56 | 0.10 / 0.34 / 1.55 | 1000 / 0 | 76 |
+| 5 | 0.33 / 0.93 / 2.27 | 0.33 / 0.96 / 4.32 | 1000 / 0 | 316 |
+| 6 | 0.55 / 1.61 / 6.36 | 0.56 / 1.66 / 5.07 | 1000 / 0 | 1019 |
+| 12 | 1.21 / 3.29 / 34.29 | 1.23 / 3.52 / 9.22 | 1000 / 0 | 1692 |
+| 13 | 1.81 / 6.61 / 37.40 | 1.86 / 6.73 / 39.91 | 1000 / 0 | 3784 |
+| 24 | 3.38 / 10.76 / 26.08 | 3.49 / 10.59 / 36.03 | 1000 / 0 | 6895 |
+| 25 | 5.77 / 28.78 / 91.45 | 6.09 / 25.22 / 109.79 | 1000 / 0 | 13907 |
+| 100 | 21.72 / 54.27 / 2043.82 | 22.10 / 52.84 / 1576.95 | 1000 / 0 | 19613 |
+| 1000 | 36.18 / 80.44 / 1229.88 | 36.04 / 80.51 / 874.45 | 1000 / 0 | 19956 |
+| 10000 | 41.49 / 89.41 / 167.24 | 39.19 / 87.63 / 193.57 | 1000 / 0 | 19959 |
 
-The existing standalone fixture now accepts `mode=survey`, still bounded to ten samples of one allowed chest/request and requiring its private bearer token plus Vercel protection. Use `node scripts/create-benchmark-preview.cjs <empty-temp-dir>`, following [Preview deployment/cleanup instructions](lock-benchmarks.md). For 100 distinct seeds/chest, request batches with `seed=50 + 10*batch`, `batch=0..9`. Never publish benchmark paths in the application. No database probes are needed for this pure-engine investigation.
+Total capped candidate searches: 331; unverified generation fallbacks: 0; optimum mismatches: 0. Every witness legally solved its lock. Process high-water RSS 123.43 MiB includes earlier benchmark work. Forced-cap unit tests also replay seven-plate construction fallbacks; finite surveys do not prove all future solver calls will find an optimum.
 
-Engineering thresholds remain #28's generation p95 <100 ms, observed max <500 ms and RSS below the 2 GiB function ceiling. They are investigation gates, not a production gameplay SLO. Generation remains synchronous and happens under gameplay transaction locks; this benchmark excludes Next.js startup, sockets, ownership checks and SQL commits. See #28 for platform/concurrency and billing caveats.
+## Comparison with archived #50
 
-## Measured difficulty — 2026-11-05
+Compare common chests only. Both use 1,000 samples/chest and seed 50, but different plate counts. Original local #50 runtime was macOS Node 24; current runtime is one-CPU Linux Node 22. Wall/CPU changes across those environments are descriptive, not isolated engine speed effects; use the matched-family #28 comparison for latency regression review.
 
-Local survey: Node v24.21.0, macOS arm64, 1,000 samples/chest, seed 50. Every final lock had a found optimum, legal witness, optimum agreement and length within the requested maximum. There were 59,070 candidate searches, including 11 budget exhaustions; no exhaustion was reported as unsolvable. Observed maximum final-layout search storage was 19,830 nodes; observed attempts never exceeded 12. Forced-exhaustion tests separately validate construction-only fallbacks, since none of the final survey locks needed one.
+| Chest | Old → new verified min / p50 / p95 / max | Old → new below-target rate | Old → new candidate caps | Old → new unverified fallback |
+| --- | ---: | ---: | ---: | ---: |
+| 1 | 2 / 4 / 4 / 4 → 2 / 4 / 4 / 4 | 0.0% → 0.0% | 0 → 0 | 0 → 0 |
+| 5 | 5 / 6 / 7 / 7 → 5 / 6 / 7 / 7 | 0.0% → 0.0% | 0 → 0 | 0 → 0 |
+| 25 | 8 / 12 / 13 / 13 → 8 / 12 / 13 / 13 | 0.3% → 0.3% | 1 → 25 | 0 → 0 |
+| 100 | 7 / 15 / 19 / 19 → 9 / 16 / 19 / 19 | 59.1% → 49.6% | 2 → 44 | 0 → 0 |
+| 1000 | 9 / 17 / 26 / 28 → 9 / 17 / 24 / 28 | 92.7% → 95.3% | 5 → 106 | 0 → 0 |
+| 10000 | 7 / 17 / 27 / 38 → 9 / 17 / 25 / 35 | 99.1% → 99.9% | 3 → 155 | 0 → 0 |
 
-| Chest | Target | Actual min / p50 / p95 / max | Below target | Capped candidate searches | Repeated layouts / rules | Independent locks | Mean cross effects/rule |
-| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| 1 | 2–4 | 2 / 4 / 4 / 4 | 0.0% | 0 | 263 / 894 | 41 | 0.53 |
-| 4 | 4–7 | 4 / 5 / 7 / 7 | 0.0% | 0 | 89 / 886 | 18 | 0.68 |
-| 5 | 5–7 | 5 / 6 / 7 / 7 | 0.0% | 0 | 4 / 156 | 0 | 1.09 |
-| 10 | 7–10 | 6 / 9 / 10 / 10 | 1.6% | 0 | 0 / 3 | 0 | 1.46 |
-| 11 | 7–10 | 6 / 10 / 10 / 10 | 0.3% | 0 | 0 / 0 | 0 | 2.02 |
-| 18 | 9–12 | 7 / 11 / 12 / 12 | 2.2% | 0 | 0 / 0 | 0 | 2.46 |
-| 19 | 9–12 | 8 / 12 / 12 / 12 | 0.7% | 0 | 0 / 0 | 0 | 3.12 |
-| 25 | 10–13 | 8 / 12 / 13 / 13 | 0.3% | 1 | 0 / 0 | 0 | 3.43 |
-| 50 | 13–16 | 7 / 14 / 16 / 16 | 19.6% | 0 | 0 / 0 | 0 | 4.23 |
-| 100 | 16–19 | 7 / 15 / 19 / 19 | 59.1% | 2 | 0 / 0 | 0 | 4.34 |
-| 1,000 | 25–28 | 9 / 17 / 26 / 28 | 92.7% | 5 | 0 / 0 | 0 | 4.33 |
-| 10,000 | 35–38 | 7 / 17 / 27 / 38 | 99.1% | 3 | 0 / 0 | 0 | 4.33 |
+Original #50 local worst generation p95 83.87 ms / max 493.74 ms, RSS 279.67 MiB; current 89.41 / 2043.82 ms and 123.43 MiB. Both raw datasets retain CPU times and full per-chest distributions. Late target attainment regresses: chest 1,000 below-target rate rises from 92.7% to 95.3%, and chest 10,000 from 99.1% to 99.9%. Candidate cap counts rise (3 → 155 at chest 10,000), although every surveyed final lock has a verified optimum. These are difficulty/search regressions; seven plates alone do not guarantee harder locks or human calibration. Existing #48 owns further target tuning. No minimum was silently weakened.
 
-Dependencies saturate while median shortest distance levels off around 17 moves. Increasing requested length is not evidence of harder generated puzzles. High early repetition is expected in a small finite state/rule space, but means puzzle memorization remains a competitive risk; no sampled late layouts repeated. Fully independent locks were confined to early chests. No sampled lock was initially solved or one move from solved. These are reproducible corpus observations, not a human difficulty scale or a proof of long-run uniqueness.
+## Resource sustain
 
-Local generation's worst per-chest p95 was 83.87 ms, maximum 493.74 ms and process RSS 279.67 MiB. The local host was not CPU/memory isolated, and a short typecheck ran during the survey; use the deployed results below for the platform gate rather than treating this as a controlled platform comparison.
+The original #47 simulation script/raw dataset was absent at the start of #61; its published aggregates remain in [gameplay history](gameplay.md#historical-resource-simulation-47-pre-61). The new checked-in `scripts/simulate-rewards.cjs` compares three- and four-mistake durability with identical per-run seeds and actual engine ore/pick reward functions. Seed 47; run seed `(47 + sample) >>> 0`; 10,000 runs/profile, cap 1,000 credited chests; starts with three picks and carries damage. A last-pick break ends the run before loot. Every surviving chest is solved and continued. Cap survivors are censored, not finished ranking entries. Fixed mistakes/chest model resources only, not puzzle difficulty, human skill or score fairness. This rerun is traceable but is not claimed to reproduce the missing original script byte-for-byte.
 
-## Vercel Preview validation
+| Durability | Mistakes/chest | Median / p95 credited chests | Censored at 1,000 | Median / p95 ore |
+| ---: | ---: | ---: | ---: | ---: |
+| 3 | 0 | 1000 / 1000 | 100.00% | 2507500 / 2507500 |
+| 3 | 1 | 1000 / 1000 | 93.17% | 2256500 / 2256500 |
+| 3 | 2 | 10 / 43 | 0.00% | 260 / 3956 |
+| 3 | 3 | 3 / 9 | 0.00% | 31 / 187 |
+| 3 | 6 | 1 / 2 | 0.00% | 4 / 10 |
+| 4 | 0 | 1000 / 1000 | 100.00% | 2507500 / 2507500 |
+| 4 | 1 | 1000 / 1000 | 99.32% | 2256500 / 2256500 |
+| 4 | 2 | 35 / 1000 | 9.56% | 2660 / 2006000 |
+| 4 | 3 | 7 / 25 | 0.00% | 121 / 1219 |
+| 4 | 6 | 1 / 3 | 0.00% | 4 / 18 |
 
-Temporary immutable Preview `https://wedges-trial-qrd5pul2y-begiedz-dev.vercel.app`: Node v22.23.4, Linux x64, region iad1. 100 samples/chest (1,200 total), ten sequential requests/chest, ten samples/request, no discarded warmups. One function instance was observed; peak process RSS was 211.23 MiB. All 1,200 final searches found legal solutions with consistent optima; no final or candidate search exhausted its budget in this smaller subset.
+Expected replenishment remains 0.5 picks/chest. Four-mistake durability shifts the nominal resource balance from 1.5 to 2 mistakes/chest before truncation. Longer survival and higher ore under fixed mistakes are an intended balance effect, not an ore-formula change. Perfect runs still have no designed end; random replenishment and automation risks remain open. There is one main ranking; these historical simulations are measurement comparisons, not separate player rankings.
 
-| Chest | Generation p50 / p95 / max (ms) | Below target |
-| --- | ---: | ---: |
-| 1 | 0.21 / 0.87 / 8.66 | 0% |
-| 4 | 0.31 / 1.13 / 7.50 | 0% |
-| 5 | 0.65 / 3.02 / 12.35 | 0% |
-| 10 | 1.64 / 4.65 / 11.80 | 4% |
-| 11 | 3.00 / 12.47 / 23.77 | 1% |
-| 18 | 5.16 / 12.69 / 30.00 | 0% |
-| 19 | 11.25 / 30.39 / 63.29 | 1% |
-| 25 | 11.65 / 34.53 / 47.30 | 0% |
-| 50 | 20.77 / 42.52 / 86.83 | 16% |
-| 100 | 26.29 / 51.57 / 68.23 | 60% |
-| 1,000 | 39.27 / 73.85 / 94.58 | 89% |
-| 10,000 | 40.33 / 83.70 / 167.97 | 99% |
+## Issue #61 acceptance evidence
 
-**GO under the existing investigation gates**, with the added path validation included. No search budget increase is warranted. This does not establish concurrent gameplay throughput, a production SLO or human difficulty calibration.
-
-Raw evidence: [12,000 local locks](../../benchmarks/results/lock-survey-local.gz), [1,200 Preview locks](../../benchmarks/results/lock-survey-preview.gz), gzip-compressed JSON. The measured TypeScript-source hash is `0675669505ee7c01b45a211e65e04f77d805d5e4c4db6a599d6ad266c2dd6887`; a subsequent explicit TypeScript filter predicate changes the final source hash to `4994d176b21b10d8e0cfae348884170db3cb6c98bea717232c425d71f41c3731`. Byte comparison confirmed identical emitted engine code, SHA256 `839938295e4b579cda8aaf35c34ef253ff929bd0288cc30d4531353694fb0028`. Both reports retain this provenance. Reproduction from final source has the latter source hash and the same runtime hash. Preview client timings initially include CLI startup (`cliRoundTripMs`), then direct HTTPS timings (`roundTripMs`); neither is used for the pure-generation gate.
-
-## Acceptance evidence
-
-| Issue #50 criterion | Status | Evidence |
+| Criterion | Status | Evidence |
 | --- | --- | --- |
-| Generated locks solvable by legal actions across representative seeds | PASS | Actual gameplay action replay on all 12,000 local and 1,200 Preview locks; forced construction-only fallback replay at chest 10,000. |
-| Solver paths verified; null/budget handled explicitly | PASS | Runtime replay before `found`; three explicit outcomes; exhaustive reference BFS on all 81 start/target pairs in each of 16 small directed/inverse fixtures (1,296 cases), plus existing seeded two/three-pin fixtures. Generation fails closed on impossible unsolvability. |
-| Actual vs target difficulty/fallback rates measured | PASS | Per-chest seeded distributions, below-target outcomes, candidate cap counts, attempts, repetitions and dependency statistics above and in raw reports. Retain existing bounded fallback; #48 owns a future curve decision. |
-| Runtime/resource limits maintained; bounded retries | PASS | Existing 12-attempt / 20,000-state bounds, unit regressions, late Preview p95 83.70 ms / max 167.97 ms, process RSS 211.23 MiB. |
-| No unfair optimum-based move penalty | PASS | Rewards unchanged; verified optimum only on found shortest paths, null for construction-only fallback. Reward/reset/server regression suite passes. |
+| Chests 1–5 have 4 plates | PASS | Difficulty boundary tests and final survey chests 1/5. |
+| Chests 6–12 have 5 plates | PASS | Boundary tests and final survey 6/12. |
+| Chests 13–24 have 6 plates | PASS | Boundary tests and final survey 13/24. |
+| Chests 25+ have 7 plates | PASS | Boundary, generated-path tests and survey 25/100/1000/10000. |
+| Plate count never exceeds 7 | PASS | Capped band-derived count; monotonic/range tests. |
+| Difficulty UI boundaries match locks | PASS | Authoritative continuation tests at 5/12/24 check displayed chest/band/count; debug display corrected to use one-based index directly. |
+| Exactly fourth invalid move breaks pick | PASS | Pure and authoritative engine tests; real PostgreSQL finalization and replay. |
+| Valid moves never heal | PASS | apply-move regression at three damage. |
+| Reset/continuation preserve partial damage | PASS | Pure, server, prediction and PostgreSQL refresh/reset/continue tests. |
+| Last broken pick ends run | PASS | Engine, PostgreSQL HTTP/socket batching, rollback and immutable terminal tests. |
+| Seven-plate locks remain solvable | PASS | Boundary/late tests, forced-cap witness replay and 10,000-lock survey. |
+| Performance benchmarked within existing budgets | FAIL | [Current gate decision](lock-benchmarks.md#budget-decision-and-limits); both surveys exceeded the maximum latency gate despite passing p95; no solver/retry increase. |
+| Final #28/#50/#47 reruns include new boundaries/late seven-plate cases | PASS | Raw current benchmark (100 samples/chest), survey (1000/chest), paired resource simulation (10000/profile) generated after final source tests/build. |
+| Historical reports/raw archived and linked | PASS | Date-based 2026-11-05 archives; original raw SHA256 verified before replacement; index and relative report links repaired. |
+| Current reports include provenance and comparisons | PASS | These canonical reports; metadata source/emitted hashes, base commit, runtime, seeds, samples, limits, CPU/RSS, regressions and historic comparisons. |
+| Existing scoring/rewards unchanged | PASS | Ore/pick reward source unchanged; reward, lifecycle, replay and ranking-order tests pass; the single main ranking retains the existing ruleset identifier. |
+| Four locales describe mechanics accurately | PASS | EN/PL/DE/RU instructions say four mistakes; keys/types unchanged. Indicators read the four-mistake server durability; non-four-point snapshots are rejected. |
+| Relevant tests pass | PASS | Final `pnpm test` and `pnpm test:coverage`: 331 tests each, including all 21 PostgreSQL integration tests. Typecheck, lint/names/architecture and webpack production build pass. Existing cursor CSS lint warning remains. |
 
-Verification: `pnpm test` and `pnpm test:coverage` each passed all 318 tests, including all 21 PostgreSQL integration tests against disposable PostgreSQL 17. Type checking, lint, naming/architecture checks and production build passed. Lint retains the existing cursor CSS warning. The restricted Turbopack build stalled and was stopped; the successful build and database tests ran outside the sandbox. A separate compatibility check compared 120 seeded locks across all 12 chests to HEAD and found exact equality of pins, rules, optima and durability fields. No browser/device end-to-end verification, Neon/production migration, production deployment or GitHub issue mutation was performed.
+No browser/device end-to-end, current Preview/Neon or production verification was performed. No public API fields, SQL schema or migration changed. Gameplay uses four-mistake durability and the 4–7-plate progression. The main ranking uses `deterministic-ore-v1`. See the [pre-release decision](decisions.md#approved-progression-and-durability--2026-11-06-61). No GitHub issue mutation or deployment is implied.
 
-
-Cleanup completed: the benchmark Preview was confirmed to have no aliases and was deleted; the task-created protection bypass was revoked without replacement. Temporary fixture/credential files and the disposable PostgreSQL container were removed. No application domain was assigned to the benchmark.
+Issue #61 is not fully signed off on performance: both full surveys exceeded the maximum investigation gate (1,481.88 ms and 2043.82 ms), although p95 remained under 100 ms. The [first slow seed](lock-benchmarks.md#same-engine-latency-outlier-and-repeat) did not reproduce the spike in targeted checks. Both full runs are retained; long-tail performance needs investigation before production.

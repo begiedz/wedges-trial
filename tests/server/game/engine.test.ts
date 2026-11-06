@@ -15,13 +15,13 @@ function fixture() {
     isSolved: false,
     isFailed: false,
     invalidMovesOnCurrentPick: 0,
-    maxInvalidMovesPerPick: 3,
+    maxInvalidMovesPerPick: 4,
   };
   run.game.initialLock = structuredClone(run.game.state.currentLock);
   return run;
 }
 describe("authoritative domain lifecycle", () => {
-  it.each([1, 2])(
+  it.each([1, 2, 3])(
     "preserves %i damage and cumulative penalties through repeated resets",
     (mistakes) => {
       let run = fixture();
@@ -32,7 +32,7 @@ describe("authoritative domain lifecycle", () => {
         mistakes,
       );
       expect(run.game.chestMetrics.invalidMoves).toBe(mistakes);
-      for (let i = mistakes; i < 3; i++)
+      for (let i = mistakes; i < 4; i++)
         run = transition(run, "move", { pinId: 0, direction: -1 }).run;
       expect(run.game.state.lockpicks).toBe(2);
       expect(run.game.totalMetrics.brokenPicks).toBe(1);
@@ -58,15 +58,15 @@ describe("authoritative domain lifecycle", () => {
   it("freezes final statistics on last pick and hides solver metadata", () => {
     let run = fixture();
     run.game.state.lockpicks = 1;
-    for (let i = 0; i < 3; i++)
+    for (let i = 0; i < 4; i++)
       run = transition(run, "move", { pinId: 0, direction: -1 }).run;
     run.game.state.currentLock.optimalMoves = 2;
     const dto = publicRun(run);
     expect(dto.status).toBe("finished");
     expect(dto.result?.reason).toBe("lockpicks_exhausted");
     expect(dto.result?.totalMetrics).toEqual({
-      moves: 3,
-      invalidMoves: 3,
+      moves: 4,
+      invalidMoves: 4,
       brokenPicks: 1,
     });
     expect(dto.result?.totalMetrics).not.toBe(run.game.totalMetrics);
@@ -86,8 +86,8 @@ describe("authoritative domain lifecycle", () => {
     move(1);
     expect(run.game.state.currentLock.optimalMoves).toBe(2);
     move(-1);
-    for (let i = 0; i < 4; i++) move(-1);
-    const metrics = { moves: 6, invalidMoves: 4, brokenPicks: 1 };
+    for (let i = 0; i < 5; i++) move(-1);
+    const metrics = { moves: 7, invalidMoves: 5, brokenPicks: 1 };
     expect(run.game.chestMetrics).toEqual(metrics);
     expect(run.game.totalMetrics).toEqual(metrics);
     expect(run.game.state.currentLock.invalidMovesOnCurrentPick).toBe(1);
@@ -98,14 +98,14 @@ describe("authoritative domain lifecycle", () => {
     expect(run.game.totalMetrics).toEqual(metrics);
     move(1);
     move(1);
-    expect(run.game.reward?.oreNuggets).toBe(6);
+    expect(run.game.reward?.oreNuggets).toBe(5);
     run = transition(run, "continue", {}).run;
     expect(run.game.chestMetrics).toEqual({
       moves: 0,
       invalidMoves: 0,
       brokenPicks: 0,
     });
-    expect(run.game.totalMetrics).toEqual({ ...metrics, moves: 8 });
+    expect(run.game.totalMetrics).toEqual({ ...metrics, moves: 9 });
     expect(run.game.state.currentLock.invalidMovesOnCurrentPick).toBe(1);
   });
   it("does not count unknown pins, missing rules, solved or failed moves", () => {
@@ -136,3 +136,26 @@ describe("authoritative domain lifecycle", () => {
         );
   });
 });
+
+it.each([
+  [5, 5],
+  [12, 6],
+  [24, 7],
+] as const)(
+  "continues displayed chest %i into a lock with %i plates and correct band",
+  (chest, plates) => {
+    const run = fixture();
+    run.game.state.chestIndex = chest;
+    run.status = "chest_opened";
+    run.game.reward = { oreNuggets: 0, lockpicks: 0 };
+    run.game.state.currentLock.invalidMovesOnCurrentPick = 3;
+    const next = transition(run, "continue", {}).response.run;
+    expect(next.chestIndex).toBe(chest + 1);
+    expect(next.difficulty).toBe(plates - 3);
+    expect(next.currentLock.pins).toHaveLength(plates);
+    expect(next.currentLock).toMatchObject({
+      maxInvalidMovesPerPick: 4,
+      invalidMovesOnCurrentPick: 3,
+    });
+  },
+);

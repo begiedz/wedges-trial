@@ -37,7 +37,7 @@ function fixture(): RunDto {
     currentLock: {
       pins: [{ id: 0, position: 1, target: 2, min: 0, max: 2 }],
       invalidMovesOnCurrentPick: 0,
-      maxInvalidMovesPerPick: 3,
+      maxInvalidMovesPerPick: 4,
     },
     createdAt: new Date(0).toISOString(),
     updatedAt: new Date(0).toISOString(),
@@ -69,6 +69,18 @@ function mount(overrides: Partial<ReturnType<typeof useGameSession>>) {
 }
 afterEach(cleanup);
 describe("server-backed game UI", () => {
+  it("renders damage against the server's four-mistake threshold", () => {
+    const maximum = 4;
+    const run = fixture();
+    run.currentLock.maxInvalidMovesPerPick = maximum;
+    run.currentLock.invalidMovesOnCurrentPick = maximum - 1;
+    mount({ run });
+    expect(
+      screen.getByText(
+        `${en.game.labels.invalidMoves}: ${maximum - 1}/${maximum}`,
+      ),
+    ).toBeTruthy();
+  });
   it("shows localized retry while no run is available", () => {
     const model = mount({ error: true });
     expect(screen.getByText(en.game.connection.error)).toBeTruthy();

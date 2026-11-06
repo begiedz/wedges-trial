@@ -37,6 +37,18 @@ describe("visual prediction/domain parity", () => {
       expect(confirmed).toEqual(before);
     },
   );
+  it("predicts terminal damage at the server's four-mistake limit", () => {
+    const maximum = 4;
+    const initial = storedRun();
+    initial.game.state.lockpicks = 1;
+    initial.game.state.currentLock.maxInvalidMovesPerPick = maximum;
+    const confirmed = publicRun(initial);
+    const inputs = Array.from({ length: maximum }, (_, i) =>
+      moveCommand(i + 1, -1),
+    );
+    expect(predictRun(confirmed, inputs.slice(0, -1)).terminal).toBe(false);
+    expect(predictRun(confirmed, inputs).terminal).toBe(true);
+  });
   it("preserves partial damage after reset and continuation", () => {
     let server = storedRun();
     server = transition(server, "move", { pinId: 0, direction: -1 }).run;

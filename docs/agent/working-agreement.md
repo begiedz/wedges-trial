@@ -33,7 +33,7 @@ Use lowercase kebab-case for project-owned files/directories, independently of T
 - [ ] `pnpm lint` passes (or reason stated).
 - [ ] `pnpm build` passes when relevant (or reason stated).
 - [ ] Backend behavior tests ownership, conflicts, replay/duplicate and rollback.
-- [ ] Gameplay behavior tests 3 invalid moves, reset fairness, reward once.
+- [ ] Gameplay behavior tests four invalid moves, reset fairness, reward once.
 - [ ] Four dictionaries updated for new visible text.
 - [ ] No user-facing strings hardcoded in React.
 - [ ] Browser never becomes source of truth for score or trusted resources.

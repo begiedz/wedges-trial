@@ -67,24 +67,27 @@ describe("generateRules", () => {
     }
   });
 
-  it("creates a correct inverse left rule for each right rule", () => {
-    const rules = generateRules(
-      baseConfig,
-      createSequenceRandom([0.2, 0.7, 0.4]),
-    );
-
-    for (let pinId = 0; pinId < baseConfig.tumblerCount; pinId += 1) {
-      const rightRule = findRule(rules, pinId, 1);
-      const leftRule = findRule(rules, pinId, -1);
-
-      expect(leftRule.effects).toEqual(
-        rightRule.effects.map((effect) => ({
-          pinId: effect.pinId,
-          delta: effect.delta === 1 ? -1 : 1,
-        })),
+  it.each([4, 5, 6, 7])(
+    "creates inverse rules for a %i-plate lock",
+    (tumblerCount) => {
+      const rules = generateRules(
+        { ...baseConfig, tumblerCount },
+        createSequenceRandom([0.2, 0.7, 0.4]),
       );
-    }
-  });
+
+      for (let pinId = 0; pinId < tumblerCount; pinId += 1) {
+        const rightRule = findRule(rules, pinId, 1);
+        const leftRule = findRule(rules, pinId, -1);
+
+        expect(leftRule.effects).toEqual(
+          rightRule.effects.map((effect) => ({
+            pinId: effect.pinId,
+            delta: effect.delta === 1 ? -1 : 1,
+          })),
+        );
+      }
+    },
+  );
 
   it("increases secondary effects as dependency density rises", () => {
     const lowDensityRules = generateRules(

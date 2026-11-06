@@ -38,7 +38,7 @@ function createTestRun(overrides?: Partial<RunState>): RunState {
       },
     ],
     invalidMovesOnCurrentPick: 0,
-    maxInvalidMovesPerPick: 3,
+    maxInvalidMovesPerPick: 4,
     isSolved: false,
     isFailed: false,
   };
@@ -98,7 +98,7 @@ describe("applyMove", () => {
     expect(result.lockpicks).toBe(2);
   });
 
-  it("breaks a lockpick after exactly three invalid moves", () => {
+  it("breaks a lockpick after exactly four invalid moves", () => {
     let run = createTestRun({
       currentLock: {
         ...createTestRun().currentLock,
@@ -119,12 +119,15 @@ describe("applyMove", () => {
 
     run = applyMove(run, 0, 1);
 
+    expect(run.lockpicks).toBe(2);
+    expect(run.currentLock.invalidMovesOnCurrentPick).toBe(3);
+    run = applyMove(run, 0, 1);
     expect(run.lockpicks).toBe(1);
     expect(run.currentLock.invalidMovesOnCurrentPick).toBe(0);
     expect(run.currentLock.pins.map((pin) => pin.position)).toEqual([2, 1]);
   });
 
-  it.each([1, 2, 4])(
+  it.each([1, 2, 3, 4])(
     "breaks a pick at the lock's configured threshold of %i invalid moves",
     (maxInvalidMovesPerPick) => {
       let run = createTestRun({
@@ -160,13 +163,13 @@ describe("applyMove", () => {
     const run = createTestRun({
       currentLock: {
         ...createTestRun().currentLock,
-        invalidMovesOnCurrentPick: 2,
+        invalidMovesOnCurrentPick: 3,
       },
     });
     const result = applyMove(run, 1, 1);
 
     expect(result.currentLock.pins.map((pin) => pin.position)).toEqual([1, 2]);
-    expect(result.currentLock.invalidMovesOnCurrentPick).toBe(2);
+    expect(result.currentLock.invalidMovesOnCurrentPick).toBe(3);
     expect(result.lockpicks).toBe(2);
 
     const brokenPickRun = applyMove(result, 0, -1);
@@ -181,7 +184,7 @@ describe("applyMove", () => {
       lockpicks: 1,
       currentLock: {
         ...createTestRun().currentLock,
-        invalidMovesOnCurrentPick: 2,
+        invalidMovesOnCurrentPick: 3,
         pins: [
           { id: 0, position: 2, target: 2, min: 0, max: 2 },
           { id: 1, position: 1, target: 0, min: 0, max: 2 },

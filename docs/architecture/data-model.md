@@ -22,7 +22,7 @@ No browser save is imported. No automatic cleanup is scheduled. The manual `clea
 
 ## Ranking storage and reads (#31)
 
-`leaderboard_entries` contains labels only. `readTopRuns()` joins claims to immutable finished runs, filters deterministic-ore-v1, orders ore DESC, opened chests DESC, finished_at ASC, UUID ASC and limits to 1000. Displaced claims remain durable. Generated numeric columns derive exclusively from game JSONB; the run trigger derives the indexed timestamp from game.finishedAt. No caller-supplied score is stored in a claim. Private claims reuse run_actions JSONB with additional entry/qualification fields; this is a TypeScript extension, with no SQL migration or rewrite of historical replies.
+`leaderboard_entries` contains labels only. `readTopRuns()` joins claims to immutable finished runs, filters the main `deterministic-ore-v1` ranking, orders ore DESC, opened chests DESC, finished_at ASC, UUID ASC and limits to 1000. Displaced claims remain durable. Generated numeric columns derive exclusively from game JSONB; the run trigger derives the indexed timestamp from game.finishedAt. No caller-supplied score is stored in a claim. Private claims reuse run_actions JSONB with additional entry/qualification fields; this is a TypeScript extension, with no SQL migration or rewrite of historical replies.
 
 The private claim service (#33) now combines ownership, Origin, nickname normalization, shared action replay and the atomic cutoff recheck before insertion. Public read/cursor infrastructure remains #24/#46. Database constraints enforce finished status and one claim per run, but do not independently enforce TOP 1000 qualification. See [competitive ranking](competitive-ranking.md).
 
@@ -56,3 +56,7 @@ Verification: all 159 tests passed with TEST_DATABASE_URL pointing only to dispo
 No new SQL migration or backfill is required: migration 0001 already checks the existing chest/run counters in game JSONB. `RunState` and pure function signatures remain unchanged; counters stay in the server `StoredGame` wrapper. Generated `LockState` documents now include optional `optimalMoves: number | null`, a count for the initial layout. Existing documents omit it and remain valid; do not retroactively infer an optimum. The same field is cloned to initialLock and retained through reset, moves and persistence, but excluded from public snapshots.
 
 Fresh finished snapshots add `result.totalMetrics` derived from the immutable stored totals. Legacy persisted replay responses remain byte-for-byte compatible at the JSON level and can omit this field; the client validates present counters and displays unavailable statistics when absent. Fresh by-ID reads of old finished runs supply their existing stored totals. An application rollback can leave the additive metadata in JSONB; older readers ignore it. No data rewrite, production migration or deployment is part of #49. The scoring ruleset stays deterministic-ore-v1.
+
+## Pre-release progression/durability update (#61)
+
+The main ranking uses `deterministic-ore-v1`; gameplay uses the 4–7-plate progression and four-mistake durability. This pre-release update requires no SQL schema migration or stored document rewrite. Ranking tie order and reward formulas remain unchanged.

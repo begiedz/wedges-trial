@@ -9,6 +9,7 @@ import { PinTable } from "@/features/lock-debug/molecules/pin-table";
 import { PinVisualizerRow } from "@/features/lock-debug/molecules/pin-visualizer-row";
 import type { TextLockCopy } from "@/features/lock-debug/types";
 import { applyMove } from "@/game/apply-move";
+import { MAX_INVALID_MOVES_PER_PICK } from "@/game/constants";
 import { createRun, openSolvedChest } from "@/game/create-run";
 import { cloneLockState, resetCurrentLock } from "@/game/reset-lock";
 import { solveLock } from "@/game/solver";
@@ -105,7 +106,7 @@ function describeMoveOutcome(
   }
 
   if (nextRun.currentLock.isSolved && !previousRun.currentLock.isSolved) {
-    return `${pinLabel} ${pinId} ${directionLabel}: ${t.labels.solvedChestEvent} ${previousRun.chestIndex + 1}`;
+    return `${pinLabel} ${pinId} ${directionLabel}: ${t.labels.solvedChestEvent} ${previousRun.chestIndex}`;
   }
 
   if (nextRun.lockpicks < previousRun.lockpicks) {
@@ -152,7 +153,7 @@ export function TextLockTester() {
     setInitialLock(cloneLockState(nextRun.currentLock));
     setSelectedPinId(nextRun.currentLock.pins[0]?.id ?? null);
     setLastReward(null);
-    setEventLog([`${t.labels.startedChestEvent} ${nextRun.chestIndex + 1}`]);
+    setEventLog([`${t.labels.startedChestEvent} ${nextRun.chestIndex}`]);
   };
 
   const continueSavedRun = () => {
@@ -167,7 +168,7 @@ export function TextLockTester() {
     setEventLog((currentLog) =>
       pushEvent(
         currentLog,
-        `${t.labels.continuedSavedChestEvent} ${savedRun.chestIndex + 1}`,
+        `${t.labels.continuedSavedChestEvent} ${savedRun.chestIndex}`,
       ),
     );
   };
@@ -202,7 +203,7 @@ export function TextLockTester() {
     setEventLog((currentLog) =>
       pushEvent(
         currentLog,
-        `${t.labels.resetChestEvent} ${run.chestIndex + 1} ${t.labels.toInitialState}`,
+        `${t.labels.resetChestEvent} ${run.chestIndex} ${t.labels.toInitialState}`,
       ),
     );
   }, [initialLock, run, t]);
@@ -222,7 +223,7 @@ export function TextLockTester() {
     setEventLog((currentLog) =>
       pushEvent(
         currentLog,
-        `${t.labels.openedChestEvent} ${run.chestIndex + 1}: +${nextRun.reward.oreNuggets} ${t.labels.oreUnit}, +${nextRun.reward.lockpicks} ${t.labels.rewardLockpicks}`,
+        `${t.labels.openedChestEvent} ${run.chestIndex}: +${nextRun.reward.oreNuggets} ${t.labels.oreUnit}, +${nextRun.reward.lockpicks} ${t.labels.rewardLockpicks}`,
       ),
     );
   };
@@ -372,7 +373,7 @@ export function TextLockTester() {
           <div className="gap-3 grid sm:grid-cols-2 xl:grid-cols-3">
             <MetricCard
               label={t.labels.chest}
-              value={run ? run.chestIndex + 1 : t.labels.noValue}
+              value={run ? run.chestIndex : t.labels.noValue}
             />
             <MetricCard
               label={t.labels.oreNuggets}
@@ -388,7 +389,10 @@ export function TextLockTester() {
             />
             <MetricCard
               label={t.labels.maxInvalidMoves}
-              value={run?.currentLock.maxInvalidMovesPerPick ?? 3}
+              value={
+                run?.currentLock.maxInvalidMovesPerPick ??
+                MAX_INVALID_MOVES_PER_PICK
+              }
             />
             <MetricCard
               label={t.labels.state}

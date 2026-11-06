@@ -18,7 +18,7 @@ The global leaderboard, TOP 100 qualification and nickname claims remain planned
 4. Choose **Take all** to collect the reward and advance to the next lock.
 5. Keep going until you run out of lockpicks.
 
-A move is invalid when any affected plate would leave its permitted position range. Invalid moves leave every plate in place and damage the current lockpick. **Exactly three invalid moves on that pick break it.** Breaking a pick does not reset the lock. The run ends when the last pick breaks.
+A move is invalid when any affected plate would leave its permitted position range. Invalid moves leave every plate in place and damage the current lockpick. **Exactly four invalid moves on that pick break it.** Breaking a pick does not reset the lock. The run ends when the last pick breaks.
 
 Manual reset restores the current lock’s starting layout. Starting a new run during an active trial requires confirmation; starting after Game Over does not.
 

@@ -161,12 +161,12 @@ describe("endless ore leaderboard policy", () => {
         { sourcePinId: 0, direction: -1, effects: [{ pinId: 0, delta: -1 }] },
       ],
       invalidMovesOnCurrentPick: 0,
-      maxInvalidMovesPerPick: 3,
+      maxInvalidMovesPerPick: 4,
       isFailed: false,
       isSolved: false,
     };
     run.game.reward = { oreNuggets: 99999, lockpicks: 99 };
-    for (let i = 0; i < 3; i++)
+    for (let i = 0; i < 4; i++)
       run = transition(run, "move", { pinId: 0, direction: -1 }).run;
     expect(rankableRun(run)?.oreNuggets).toBe(100);
   });

@@ -28,14 +28,14 @@ describe("lock benchmark", () => {
     const report = runBenchmark(engine, {
       samples: 2,
       warmups: 1,
-      chests: [1, 19, 10000],
+      chests: [1, 25, 10000],
     });
     expect(built.hash).toMatch(/^[a-f0-9]{64}$/);
     expect(
       report.rows.map(
         (row: { config: { tumblerCount: number } }) => row.config.tumblerCount,
       ),
-    ).toEqual([3, 6, 6]);
+    ).toEqual([4, 7, 7]);
     expect(report.raw).toHaveLength(16);
     for (const row of report.rows) {
       expect(row.solverNulls).toBe(0);

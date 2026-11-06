@@ -136,7 +136,7 @@
         "rules": [
           "Ein Zug ist ungültig, wenn eine betroffene Platte ihren erlaubten Positionsbereich verlassen würde.",
           "Ein ungültiger Zug verändert keine Plattenposition und beschädigt den aktuellen Dietrich.",
-          "Ein Dietrich bricht nach genau 3 ungültigen Zügen.",
+          "Ein Dietrich bricht nach genau 4 ungültigen Zügen.",
           "Ein gebrochener Dietrich setzt weder das Schloss noch die Plattenpositionen zurück.",
           "Manuelles Zurücksetzen stellt die Ausgangslage des aktuellen Schlosses wieder her.",
           "Wenn der letzte Dietrich bricht, endet der Lauf."

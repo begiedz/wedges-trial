@@ -29,11 +29,18 @@ export function openSolvedChest(
   const reward = getChestReward(run.chestIndex, random);
   const nextChestIndex = run.chestIndex + 1;
 
+  const currentLock = createLock(
+    getDifficultyForChest(nextChestIndex - 1),
+    random,
+  );
+  currentLock.invalidMovesOnCurrentPick =
+    run.currentLock.invalidMovesOnCurrentPick;
+
   return {
     chestIndex: nextChestIndex,
     oreNuggets: run.oreNuggets + reward.oreNuggets,
     lockpicks: run.lockpicks + reward.lockpicks,
-    currentLock: createLock(getDifficultyForChest(nextChestIndex - 1), random),
+    currentLock,
     reward,
   };
 }

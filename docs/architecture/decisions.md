@@ -19,7 +19,7 @@ Use **plate** for the horizontally sliding element and **pin** for the stationar
 | Run-based leaderboard | Rank claimed finished runs; multiple runs may share nickname or anonymous owner | #24, #25 |
 | Endless primary mode | Random solvable puzzles, escalating difficulty; ore-based survival ranking, no bounded ranked mode for v1 | #48, #51 |
 | Game resources | Ore nuggets and lockpicks only; ore is rank score | #24, #47 |
-| Three invalid moves | A pick breaks on exactly three out-of-bounds attempts | #36, #37 |
+| Four invalid moves (#61) | New picks break on exactly four out-of-bounds attempts | #36, #37 |
 | Reset fairness | Reset cannot refund spent picks or erase damage/penalties | #37, #49 |
 | Deterministic ore (approved and implemented) | deterministic-ore-v1 formula below; chest progression and cumulative invalid moves determine ore | #47, #49 |
 | Audio opt-in | Independent music/SFX toggles and volume; no surprise autoplay | #53, #54 |
@@ -67,7 +67,7 @@ Retain current random pick replenishment for this cohort; a deterministic replac
 
 ## Reward implementation completion — 2026-11-05 (#47)
 
-The earlier deterministic-ore-v1 and #51 approvals govern the older #47 proposal: keep the integer ore curve and 40% floor, apply no excess-valid-move penalty, and retain random pick replenishment. This implementation centralizes tuning, documents the calculation at `getDeterministicOre()` and records a seeded resource simulation in [gameplay](gameplay.md#reward-transparency-and-balance-evidence-47--2026-11-05). No new balance decision or ruleset split is introduced. Random sustain and player/difficulty calibration remain open release work; deterministic ore alone does not make endless runs finite.
+The earlier deterministic-ore-v1 and #51 approvals govern the older #47 proposal: keep the integer ore curve and 40% floor, apply no excess-valid-move penalty, and retain random pick replenishment. This implementation centralizes tuning, documents the calculation at `getDeterministicOre()` and records a seeded resource simulation in [gameplay](gameplay.md#reward-transparency-and-balance-evidence-47--2026-11-05). The approved reward parameters remain unchanged. Random sustain and player/difficulty calibration remain open release work; deterministic ore alone does not make endless runs finite.
 
 The task author subsequently requested the original reward UI with no calculation details. The breakdown UI requirement from #47 is superseded; keep reward items and total ore only, with rules explained in the calculation function’s code comment.
 
@@ -87,3 +87,27 @@ The shared `LEADERBOARD_SIZE` constant in `src/api/contracts.ts` drives policy, 
 Retain the current deterministic-ore-v1 generator selection, 12 attempts and 20,000-state search cap. Explicit outcomes distinguish proof of unsolvability from budget exhaustion, and all returned solution witnesses are replayed. Offline diagnostics measure target shortfalls without promising a minimum. A 12,000-lock seeded survey shows late targets are frequently missed (92.7% at chest 1,000; 99.1% at chest 10,000). The existing bounded fallback is retained for compatibility, rather than silently changing this cohort's difficulty. This is measured technical behavior, not approval of a new difficulty curve or a claim of human calibration. Any stricter rejection/target change remains an explicit #48 decision and requires ranking-cohort review.
 
 Construction-only witness lengths are upper bounds, never verified optima. No extra-valid-move penalty is introduced, including when optimal metadata is available. See [validation, distributions and Preview thresholds](lock-validation.md) for evidence and rollback. No migration, production deployment or GitHub issue mutation is part of this work.
+
+## Approved progression and durability — 2026-11-06 (#61)
+
+This decision changes the original 3–6-plate progression to 4–7 plates and increases durability from three to four invalid moves per pick.
+
+| Difficulty stage | Previous chests / plates | Approved chests / plates |
+| --- | --- | --- |
+| 1 | 1–4 / 3 | 1–5 / 4 |
+| 2 | 5–10 / 4 | 6–12 / 5 |
+| 3 | 11–18 / 5 | 13–24 / 6 |
+| 4 | 19+ / 6 | 25+ / 7 |
+
+| Lockpick rule | Previous | Approved |
+| --- | --- | --- |
+| Invalid moves before breaking | 3 | 4 |
+| Starting lockpicks | 3 | 3 (unchanged) |
+
+The [2026-11-05 performance report](archive/2026-11-05-lock-benchmarks.md) and [difficulty survey](archive/2026-11-05-lock-validation.md) preserve measurements of the previous rules. The current [performance report](lock-benchmarks.md) and [difficulty/resource survey](lock-validation.md) measure the approved rules and compare them with those baselines. Raw results retain their measurement dates and source hashes.
+
+The task author requested implementation of #61: 4 plates on chests 1–5, 5 on 6–12, 6 on 13–24 and 7 on 25+, with four invalid moves per pick. Existing dependency density, scramble/solution curves, seven positions, target 3, inverse moves, 12 attempts and 20,000-state solver cap remain unchanged. Reset and continuation carry partial damage and cumulative penalties. Ore calculation, random pick replenishment and ranking tie order remain unchanged.
+
+The main ranking uses `deterministic-ore-v1`. This pre-release update requires no SQL schema migration or data rewrite. See [current performance](lock-benchmarks.md) and [difficulty/resource evidence](lock-validation.md).
+
+Rollback before release is an application-code revert. Future changes after ranked results exist require a score-comparability review.

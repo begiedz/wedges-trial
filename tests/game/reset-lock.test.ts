@@ -22,7 +22,7 @@ function createTestRun(overrides?: Partial<RunState>): RunState {
       },
     ],
     invalidMovesOnCurrentPick: 2,
-    maxInvalidMovesPerPick: 3,
+    maxInvalidMovesPerPick: 4,
     isSolved: false,
     isFailed: false,
   };

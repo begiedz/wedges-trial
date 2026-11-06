@@ -4,7 +4,7 @@ const os = require("node:os");
 const crypto = require("node:crypto");
 const { performance } = require("node:perf_hooks");
 
-const CHESTS = [1, 4, 5, 10, 11, 18, 19, 25, 50, 100, 1000, 10000];
+const CHESTS = [1, 5, 6, 12, 13, 24, 25, 100, 1000, 10000];
 
 function seededRandom(seed) {
   let state = seed >>> 0;
@@ -62,7 +62,7 @@ function load(name) {
   if (!cache[id]) { const module = {exports: {}}; cache[id] = module; factories[id](load, module, module.exports); }
   return cache[id].exports;
 }
-module.exports = { ...load("create-lock"), ...load("solver"), ...load("create-run"), ...load("progress-difficulty"), ...load("apply-move"), ...load("check-solved") };`;
+module.exports = { ...load("create-lock"), ...load("solver"), ...load("create-run"), ...load("progress-difficulty"), ...load("apply-move"), ...load("check-solved"), ...load("rewards"), ...load("constants"), ...load("ruleset") };`;
   return { source, hash: hash.digest("hex") };
 }
 

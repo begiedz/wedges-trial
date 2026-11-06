@@ -6,15 +6,15 @@ import {
 import type { DifficultyConfig, LockDifficulty } from "@/game/types";
 
 export function getDifficultyBand(chestIndex: number): LockDifficulty {
-  if (chestIndex >= 18) {
+  if (chestIndex >= 24) {
     return 4;
   }
 
-  if (chestIndex >= 10) {
+  if (chestIndex >= 12) {
     return 3;
   }
 
-  if (chestIndex >= 4) {
+  if (chestIndex >= 5) {
     return 2;
   }
 
@@ -25,7 +25,7 @@ export function getDifficultyForChest(chestIndex: number): DifficultyConfig {
   const index = Math.max(0, chestIndex);
   // Grow beyond the final display band without rapidly increasing complexity.
   const difficulty = Math.log2(1 + index / 4);
-  const tumblerCount = index < 4 ? 3 : index < 10 ? 4 : index < 18 ? 5 : 6;
+  const tumblerCount = getDifficultyBand(index) + 3;
   const minSolutionLength = Math.max(2, Math.floor(2 + difficulty * 3));
 
   return {

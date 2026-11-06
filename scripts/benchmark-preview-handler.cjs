@@ -22,7 +22,7 @@ function createHandler(engine, pool, engineSha256) {
     if (busy)
       return res.status(429).json({ error: "Benchmark already running" });
     const url = new URL(req.url, "https://benchmark.invalid");
-    const chest = Number(url.searchParams.get("chest") ?? 19);
+    const chest = Number(url.searchParams.get("chest") ?? 25);
     const mode = url.searchParams.get("mode") ?? "engine";
     const seed = Number(url.searchParams.get("seed") ?? 28);
     if (

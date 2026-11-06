@@ -25,11 +25,18 @@ This is a localization/accessibility correction only. It changes no mechanics, v
 
 - New runs start at chest 1 with 0 ore and 3 lockpicks. Locks are randomly generated from solved layouts through legal moves, with increasing progression settings.
 - Each plate has a bounded integer alignment position and a target; fixed plate dependencies apply inverse effects for opposite directions. An out-of-bounds slide changes no plate positions.
-- Exactly three invalid moves on one pick break it. Valid moves do not heal damage; a broken pick does not reset positions. The last pick breaking atomically finishes the run.
+- Exactly four invalid moves on one pick break it. Valid moves do not heal damage; a broken pick does not reset positions. The last pick breaking atomically finishes the run.
 - Manual reset restores initial plate positions, preserving partial damage, spent picks, ore and accumulated chest/run metrics. Continuing to another chest also preserves partial pick damage.
 - Server metrics record moves, invalid moves and broken picks per chest and for the run. Reset does not clear them. Continue begins new chest metrics while retaining run totals.
 - Solving records a stable pending reward and increments openedChests. Continue credits that reward exactly once and generates the next lock in one transaction. Abandoning an opened chest discards its pending reward.
+- Plates: chests 1–5 have 4; 6–12 have 5; 13–24 have 6; 25+ have 7. Generation accepts zero-based indices; displayed chest numbers are one-based.
 - Difficulty display uses the same zero-based progression input as generation. Further calibration remains open.
+
+The main ranking uses `deterministic-ore-v1`, with four-mistake durability and the 4–7-plate progression.
+
+### Progression decision history
+
+On 2026-11-06, #61 changed the plate progression from 3–6 to 4–7 and pick durability from three to four invalid moves. Starting inventory remains three lockpicks; ore rewards, replenishment, reset penalties and movement mechanics are unchanged. The [decision ledger](decisions.md#approved-progression-and-durability--2026-11-06-61) records both threshold tables, with dated benchmark evidence for the previous and current rules.
 
 ## Approved ore formula
 
@@ -63,7 +70,7 @@ Measure early, threshold and high-chest generation, fallbacks and difficulty bef
 
 ## Statistics contract (#49)
 
-`StoredGame.chestMetrics` contains `moves`, `invalidMoves` and `brokenPicks` for the current chest; `totalMetrics` contains the corresponding run totals. These are the implemented equivalents of moves/invalid moves/broken picks on the current chest, kept in server-owned state rather than duplicated in `RunState`. A processed valid or out-of-bounds move increments moves once; invalid moves also increment mistakes, and every third invalid action on the pick increments broken picks. Durability (`invalidMovesOnCurrentPick`) resets on a break; cumulative mistakes do not. Unknown plate IDs (`pinId`), ignored moves, terminal moves, conflicts and exact replays add no metrics. Reset is not a move and preserves every counter; continue clears only chest counters. Reward calculation continues to use all chest mistakes.
+`StoredGame.chestMetrics` contains `moves`, `invalidMoves` and `brokenPicks` for the current chest; `totalMetrics` contains the corresponding run totals. These are the implemented equivalents of moves/invalid moves/broken picks on the current chest, kept in server-owned state rather than duplicated in `RunState`. A processed valid or out-of-bounds move increments moves once; invalid moves also increment mistakes, and every fourth invalid action on a pick in new runs increments broken picks. Durability (`invalidMovesOnCurrentPick`) resets on a break; cumulative mistakes do not. Unknown plate IDs (`pinId`), ignored moves, terminal moves, conflicts and exact replays add no metrics. Reset is not a move and preserves every counter; continue clears only chest counters. Reward calculation continues to use all chest mistakes.
 
 Counters and action replay records commit together in PostgreSQL, including socket batches. The final immutable run retains totals, projected as `result.totalMetrics` and shown in Game Over in en/pl/de/ru. Historical action replies are replayed unchanged; a legacy reply without totals displays localized “Unavailable”, while a fresh by-ID read projects totals from the stored run. No metric or optimum is accepted from the client, and optima remain private. This adds no efficiency penalty, score rule, ranking change or replenishment decision.
 
@@ -85,9 +92,9 @@ The approved formula remains `deterministic-ore-v1`. `ORE_REWARD_TUNING` in `src
 
 At the task author's request, the chest-opened UI retains its previous appearance: reward items and total ore only. Calculation rules are explained beside `getDeterministicOre()`, without a public breakdown field or additional UI copy. Pick rewards are rolled separately via `getLockpickReward()`; authoritative ore never invokes the legacy random-ore helper.
 
-### Reproducible resource simulation
+### Historical resource simulation (#47; pre-#61)
 
-Run `node scripts/simulate-rewards.mjs` with Node 24. Seed: 47; 10,000 runs per profile; maximum 1,000 credited chests. The model starts with three picks, carries partial damage between chests, consumes a pick every third mistake and ends immediately when the last pick breaks, before any loot is granted. Every surviving chest is solved and continued. Each profile has a fixed mistake count per attempted chest and uses the unchanged 0/1/2 pick distribution (0.58/0.34/0.08). This measures resource sustain and ore distribution; it does not model puzzle generation, human ability, difficulty or runtime latency. Survivors at the cap are censored, not finished runs eligible for ranking.
+The original report referenced `scripts/simulate-rewards.mjs`, absent at the start of #61. Historical aggregates below are preserved; [current #61 measurements](lock-validation.md#resource-sustain) use the checked-in `scripts/simulate-rewards.cjs`. Original method: Node 24. Seed: 47; 10,000 runs per profile; maximum 1,000 credited chests. The model starts with three picks, carries partial damage between chests, consumes a pick every third mistake and ends immediately when the last pick breaks, before any loot is granted. Every surviving chest is solved and continued. Each profile has a fixed mistake count per attempted chest and uses the unchanged 0/1/2 pick distribution (0.58/0.34/0.08). This measures resource sustain and ore distribution; it does not model puzzle generation, human ability, difficulty or runtime latency. Survivors at the cap are censored, not finished runs eligible for ranking.
 
 | Mistakes/chest | Median credited chests | P95 chests | Reached cap | Median ore | P95 ore |
 | --- | ---: | ---: | ---: | ---: | ---: |

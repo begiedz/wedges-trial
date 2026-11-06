@@ -32,7 +32,7 @@ function fixture(): RunDto {
     currentLock: {
       pins: [{ id: 0, position: 1, min: 0, max: 2, target: 2 }],
       invalidMovesOnCurrentPick: 2,
-      maxInvalidMovesPerPick: 3,
+      maxInvalidMovesPerPick: 4,
     },
     createdAt: new Date(0).toISOString(),
     updatedAt: new Date(0).toISOString(),

@@ -64,7 +64,7 @@ describe("createLock", () => {
     expect(solveLock(lock)).not.toBeNull();
   });
 
-  it.each([0, 3, 4, 9, 10, 17, 18, 24, 49])(
+  it.each([0, 4, 5, 11, 12, 23, 24])(
     "measures and targets shortest solutions at difficulty index %i",
     (index) => {
       const difficulty = getDifficultyForChest(index);
@@ -89,7 +89,7 @@ describe("createLock", () => {
     },
   );
 
-  it.each([99, 999, 9999])(
+  it.each([49, 99, 999, 9999])(
     "retains honest metadata and solvability at late difficulty index %i",
     (index) => {
       for (const seed of [1, 7, 42]) {
@@ -155,7 +155,7 @@ describe("createLock", () => {
     expect(checkSolved(lock)).toBe(false);
     expect(solveLock(lock)?.length).toBe(3);
     expect(lock.optimalMoves).toBe(3);
-    expect(lock.maxInvalidMovesPerPick).toBe(3);
+    expect(lock.maxInvalidMovesPerPick).toBe(4);
   });
 
   it("rejects a configuration that cannot produce an unsolved lock", () => {

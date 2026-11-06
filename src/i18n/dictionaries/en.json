@@ -136,7 +136,7 @@
         "rules": [
           "A move is invalid if it would push any affected plate outside its permitted position range.",
           "An invalid move changes no plate positions and damages the current lockpick.",
-          "A lockpick breaks after exactly 3 invalid moves.",
+          "A lockpick breaks after exactly 4 invalid moves.",
           "A broken lockpick does not reset the lock or its plate positions.",
           "Manual reset restores the current lock’s starting layout.",
           "When the last lockpick breaks, the run ends."

@@ -20,7 +20,7 @@ function createLock(positions: number[], targets: number[]): LockState {
       effects: [{ pinId: sourcePinId, delta: 1 }],
     })),
     invalidMovesOnCurrentPick: 0,
-    maxInvalidMovesPerPick: 3,
+    maxInvalidMovesPerPick: 4,
     isSolved: false,
     isFailed: false,
   };
@@ -246,4 +246,22 @@ describe("explicit solver evidence", () => {
       ]),
     ).toBe(false);
   });
+});
+
+it("handles heterogeneous negative ranges and atomic duplicate effects with numeric keys", () => {
+  const lock = createLock([-2, 4], [0, 5]);
+  lock.pins[0].min = -2;
+  lock.pins[0].max = 0;
+  lock.pins[1].min = 4;
+  lock.pins[1].max = 5;
+  lock.rules[0].effects.push({ pinId: 1, delta: -1 }, { pinId: 1, delta: 1 });
+  expectShortestValidSolution(lock);
+  expect(solveLock(lock)).toHaveLength(3);
+});
+
+it("falls back to collision-free string keys when state encoding exceeds safe integers", () => {
+  const lock = createLock([0, 0], [1, 0]);
+  for (const pin of lock.pins) pin.max = 1_000_000_000;
+  expect(solveLock(lock)).toEqual([{ pinId: 0, direction: 1 }]);
+  expect(verifySolution(lock, solveLock(lock) ?? [])).toBe(true);
 });
