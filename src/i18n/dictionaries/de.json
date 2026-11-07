@@ -162,7 +162,8 @@
   "game": {
     "title": "Truhe öffnen",
     "actions": {
-      "newRun": "Neuer Lauf"
+      "newRun": "Neuer Lauf",
+      "exitGame": "Verlassen"
     },
     "labels": {
       "chest": "Truhe",

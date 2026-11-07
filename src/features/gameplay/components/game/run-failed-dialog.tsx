@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { RunResultDto } from "@/api/contracts";
 import { useGameDictionary } from "@/i18n/provider";
+import { ExitGameLink } from "./exit-game-link";
 import { DialogAction, GameDialog } from "./game-dialog";
 import { LeaderboardClaim } from "./leaderboard-claim";
 
@@ -26,13 +27,15 @@ export function RunFailedDialog({
         title={t.dialogs.failed.title}
         description={t.dialogs.failed.description}
         actions={
-          runId ? (
-            <DialogAction onClick={() => setClaimOpen(true)}>
-              {t.leaderboardClaim.continue}
-            </DialogAction>
-          ) : (
+          <>
+            {runId && (
+              <DialogAction onClick={() => setClaimOpen(true)}>
+                {t.dialogs.failed.leaderboard}
+              </DialogAction>
+            )}
             <DialogAction onClick={onNewRun}>{t.actions.newRun}</DialogAction>
-          )
+            <ExitGameLink />
+          </>
         }
       >
         <dl className="grid grid-cols-2 gap-6 text-center">
@@ -73,7 +76,10 @@ export function RunFailedDialog({
           title={t.leaderboardClaim.title}
           description={t.leaderboardClaim.description}
           actions={
-            <DialogAction onClick={onNewRun}>{t.actions.newRun}</DialogAction>
+            <>
+              <DialogAction onClick={onNewRun}>{t.actions.newRun}</DialogAction>
+              <ExitGameLink />
+            </>
           }
         >
           <LeaderboardClaim key={runId} runId={runId} />

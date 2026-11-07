@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import LockPickIcon from "@/assets/images/icons/items/T_ItemIcon_ItKe_Lockpick.png";
 import OreNuggetIcon from "@/assets/images/icons/items/T_ItemIcon_ItMi_Orenugget.png";
@@ -11,7 +12,7 @@ import Movement from "@/features/gameplay/components/game/movement";
 import Lock from "@/features/gameplay/components/lock";
 import { onNewRunRequested } from "@/features/gameplay/events";
 import type { Direction } from "@/game/types";
-import { useGameDictionary } from "@/i18n/provider";
+import { useGameDictionary, useLocale } from "@/i18n/provider";
 import { getNextPinId } from "@/lib/pin-selection";
 import { useGameKeyboard } from "../../hooks/use-game-keyboard";
 import { useGameSession } from "../../hooks/use-game-session";
@@ -22,6 +23,8 @@ import { RunFailedDialog } from "./run-failed-dialog";
 
 export function GameClient() {
   const t = useGameDictionary();
+  const locale = useLocale();
+  const router = useRouter();
   const {
     loading,
     error,
@@ -125,6 +128,7 @@ export function GameClient() {
     selectPreviousPin,
     selectNextPin,
     resetLock,
+    exitGame: () => router.push(`/${locale}`),
     showReward: () => {
       if (reward) setRewardOpen(true);
     },
@@ -236,11 +240,7 @@ export function GameClient() {
         onSelectPreviousPin={selectPreviousPin}
         onSelectNextPin={selectNextPin}
         onReset={resetLock}
-        onContinueToNextChest={() => {
-          if (reward) setRewardOpen(true);
-        }}
         disabled={interactionBlocked}
-        continueDisabled={!reward || restartOpen}
       />
       {reward && (
         <ChestRewardDialog

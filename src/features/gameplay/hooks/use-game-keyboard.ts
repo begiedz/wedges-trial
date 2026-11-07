@@ -10,6 +10,7 @@ type KeyboardControls = {
   selectNextPin: () => void;
   resetLock: () => void;
   showReward: () => void;
+  exitGame: () => void;
 };
 export function useGameKeyboard({
   enabled,
@@ -19,6 +20,7 @@ export function useGameKeyboard({
   selectNextPin,
   resetLock,
   showReward,
+  exitGame,
 }: KeyboardControls) {
   useEffect(() => {
     if (!enabled) return;
@@ -33,9 +35,11 @@ export function useGameKeyboard({
       arrowdown: selectNextPin,
       r: resetLock,
       n: showReward,
+      escape: exitGame,
     };
     const keydown = (event: KeyboardEvent) => {
       if (
+        (event.repeat && event.key === "Escape") ||
         event.defaultPrevented ||
         event.ctrlKey ||
         event.metaKey ||
@@ -65,5 +69,6 @@ export function useGameKeyboard({
     selectNextPin,
     resetLock,
     showReward,
+    exitGame,
   ]);
 }

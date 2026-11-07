@@ -162,7 +162,8 @@
   "game": {
     "title": "Open Chest",
     "actions": {
-      "newRun": "New run"
+      "newRun": "New run",
+      "exitGame": "Exit"
     },
     "labels": {
       "chest": "Chest",

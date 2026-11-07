@@ -7,6 +7,9 @@ import { GameClient } from "@/features/gameplay/components/game/game-client";
 import en from "@/i18n/dictionaries/en.json";
 import { I18nProvider } from "@/i18n/provider";
 
+const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: navigate }) }));
+
 vi.mock("next/image", () => ({
   default: (props: object) => createElement("img", props),
 }));
@@ -114,7 +117,7 @@ describe("game dialogs after confirmed server transitions", () => {
         expect(fetchMock).toHaveBeenCalledTimes(3);
         fireEvent.click(
           screen.getByRole("button", {
-            name: en.game.leaderboardClaim.continue,
+            name: en.game.dialogs.failed.leaderboard,
           }),
         );
         expect(

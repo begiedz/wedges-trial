@@ -162,7 +162,8 @@
   "game": {
     "title": "Открыть сундук",
     "actions": {
-      "newRun": "Новый забег"
+      "newRun": "Новый забег",
+      "exitGame": "Выйти"
     },
     "labels": {
       "chest": "Сундук",

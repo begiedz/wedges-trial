@@ -1,16 +1,14 @@
 import Image from "next/image";
 import AIcon from "@/assets/images/icons/T_Icon_PC_A.png";
 import DIcon from "@/assets/images/icons/T_Icon_PC_D.png";
-import NIcon from "@/assets/images/icons/T_Icon_PC_N.png";
 import RIcon from "@/assets/images/icons/T_Icon_PC_R.png";
 import WIcon from "@/assets/images/icons/T_Icon_PC_W.png";
 import SIcon from "@/assets/images/icons/T_Icon_PS_S.png";
 import { useGameDictionary } from "@/i18n/provider";
+import { ExitGameLink } from "./exit-game-link";
 
 type MovementProps = {
   disabled?: boolean;
-  continueDisabled?: boolean;
-  onContinueToNextChest: () => void;
   onMoveLeft: () => void;
   onMoveRight: () => void;
   onReset: () => void;
@@ -54,8 +52,6 @@ function MovementButton({
 
 export default function Movement({
   disabled = false,
-  continueDisabled = false,
-  onContinueToNextChest,
   onMoveLeft,
   onMoveRight,
   onReset,
@@ -108,7 +104,8 @@ export default function Movement({
           <p>{t.labels.moveVertical}</p>
         </div>
 
-        <div className="flex items-center gap-8">
+        <div className="flex flex-wrap items-center gap-8">
+          <ExitGameLink control />
           <div className="flex items-center gap-2">
             <MovementButton
               disabled={disabled}
@@ -118,16 +115,6 @@ export default function Movement({
               onClick={onReset}
             />
             <p>{t.labels.reset}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <MovementButton
-              disabled={continueDisabled}
-              src={NIcon.src}
-              iconSize={iconSize}
-              alt={t.actions.continueToNextChest}
-              onClick={onContinueToNextChest}
-            />
-            <p>{t.labels.next}</p>
           </div>
         </div>
       </div>

@@ -162,7 +162,8 @@
   "game": {
     "title": "Otwórz skrzynię",
     "actions": {
-      "newRun": "Nowa gra"
+      "newRun": "Nowa gra",
+      "exitGame": "Wyjdź"
     },
     "labels": {
       "chest": "Skrzynia",

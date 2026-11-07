@@ -73,6 +73,53 @@ describe("session application lifecycle without React", () => {
       error: false,
     });
   });
+  it("deduplicates chest collection and retries an unknown commit with the original action", async () => {
+    const initial = runDto();
+    const opened = {
+      ...initial,
+      status: "chest_opened",
+      reward: { oreNuggets: 10, lockpicks: 1 },
+    };
+    const continued = {
+      ...initial,
+      version: 2,
+      chestIndex: 2,
+      oreNuggets: 10,
+      lockpicks: initial.lockpicks + 1,
+    };
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(json({ ready: true }))
+      .mockResolvedValueOnce(json({ run: opened }));
+    const session = setup(fetcher);
+    await vi.waitFor(() => expect(session.getSnapshot().loading).toBe(false));
+    let reject!: (error: Error) => void;
+    fetcher.mockReturnValueOnce(
+      new Promise<Response>((_, fail) => {
+        reject = fail;
+      }),
+    );
+    const collecting = session.continueToNextChest();
+    await session.continueToNextChest();
+    await vi.waitFor(() => expect(fetcher).toHaveBeenCalledTimes(3));
+    expect(session.getSnapshot().run?.oreNuggets).toBe(0);
+    const original = fetcher.mock.calls[2];
+    expect(original[0]).toBe(`/api/runs/${initial.id}/continue`);
+    reject(new TypeError("unknown commit"));
+    await collecting;
+    expect(session.getSnapshot().error).toBe(true);
+    fetcher
+      .mockResolvedValueOnce(json({ run: continued }))
+      .mockResolvedValueOnce(json({ run: continued }));
+    await session.retry();
+    expect(fetcher.mock.calls[3][0]).toBe(original[0]);
+    expect(fetcher.mock.calls[3][1]?.body).toBe(original[1]?.body);
+    expect(session.getSnapshot()).toMatchObject({
+      run: continued,
+      error: false,
+      loading: false,
+    });
+  });
   it("stops publishing and opening channels after disposal during bootstrap", async () => {
     let resolve!: (response: Response) => void;
     const fetcher = vi

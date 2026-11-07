@@ -12,6 +12,9 @@ import { I18nProvider } from "@/i18n/provider";
 vi.mock("@/features/gameplay/hooks/use-game-session", () => ({
   useGameSession: vi.fn(),
 }));
+const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: navigate }) }));
+
 vi.mock("next/image", () => ({
   default: (props: object) => createElement("img", props),
 }));
@@ -67,8 +70,37 @@ function mount(overrides: Partial<ReturnType<typeof useGameSession>>) {
   render(createElement(GameClient), { wrapper });
   return model;
 }
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  navigate.mockClear();
+});
 describe("server-backed game UI", () => {
+  it("replaces the Next control with a home exit and preserves reward access", () => {
+    const model = mount({ run: fixture() });
+    expect(
+      screen
+        .getByRole("link", { name: en.game.actions.exitGame })
+        .getAttribute("href"),
+    ).toBe("/en");
+    expect(
+      screen.queryByRole("button", {
+        name: en.game.movement.actions.continueToNextChest,
+      }),
+    ).toBeNull();
+    const exit = screen.getByRole("link", { name: en.game.actions.exitGame });
+    const reset = screen.getByRole("button", {
+      name: en.game.movement.actions.reset,
+    });
+    expect(
+      exit.compareDocumentPosition(reset) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(exit.getAttribute("aria-keyshortcuts")).toBe("Escape");
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(navigate).toHaveBeenCalledWith("/en");
+    fireEvent.keyDown(window, { key: "n" });
+    expect(model.continueToNextChest).not.toHaveBeenCalled();
+    expect(model.startNewRun).not.toHaveBeenCalled();
+  });
   it("renders damage against the server's four-mistake threshold", () => {
     const maximum = 4;
     const run = fixture();
@@ -100,6 +132,8 @@ describe("server-backed game UI", () => {
     const input = document.createElement("input");
     document.body.append(input);
     fireEvent.keyDown(input, { key: "a" });
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(navigate).not.toHaveBeenCalled();
     input.remove();
     expect(model.move).toHaveBeenCalledTimes(2);
   });
@@ -113,6 +147,11 @@ describe("server-backed game UI", () => {
       expect(model.resetLock).not.toHaveBeenCalled();
     },
   );
+  it("leaves Escape to the reward dialog", () => {
+    mount({ run: fixture(), rewardOpen: true });
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(navigate).not.toHaveBeenCalled();
+  });
   it("keeps failed mutations retryable outside modal dialogs", () => {
     const run: RunDto = {
       ...fixture(),

@@ -200,3 +200,20 @@ Apply additive migration `0003_charming_the_fury.sql` before enabling these hand
 New `scarce-picks-v1` runs start with one pick and use 79%/17%/4% drops for 0/1/2 picks. Existing v1 runs retain original inventory and rewards. Generation, UI and ore are unchanged. See the [decision and resource simulation](decisions.md#approved-scarce-lockpicks--2026-11-07). No remote migration or deployment is implied.
 
 Local verification: 380 tests passed, including all 36 PostgreSQL integration tests against a disposable localhost database. TypeScript, lint and production build passed; lint retains the existing cursor CSS warning. No remote database or deployment was used.
+
+## Reward and post-game controls (#7) — 2026-11-07
+
+The gameplay control row now offers **Exit** before Reset in place of Next. It uses the same key-control layout as movement/reset, with a temporary Esc keycap awaiting the replacement image. Escape exits during gameplay; dialogs retain their own Escape behavior. Exit navigates to the current language's home page; it does not abandon or finalize the server-owned run. Returning to gameplay restores the active run through the existing session. Reward collection/continuation stays in the reward dialog, with the existing N shortcut to reopen it.
+
+Game Over offers **Leaderboard**, **New run** and **Exit**. Leaderboard opens the existing separate qualification/name-entry modal; New run and Exit remain available there during eligibility checks, errors and submission outcomes. This replaces the former Continue label and removes the need to check qualification before replaying. The public ranking browser remains separate work; this action opens the private post-run qualification UI.
+
+| Issue #7 acceptance criterion | Status | Evidence |
+| --- | --- | --- |
+| Reward and continue follow trusted server responses | PASS | HTTP-backed `game-client-lifecycle.test.ts` opens rewards only after the move response; `game-dialogs.test.ts` verifies exact reward/total, dismissal without collection and Space continuation. Existing server/client lifecycle is unchanged. |
+| Game Over offers name entry only when eligible and always offers a new run | PASS | `run-failed-dialog.test.tsx` checks statistics before qualification, a separate eligible form, and immediate replay actions; `leaderboard-claim.test.tsx` checks nonqualifiers, cutoff races, expiry and failures. |
+| Retries/double-clicks cannot duplicate rewards or claims | PASS | New `session.test.ts` regression verifies concurrent collection is suppressed, unconfirmed ore is not credited locally, and unknown commits retry the original action/body. Existing claim regression checks synchronous submit guarding and exact action/name retry. Backend idempotency implementation is unchanged. |
+| Accessible and localized tests | PASS | Four-language modal tests verify accessible dialog/button/input names and localized exit destinations in both post-game stages. Gameplay regression verifies Exit replaces Next; reward keyboard and input-handling regressions remain passing. |
+
+Verification here is local automated coverage, not browser/device or deployed verification. No API, database, scoring, asset or persistence change is required. Rollback is a source-only revert. No migration, deployment or GitHub issue mutation was performed.
+
+Local verification: `pnpm test` passed 346 tests; 36 opt-in PostgreSQL tests were skipped because `TEST_DATABASE_URL` was unset. `pnpm test:coverage --testTimeout=20000` passed the same tests (59.16% overall statement coverage); the first coverage attempt exceeded the existing lock benchmark's five-second timeout while the build ran. Type checking and `pnpm lint` passed, with the existing cursor `!important` warning. `pnpm build` passed outside the sandbox after the restricted build stalled and was stopped.
