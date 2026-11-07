@@ -26,7 +26,7 @@ function createSeededRandom(seed: number): RandomSource {
 
 describe("createLock", () => {
   const config: DifficultyConfig = {
-    tumblerCount: 4,
+    plateCount: 4,
     minPosition: 0,
     maxPosition: 6,
     targetPosition: 3,
@@ -142,7 +142,7 @@ describe("createLock", () => {
     const lock = createLock(
       {
         ...config,
-        tumblerCount: 1,
+        plateCount: 1,
         minSolutionLength: 50,
         maxSolutionLength: 60,
       },
@@ -202,7 +202,7 @@ describe("generation evidence", () => {
     const { lock, diagnostics, solution } = createLockWithDiagnostics(
       {
         ...getDifficultyForChest(0),
-        tumblerCount: 1,
+        plateCount: 1,
         minSolutionLength: 50,
         maxSolutionLength: 60,
       },

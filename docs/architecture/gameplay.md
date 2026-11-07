@@ -17,7 +17,7 @@ Use this distinction in player help, About, visible controls, accessible labels,
 
 ### Existing technical names
 
-The implementation retains `Pin`, `PinId`, `PinEffect`, `MoveRule`, `tumblerCount`, `pinId`, `selectedPinId`, `sourcePinId`, `LockState`, `DifficultyConfig` and `createLock()`. The `pins` array and its position/target/range fields encode plate alignment; they do not imply that the physical indicator moves. Existing translation keys such as `selectNextPin` and `debug.labels.pin` now display plate wording. `tumbler.tsx` renders the sliding plate; `pin.tsx` renders the fixed indicator. Do not rename these types, keys, files, DTO fields or persisted state as part of a terminology correction. Technical examples, historical evidence and raw benchmark fields may retain those identifiers.
+The implementation retains `Pin`, `PinId`, `PinEffect`, `MoveRule`, `plateCount`, `pinId`, `selectedPinId`, `sourcePinId`, `LockState`, `DifficultyConfig` and `createLock()`. The `pins` array and its position/target/range fields encode plate alignment; they do not imply that the physical indicator moves. Existing translation keys such as `selectNextPin` and `debug.labels.pin` now display plate wording. `plate.tsx` renders the sliding plate; `pin.tsx` renders the fixed indicator. Do not rename these types, keys, files, DTO fields or persisted state as part of a terminology correction. Technical examples, historical evidence and raw benchmark fields may retain those identifiers.
 
 This is a localization/accessibility correction only. It changes no mechanics, visuals, solver behavior, difficulty, rewards, resources, API, storage or ranking cohort; no migration or ruleset change is required.
 

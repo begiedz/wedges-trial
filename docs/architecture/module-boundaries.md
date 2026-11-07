@@ -8,7 +8,7 @@ The #56 responsibility boundaries are retained. The #57 frontend refactor moves 
 | --- | --- | --- |
 | `components/game/` components, dialogs, events | `features/gameplay/components/game/`, private `events.ts` | Game route and internal gameplay presentation |
 | `components/game/useGame*` | `features/gameplay/hooks/` | React adapter, dialogs and keyboard handling; `GameSession` stays in `client/game` |
-| `components/lock/` | `features/gameplay/components/lock/` | Gameplay-only sliding plate (`tumbler.tsx`) and stationary pin (`pin.tsx`) rendering |
+| `components/lock/` | `features/gameplay/components/lock/` | Gameplay-only sliding plate (`plate.tsx`) and stationary pin (`pin.tsx`) rendering |
 | General `difficulty`, `movement`, `item-frame` | `features/gameplay/components/game/` | Only game screen/reward dialog use them; no demonstrated site-wide reuse |
 | `components/lock-debug/` | `features/lock-debug/` | Existing development-only debug route, separate from trusted gameplay |
 | `client/game/pinSelection.ts` | `lib/pin-selection.ts` | Pure presentation helper reused by gameplay and debug; no session responsibility |

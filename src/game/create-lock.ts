@@ -17,7 +17,7 @@ function clonePins(pins: Pin[]): Pin[] {
 }
 
 function createSolvedPins(config: DifficultyConfig): Pin[] {
-  return Array.from({ length: config.tumblerCount }, (_, id) => ({
+  return Array.from({ length: config.plateCount }, (_, id) => ({
     id,
     min: config.minPosition,
     max: config.maxPosition,

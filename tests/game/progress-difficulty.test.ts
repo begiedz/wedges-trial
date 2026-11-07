@@ -11,8 +11,8 @@ describe("getDifficultyForChest", () => {
     const middle = getDifficultyForChest(8);
     const late = getDifficultyForChest(20);
 
-    expect(middle.tumblerCount).toBeGreaterThanOrEqual(early.tumblerCount);
-    expect(late.tumblerCount).toBeGreaterThanOrEqual(middle.tumblerCount);
+    expect(middle.plateCount).toBeGreaterThanOrEqual(early.plateCount);
+    expect(late.plateCount).toBeGreaterThanOrEqual(middle.plateCount);
     expect(middle.dependencyDensity).toBeGreaterThanOrEqual(
       early.dependencyDensity,
     );
@@ -28,7 +28,7 @@ describe("getDifficultyForChest", () => {
       const current = getDifficultyForChest(index);
 
       for (const key of [
-        "tumblerCount",
+        "plateCount",
         "dependencyDensity",
         "guaranteedSolvableMoves",
         "minSolutionLength",
@@ -45,11 +45,11 @@ describe("getDifficultyForChest", () => {
     expect(getDifficultyForChest(-5)).toEqual(getDifficultyForChest(0));
   });
 
-  it("keeps tumbler counts within the allowed range", () => {
+  it("keeps plate counts within the allowed range", () => {
     for (const chestIndex of [0, 4, 10, 18, 30]) {
       const config = getDifficultyForChest(chestIndex);
-      expect(config.tumblerCount).toBeGreaterThanOrEqual(4);
-      expect(config.tumblerCount).toBeLessThanOrEqual(7);
+      expect(config.plateCount).toBeGreaterThanOrEqual(4);
+      expect(config.plateCount).toBeLessThanOrEqual(7);
     }
   });
 
@@ -98,7 +98,7 @@ describe("getDifficultyForChest", () => {
     });
   });
 
-  it("adds tumblers at the expected display chest thresholds", () => {
+  it("adds plates at the expected display chest thresholds", () => {
     for (const [index, count] of [
       [0, 4],
       [4, 4],
@@ -111,7 +111,7 @@ describe("getDifficultyForChest", () => {
       [999, 7],
       [9999, 7],
     ]) {
-      expect(getDifficultyForChest(index).tumblerCount).toBe(count);
+      expect(getDifficultyForChest(index).plateCount).toBe(count);
       expect(getDifficultyBand(index)).toBe(count - 3);
     }
   });

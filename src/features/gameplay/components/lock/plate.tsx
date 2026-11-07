@@ -4,7 +4,7 @@ import type { Pin as LockPin } from "@/game/types";
 
 import Pin from "./pin";
 
-type TumblerProps = {
+type PlateProps = {
   pin: LockPin;
   isSelected?: boolean;
   onSelect?: (pinId: number) => void;
@@ -17,12 +17,12 @@ const slotStepRem = slotSizeRem + slotGapRem;
 const shellPaddingXRem = 1;
 const shellPaddingYRem = 0.5;
 
-export default function Tumbler({
+export default function Plate({
   pin,
   isSelected = false,
   onSelect,
   invalidMoveSequence = 0,
-}: TumblerProps) {
+}: PlateProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {

@@ -25,11 +25,11 @@ export function getDifficultyForChest(chestIndex: number): DifficultyConfig {
   const index = Math.max(0, chestIndex);
   // Grow beyond the final display band without rapidly increasing complexity.
   const difficulty = Math.log2(1 + index / 4);
-  const tumblerCount = getDifficultyBand(index) + 3;
+  const plateCount = getDifficultyBand(index) + 3;
   const minSolutionLength = Math.max(2, Math.floor(2 + difficulty * 3));
 
   return {
-    tumblerCount,
+    plateCount,
     minPosition: DEFAULT_MIN_POSITION,
     maxPosition: DEFAULT_MAX_POSITION,
     targetPosition: DEFAULT_TARGET_POSITION,

@@ -25,11 +25,11 @@ function shuffle<T>(items: T[], random: RandomSource): T[] {
 }
 
 function getSecondaryEffectCount(
-  tumblerCount: number,
+  plateCount: number,
   density: number,
   random: RandomSource,
 ): number {
-  const expected = Math.max(0, tumblerCount - 1) * density;
+  const expected = Math.max(0, plateCount - 1) * density;
   const whole = Math.floor(expected);
   // Stochastic rounding preserves fractional density across individual rules.
   return whole + (random() < expected - whole ? 1 : 0);
@@ -40,13 +40,10 @@ export function generateRules(
   random: RandomSource = Math.random,
 ): MoveRule[] {
   const rules: MoveRule[] = [];
-  const pinIds = Array.from(
-    { length: config.tumblerCount },
-    (_, index) => index,
-  );
+  const pinIds = Array.from({ length: config.plateCount }, (_, index) => index);
   for (const sourcePinId of pinIds) {
     const secondaryBudget = getSecondaryEffectCount(
-      config.tumblerCount,
+      config.plateCount,
       config.dependencyDensity,
       random,
     );

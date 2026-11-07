@@ -33,7 +33,7 @@ describe("lock benchmark", () => {
     expect(built.hash).toMatch(/^[a-f0-9]{64}$/);
     expect(
       report.rows.map(
-        (row: { config: { tumblerCount: number } }) => row.config.tumblerCount,
+        (row: { config: { plateCount: number } }) => row.config.plateCount,
       ),
     ).toEqual([4, 7, 7]);
     expect(report.raw).toHaveLength(16);

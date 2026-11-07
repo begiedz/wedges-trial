@@ -46,7 +46,7 @@ export type RunState = {
 };
 
 export type DifficultyConfig = {
-  tumblerCount: number;
+  plateCount: number;
   minPosition: number;
   maxPosition: number;
   targetPosition: number;

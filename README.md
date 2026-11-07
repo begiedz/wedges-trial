@@ -131,7 +131,7 @@ Project-owned filenames and directories use **lowercase kebab-case**; TypeScript
 
 ### Puzzle generation
 
-Locks start from a solved configuration. The generator creates symmetric move rules, then mixes the plate positions using legal slides. Reversing those moves provides a solution by construction. Difficulty grows through plate count, dependency density and solution-length targets. Existing code identifiers such as `Pin`, `pins`, `pinId` and `tumblerCount` remain unchanged; see [terminology and compatibility](docs/architecture/gameplay.md#lock-component-terminology-60).
+Locks start from a solved configuration. The generator creates symmetric move rules, then mixes the plate positions using legal slides. Reversing those moves provides a solution by construction. Difficulty grows through plate count, dependency density and solution-length targets. Existing code identifiers such as `Pin`, `pins`, `pinId` and `plateCount` remain unchanged; see [terminology and compatibility](docs/architecture/gameplay.md#lock-component-terminology-60).
 
 The solver uses a bounded search. Exhausting its budget does not prove a lock unsolvable or establish an optimal solution. Difficulty calibration and scoring against verified solutions remain active work.
 

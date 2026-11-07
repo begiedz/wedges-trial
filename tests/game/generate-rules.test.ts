@@ -32,7 +32,7 @@ function findRule(
 
 describe("generateRules", () => {
   const baseConfig: DifficultyConfig = {
-    tumblerCount: 4,
+    plateCount: 4,
     minPosition: 0,
     maxPosition: 6,
     targetPosition: 3,
@@ -46,9 +46,9 @@ describe("generateRules", () => {
       createSequenceRandom([0.1, 0.8, 0.3]),
     );
 
-    expect(rules).toHaveLength(baseConfig.tumblerCount * 2);
+    expect(rules).toHaveLength(baseConfig.plateCount * 2);
 
-    for (let pinId = 0; pinId < baseConfig.tumblerCount; pinId += 1) {
+    for (let pinId = 0; pinId < baseConfig.plateCount; pinId += 1) {
       expect(findRule(rules, pinId, 1)).toBeDefined();
       expect(findRule(rules, pinId, -1)).toBeDefined();
     }
@@ -69,13 +69,13 @@ describe("generateRules", () => {
 
   it.each([4, 5, 6, 7])(
     "creates inverse rules for a %i-plate lock",
-    (tumblerCount) => {
+    (plateCount) => {
       const rules = generateRules(
-        { ...baseConfig, tumblerCount },
+        { ...baseConfig, plateCount },
         createSequenceRandom([0.2, 0.7, 0.4]),
       );
 
-      for (let pinId = 0; pinId < tumblerCount; pinId += 1) {
+      for (let pinId = 0; pinId < plateCount; pinId += 1) {
         const rightRule = findRule(rules, pinId, 1);
         const leftRule = findRule(rules, pinId, -1);
 
@@ -113,7 +113,7 @@ describe("generateRules", () => {
     const moreEffects = generateRules(baseConfig, () => 0.49);
     const fewerEffects = generateRules(baseConfig, () => 0.5);
 
-    for (let pinId = 0; pinId < baseConfig.tumblerCount; pinId += 1) {
+    for (let pinId = 0; pinId < baseConfig.plateCount; pinId += 1) {
       expect(findRule(moreEffects, pinId, 1).effects).toHaveLength(3);
       expect(findRule(fewerEffects, pinId, 1).effects).toHaveLength(2);
     }
@@ -138,7 +138,7 @@ describe("generateRules", () => {
 
       for (const rule of rules) {
         expect(rule.effects).toHaveLength(
-          density === 0 ? 1 : baseConfig.tumblerCount,
+          density === 0 ? 1 : baseConfig.plateCount,
         );
         expect(new Set(rule.effects.map((effect) => effect.pinId)).size).toBe(
           rule.effects.length,

@@ -1,6 +1,6 @@
 import type { Pin } from "@/game/types";
 
-import Tumbler from "./tumbler";
+import Plate from "./plate";
 
 type LockProps = {
   pins: Pin[];
@@ -18,7 +18,7 @@ export default function Lock({
   return (
     <div className="flex flex-col items-center w-full overflow-x-auto">
       {pins.map((pin) => (
-        <Tumbler
+        <Plate
           invalidMoveSequence={
             invalidMove?.pinId === pin.id ? invalidMove.sequence : 0
           }

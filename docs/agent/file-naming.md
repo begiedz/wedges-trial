@@ -2,7 +2,7 @@
 
 Project-owned filenames and directory segments use lowercase kebab-case: `create-lock.ts`, `lock-pin.tsx`, `use-game-session.ts`, `command-queue.ts`. Preserve suffixes such as `.test.ts`, `.test.tsx`, `.spec.ts`, `.d.ts` and `.config.ts`. Naming applies to paths, independently of TypeScript symbols: keep `LockPin`, `RunState`, `useLockGame` and `MAX_LOCKPICKS` in code.
 
-Product terminology follows the [plate/pin glossary](../architecture/gameplay.md#lock-component-terminology-60). Existing `tumbler.tsx` (sliding plate), `pin.tsx` (fixed indicator), `pin-selection.ts` and `Pin`/`pinId` symbols remain compatible; a copy correction does not require renaming files or code.
+Product terminology follows the [plate/pin glossary](../architecture/gameplay.md#lock-component-terminology-60). Existing `plate.tsx` (sliding plate), `pin.tsx` (fixed indicator), `pin-selection.ts` and `Pin`/`pinId` symbols remain compatible; a copy correction does not require renaming files or code.
 
 ## Exceptions
 
