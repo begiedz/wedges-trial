@@ -141,7 +141,7 @@ One Next.js application on Vercel owns run transitions through Route Handlers an
 
 Ore follows the approved deterministic formula: base 10, +5 per later chest, minus 10 percentage points per invalid move, with a 40% floor. New runs start with one lockpick and roll 0/1/2 picks with chances 79%/17%/4%; saved runs retain their original balance. See [gameplay](docs/architecture/gameplay.md) and the [decision ledger](docs/architecture/decisions.md).
 
-The [v1.1.0 roadmap](docs/architecture/roadmap.md) tracks remaining ranking storage/APIs/UI, distributed rate limits, deployment checks, difficulty calibration and solver evidence. Only qualifying verified finished runs will be allowed to claim a nickname for the planned arcade TOP 100. Audio playback and independent music/SFX controls remain planned; asset licensing requires an audit.
+The [v1.0.0 roadmap](docs/architecture/roadmap.md) tracks remaining ranking storage/APIs/UI, distributed rate limits, deployment checks, difficulty calibration and solver evidence. Only qualifying verified finished runs will be allowed to claim a nickname for the planned arcade TOP 100. Audio playback and independent music/SFX controls remain planned; asset licensing requires an audit.
 
 ## Contributing
 

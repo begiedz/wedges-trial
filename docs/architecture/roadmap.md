@@ -8,7 +8,7 @@ Implemented: anonymous sessions, gameplay schema/transactions, authoritative run
 
 Next: ranking storage/query, finished-run qualification and atomic nickname claims, ranking UI, distributed security controls and production verification. Balance/solver calibration and asset rights remain separate work. The issue list below describes workstreams, not an assertion that every item is still unimplemented.
 
-## Milestone: v1.1.0 - Leaderboard
+## Milestone: v1.0.0 - Leaderboard
 
 1. **Project contract and feasibility:** #27 (instructions), #28 (generator benchmark), #29 (API contract).
 2. **Foundation:** #30 (Neon environments), #31 (schema), #32 (transaction semantics), #33 (anonymous sessions), #34 (post-Game Over nickname claim).

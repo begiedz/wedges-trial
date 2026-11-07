@@ -61,4 +61,4 @@
 - Decisions / unanswered questions: `docs/architecture/decisions.md`
 - Audio / assets: `docs/architecture/audio-assets.md`
 - Skill selection and workflow: `docs/agent/README.md`, `.agents/skills/`
-- GitHub backlog: milestone `v1.1.0 - Leaderboard`, especially Issues #27–#51; audio / licensing Issues #52–#54.
+- GitHub backlog: milestone `v1.0.0 - Leaderboard`, especially Issues #27–#51; audio / licensing Issues #52–#54.
