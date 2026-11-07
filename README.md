@@ -139,7 +139,7 @@ The solver uses a bounded search. Exhausting its budget does not prove a lock un
 
 One Next.js application on Vercel owns run transitions through Route Handlers and native WebSockets, backed by Neon PostgreSQL and Drizzle. Anonymous cookies authorize actions; the client sends intent with action IDs and expected versions. Transactions persist state and replay responses together. Public movement rules support rendering prediction; resources and final outcomes remain server-confirmed.
 
-Ore follows the approved deterministic formula: base 10, +5 per later chest, minus 10 percentage points per invalid move, with a 40% floor. Pick replenishment retains its previous random behavior pending a separate balance decision. See [gameplay](docs/architecture/gameplay.md) and the [decision ledger](docs/architecture/decisions.md).
+Ore follows the approved deterministic formula: base 10, +5 per later chest, minus 10 percentage points per invalid move, with a 40% floor. New runs start with one lockpick and roll 0/1/2 picks with chances 79%/17%/4%; saved runs retain their original balance. See [gameplay](docs/architecture/gameplay.md) and the [decision ledger](docs/architecture/decisions.md).
 
 The [v1.1.0 roadmap](docs/architecture/roadmap.md) tracks remaining ranking storage/APIs/UI, distributed rate limits, deployment checks, difficulty calibration and solver evidence. Only qualifying verified finished runs will be allowed to claim a nickname for the planned arcade TOP 100. Audio playback and independent music/SFX controls remain planned; asset licensing requires an audit.
 

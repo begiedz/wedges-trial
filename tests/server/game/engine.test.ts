@@ -1,9 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { getDeterministicOre } from "@/game/rewards";
+import { LEGACY_RULESET_VERSION, RULESET_VERSION } from "@/game/ruleset";
 import { newRun, publicRun, transition } from "@/server/game/engine";
 
 function fixture() {
   const run = newRun("run", "owner");
+  run.game.state.lockpicks = 3; // Exercise damage/reset with a multi-pick inventory.
   run.game.state.currentLock = {
     optimalMoves: 2,
     pins: [{ id: 0, position: 0, min: 0, max: 2, target: 2 }],
@@ -159,3 +161,37 @@ it.each([
     });
   },
 );
+
+it("starts with one pick and ends after its fourth invalid move", () => {
+  const fresh = newRun("fresh", "owner");
+  expect(fresh.game.state.lockpicks).toBe(1);
+  expect(fresh.rulesetVersion).toBe(RULESET_VERSION);
+  let run = fixture();
+  run.game.state.lockpicks = fresh.game.state.lockpicks;
+  for (let i = 0; i < 4; i++)
+    run = transition(run, "move", { pinId: 0, direction: -1 }).run;
+  expect(run.status).toBe("finished");
+  expect(run.game.state.lockpicks).toBe(0);
+  expect(run.game.reward).toBeNull();
+});
+it("selects the correct drop table without changing saved or pending inventory", () => {
+  const random = vi.spyOn(Math, "random").mockReturnValue(0.75);
+  try {
+    for (const [version, expected] of [
+      [RULESET_VERSION, 0],
+      [LEGACY_RULESET_VERSION, 1],
+    ] as const) {
+      let run = fixture();
+      run.rulesetVersion = version;
+      run = transition(run, "move", { pinId: 0, direction: 1 }).run;
+      run = transition(run, "move", { pinId: 0, direction: 1 }).run;
+      expect(run.game.reward?.lockpicks).toBe(expected);
+      expect(run.game.state.lockpicks).toBe(3);
+      run = transition(run, "continue", {}).run;
+      expect(run.game.state.lockpicks).toBe(3 + expected);
+      expect(run.rulesetVersion).toBe(version);
+    }
+  } finally {
+    random.mockRestore();
+  }
+});

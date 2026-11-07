@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getDeterministicOre, getLockpickReward } from "@/game/rewards";
+import { LEGACY_RULESET_VERSION } from "@/game/ruleset";
 
 describe("deterministic-ore-v1 rewards", () => {
   it.each([
@@ -34,12 +35,30 @@ describe("deterministic-ore-v1 rewards", () => {
   });
   it.each([
     [0, 0],
+    [0.79, 0],
+    [0.79001, 1],
+    [0.96, 1],
+    [0.96001, 2],
+    [0.99999, 2],
+  ])("uses the halved drop boundary %f -> %i", (roll, expected) => {
+    expect(getLockpickReward(() => roll)).toBe(expected);
+  });
+});
+
+it("halves each nonzero drop probability", () => {
+  const counts = [0, 0, 0];
+  for (let i = 0; i < 100; i++)
+    counts[getLockpickReward(() => (i + 0.5) / 100)]++;
+  expect(counts).toEqual([79, 17, 4]);
+});
+it("preserves original drops for saved runs", () => {
+  for (const [roll, expected] of [
     [0.58, 0],
     [0.58001, 1],
     [0.92, 1],
     [0.92001, 2],
-    [0.99999, 2],
-  ])("preserves the approved pick roll boundary %f -> %i", (roll, expected) => {
-    expect(getLockpickReward(() => roll)).toBe(expected);
-  });
+  ])
+    expect(getLockpickReward(() => roll, LEGACY_RULESET_VERSION)).toBe(
+      expected,
+    );
 });

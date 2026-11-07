@@ -1,3 +1,4 @@
+import { STARTING_LOCKPICKS } from "@/game/constants";
 import { createLock } from "@/game/create-lock";
 import { getDifficultyForChest } from "@/game/progress-difficulty";
 import { getChestReward } from "@/game/rewards";
@@ -7,7 +8,7 @@ export function createRun(random: RandomSource = Math.random): RunState {
   return {
     chestIndex: 1,
     oreNuggets: 0,
-    lockpicks: 3,
+    lockpicks: STARTING_LOCKPICKS,
     currentLock: createLock(getDifficultyForChest(0), random),
   };
 }

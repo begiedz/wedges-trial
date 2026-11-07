@@ -111,3 +111,12 @@ The task author requested implementation of #61: 4 plates on chests 1–5, 5 on 
 The main ranking uses `deterministic-ore-v1`. This pre-release update requires no SQL schema migration or data rewrite. See [current performance](lock-benchmarks.md) and [difficulty/resource evidence](lock-validation.md).
 
 Rollback before release is an application-code revert. Future changes after ranked results exist require a score-comparability review.
+
+
+## Approved scarce lockpicks — 2026-11-07
+
+The task author requested one starting lockpick and halved drop chances. New runs start with one pick and use 79%/17%/4% for 0/1/2 picks (previously 58%/34%/8%). Thus the chance of any pick drops from 42% to 21%, and expected replenishment from 0.5 to 0.25 picks/chest. Maximum drop remains two; stored inventory remains uncapped. UI, lock generation/progression, four-invalid-move durability, damage carry, reset penalties and deterministic ore are unchanged.
+
+Because resource supply affects survival/ranked ore, new creation and main ranking use `scarce-picks-v1`. Existing `deterministic-ore-v1` runs retain their current inventory, old drop table and already-pending rewards; old results/claims/replays remain durable and separate. No schema migration, data rewrite or deployment is part of this change. A rollback must retain both reward handlers while active runs exist; restore the old starting stock/default cohort in application code rather than rewriting saved games.
+
+Resource-only simulation: seed 47, 10,000 runs/profile, cap 1,000 credited chests, starts with one pick, carries partial damage, and ends before loot on the last pick's fourth invalid move. At fixed 0/1/2/3/6 mistakes per chest, median credited chests are 1,000 (all censored) / 7 / 1 / 1 / 0. The one-mistake profile has p95 551 chests and 3.77% censored survivors. These are resource scenarios, not human difficulty measurements or a finite-run guarantee. Reproduce with `node scripts/simulate-rewards.cjs`; historical #61 figures describe the older balance and are not overwritten.

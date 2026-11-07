@@ -25,6 +25,7 @@ describe("run progression", () => {
     let run = createRun(random);
 
     expect(run.chestIndex).toBe(1);
+    expect(run.lockpicks).toBe(1);
     expect(createLock).toHaveBeenLastCalledWith(
       getDifficultyForChest(0),
       random,

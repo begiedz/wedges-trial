@@ -138,7 +138,7 @@ function moveRun(
     run.status = "chest_opened";
     game.openedChests++;
     game.reward = {
-      lockpicks: getLockpickReward(),
+      lockpicks: getLockpickReward(Math.random, run.rulesetVersion),
       oreNuggets: getDeterministicOre(
         game.state.chestIndex,
         game.chestMetrics.invalidMoves,

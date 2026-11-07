@@ -193,3 +193,10 @@ Scope verification: public, eligibility and claim schemas/response types are exi
 Verification: coverage passed all 376 tests, including all 36 PostgreSQL integration tests against disposable local PostgreSQL 17. An initial coverage run hit the existing 5-second lock-benchmark timeout while the build ran concurrently; the isolated rerun passed without changing the benchmark or timeout. Type checking, lint (including naming/architecture) and the production webpack build passed; lint retains the existing cursor CSS warning. Fresh local `pnpm db:migrate` and immediate rerun succeeded; `pnpm db:generate` reports no drift. The integration suite applies the additive migration over existing finished data as well as fresh schemas. Typecheck initially caught a test fixture's inferred UUID type; its owner parameter now explicitly accepts a string.
 
 Apply additive migration `0003_charming_the_fury.sql` before enabling these handlers; missing admission storage fails closed with 503. Rollback reverts application code while retaining the budget table, snapshots, claims and results. No Neon/production migration, deployment, live browser/device verification or GitHub issue mutation was performed.
+
+
+## Scarce lockpicks — 2026-11-07
+
+New `scarce-picks-v1` runs start with one pick and use 79%/17%/4% drops for 0/1/2 picks. Existing v1 runs retain original inventory and rewards. Generation, UI and ore are unchanged. See the [decision and resource simulation](decisions.md#approved-scarce-lockpicks--2026-11-07). No remote migration or deployment is implied.
+
+Local verification: 380 tests passed, including all 36 PostgreSQL integration tests against a disposable localhost database. TypeScript, lint and production build passed; lint retains the existing cursor CSS warning. No remote database or deployment was used.

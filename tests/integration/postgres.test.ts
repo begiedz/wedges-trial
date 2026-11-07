@@ -37,6 +37,7 @@ const legacyRunId = randomUUID();
 const actionId = () => randomUUID();
 async function seed() {
   const run = newRun(randomUUID(), ownerId);
+  run.game.state.lockpicks = 3; // Multi-pick fixture for existing lifecycle regressions.
   run.game.state.currentLock = {
     pins: [{ id: 0, position: 0, min: 0, max: 2, target: 2 }],
     rules: [1, -1].map((direction) => ({

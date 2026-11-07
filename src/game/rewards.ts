@@ -1,3 +1,4 @@
+import { LEGACY_RULESET_VERSION, RULESET_VERSION } from "@/game/ruleset";
 import type { ChestReward, RandomSource } from "@/game/types";
 
 /** Tuning for deterministic-ore-v1; changes require a ranking cohort review. */
@@ -8,9 +9,15 @@ export const ORE_REWARD_TUNING = {
   minimumEfficiencyTenths: 4,
 } as const;
 
-export function getLockpickReward(random: RandomSource = Math.random): number {
+/** New balance: 79% none, 17% one, 4% two; never cap stored inventory. */
+export function getLockpickReward(
+  random: RandomSource = Math.random,
+  rulesetVersion: string = RULESET_VERSION,
+): number {
   const roll = random();
-  return roll > 0.92 ? 2 : roll > 0.58 ? 1 : 0;
+  if (rulesetVersion === LEGACY_RULESET_VERSION)
+    return roll > 0.92 ? 2 : roll > 0.58 ? 1 : 0;
+  return roll > 0.96 ? 2 : roll > 0.79 ? 1 : 0;
 }
 
 /** Legacy random ore for debug tooling only. */

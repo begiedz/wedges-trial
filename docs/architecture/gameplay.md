@@ -23,7 +23,7 @@ This is a localization/accessibility correction only. It changes no mechanics, v
 
 ## Implemented rules
 
-- New runs start at chest 1 with 0 ore and 3 lockpicks. Locks are randomly generated from solved layouts through legal moves, with increasing progression settings.
+- New runs start at chest 1 with 0 ore and 1 lockpick. Locks are randomly generated from solved layouts through legal moves, with increasing progression settings.
 - Each plate has a bounded integer alignment position and a target; fixed plate dependencies apply inverse effects for opposite directions. An out-of-bounds slide changes no plate positions.
 - Exactly four invalid moves on one pick break it. Valid moves do not heal damage; a broken pick does not reset positions. The last pick breaking atomically finishes the run.
 - Manual reset restores initial plate positions, preserving partial damage, spent picks, ore and accumulated chest/run metrics. Continuing to another chest also preserves partial pick damage.
@@ -32,7 +32,7 @@ This is a localization/accessibility correction only. It changes no mechanics, v
 - Plates: chests 1–5 have 4; 6–12 have 5; 13–24 have 6; 25+ have 7. Generation accepts zero-based indices; displayed chest numbers are one-based.
 - Difficulty display uses the same zero-based progression input as generation. Further calibration remains open.
 
-The main ranking uses `deterministic-ore-v1`, with four-mistake durability and the 4–7-plate progression.
+The main ranking uses `scarce-picks-v1`, with four-mistake durability and the 4–7-plate progression.
 
 ### Progression decision history
 
@@ -49,7 +49,7 @@ ore = floor(base * max(4, 10 - invalidMovesOnChest) / 10)
 
 Each invalid move removes 10 percentage points of the base reward, down to a 40% floor. All invalid moves count across resets and pick breaks. Integer arithmetic avoids floating-point rounding errors. There is no excess-valid-move or unverified-optimum penalty.
 
-Lockpick replenishment retains the previous random roll: 2 picks above 0.92, 1 above 0.58, otherwise 0. A deterministic replacement and overall sustain balance remain undecided. The legacy random-ore helper remains for debug tooling/fixtures; the authoritative game uses the approved formula.
+New `scarce-picks-v1` runs roll 2 picks above 0.96, 1 above 0.79, otherwise 0: 79% none, 17% one, 4% two. This halves both nonzero drop probabilities and expected replenishment to 0.25 picks/chest. Existing `deterministic-ore-v1` runs keep their saved inventory and original 58%/34%/8% drops; pending rewards are never rerolled. Inventory remains uncapped. The legacy random-ore helper remains for debug tooling/fixtures; the authoritative game uses the approved formula.
 
 ## Lifecycle and prediction
 

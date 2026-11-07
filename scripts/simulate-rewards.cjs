@@ -30,7 +30,7 @@ function simulateResources(
       for (let sample = 0; sample < samples; sample++) {
         const sampleSeed = (seed + sample) >>> 0;
         const random = seededRandom(sampleSeed);
-        let picks = 3,
+        let picks = engine.STARTING_LOCKPICKS,
           damage = 0,
           chests = 0,
           ore = 0;

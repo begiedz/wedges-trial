@@ -18,7 +18,7 @@
 - A lockpick **breaks after exactly four invalid moves on that pick**. Breaking it does **not** reset the lock. A separate manual reset button restores plate positions; **reset must not restore spent picks, clear accumulated per-chest scoring penalties, or grant free durability**. Preserve regression coverage for partial damage across reset and chest continuation.
 - Player resources: **lockpicks and ore nuggets only**. Ore is the score resource. Do not silently introduce XP, energy, lives or currencies.
 - Pure, deterministic *given inputs* domain functions belong in `src/game/`, independent of React, database, network and sound.
-- The main ranking uses `deterministic-ore-v1`.
+- New runs use `scarce-picks-v1`: one starting lockpick and 0/1/2-pick drops of 79%/17%/4%. Existing `deterministic-ore-v1` runs retain their original inventory and drop table; the ore formula is unchanged.
 - Randomness in **lock generation** remains. **Ore rewards are deterministic** under approved deterministic-ore-v1: floor((10 + 5 * (chestNumber - 1)) * max(4, 10 - invalidMovesOnChest) / 10). Endless ore ranking is approved (ore DESC, opened chests DESC, finished time ASC, run UUID ASC); further efficiency tuning and lockpick replenishment remain **open balancing decisions**; see `docs/architecture/decisions.md` and GitHub Issues #47, #51.
 - Do not claim a generated lock's shortest solution is proven if `solveLock()` returns `null` because its search budget was exhausted. Do not penalize players against an unverified optimum.
 
