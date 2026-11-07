@@ -71,7 +71,8 @@
       "language": "Język",
       "solver": "Solver",
       "about": "O grze",
-      "howToPlay": "Jak grać"
+      "howToPlay": "Jak grać",
+      "leaderboard": "Ranking"
     },
     "locales": {
       "en": "English",
@@ -319,5 +320,26 @@
     },
     "subtitle": "Tekstowy moduł testowy w przeglądarce do weryfikacji generowania zamków, reguł ruchu, obrażeń od nieprawidłowych ruchów i ręcznego resetu.",
     "title": "Moduł testowy zamków Próba Klina"
+  },
+  "leaderboard": {
+    "title": "Ranking",
+    "subtitle": "TOP 1000 ukończonych rozgrywek",
+    "description": "Każdy wpis to zgłoszona rozgrywka. Pseudonimy mogą się powtarzać.",
+    "rank": "Miejsce",
+    "nickname": "Pseudonim",
+    "ore": "Bryłki rudy",
+    "chests": "Otwarte skrzynie",
+    "finished": "Zakończono (UTC)",
+    "loading": "Wczytywanie rankingu…",
+    "empty": "Nie zgłoszono jeszcze żadnej rozgrywki.",
+    "error": "Nie udało się wczytać rankingu. Spróbuj ponownie.",
+    "expired": "Ten widok rankingu wygasł. Odśwież, aby zobaczyć aktualne wyniki.",
+    "retry": "Ponów",
+    "refresh": "Odśwież ranking",
+    "previous": "Poprzednia",
+    "next": "Następna",
+    "pagination": "Strony rankingu",
+    "page": "Strona {page}",
+    "view": "Zobacz ranking"
   }
 }

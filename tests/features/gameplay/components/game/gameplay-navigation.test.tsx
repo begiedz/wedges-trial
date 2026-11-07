@@ -64,6 +64,29 @@ describe("gameplay navigation composition", () => {
     }
   });
 
+  it("links anonymous visitors to ranking from desktop and mobile", async () => {
+    navigation.pathname = "/en/leaderboard";
+    render(createElement(GameplayNavigation), { wrapper });
+    expect(
+      screen
+        .getByRole("link", { name: en.nav.items.leaderboard })
+        .getAttribute("href"),
+    ).toBe("/en/leaderboard");
+    fireEvent.click(
+      screen.getByRole("button", { name: en.nav.mobile.openMenu }),
+    );
+    const links = screen.getAllByRole("link", {
+      name: en.nav.items.leaderboard,
+    });
+    links[links.length - 1].addEventListener(
+      "click",
+      (event) => event.preventDefault(),
+      { once: true },
+    );
+    fireEvent.click(links[links.length - 1]);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
   it("keeps gameplay actions off other site pages", () => {
     navigation.pathname = "/en/about";
     render(createElement(GameplayNavigation), { wrapper });

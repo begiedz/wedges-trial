@@ -111,3 +111,7 @@ Statuses describe local source and automated verification. They do not establish
 | Documentation/imports/test paths reflect final implementation | PASS | Ownership/migration guide above, updated READMEs/status/backend/agent guidance; Vitest included colocated feature tests at #57; superseded by the #59 centralized convention |
 
 No deployment, database migration, live browser end-to-end check or GitHub issue mutation was performed. Rollback is a source-only revert; no stored data or wire-version conversion is needed.
+
+## Public ranking feature (#25)
+
+`src/features/leaderboard/index.ts` exposes only `Leaderboard` to the localized ranking route. Its component owns in-memory cursor-page navigation and localized presentation. `src/client/leaderboard.ts` reads and validates the public API; it has no React, session bootstrap or score mutation. The gameplay claim modal links to the ranking route without importing ranking feature internals. Server policy, ordering, snapshots and atomic claims remain in `src/server/leaderboard`.

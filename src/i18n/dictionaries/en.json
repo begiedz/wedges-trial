@@ -71,7 +71,8 @@
       "language": "Language",
       "solver": "Solver",
       "about": "About",
-      "howToPlay": "How to play"
+      "howToPlay": "How to play",
+      "leaderboard": "Leaderboard"
     },
     "locales": {
       "en": "English",
@@ -319,5 +320,26 @@
     },
     "subtitle": "Text-first browser harness for validating lock generation, move rules, invalid move damage, and manual reset behavior.",
     "title": "Wedge's Trial Lock Harness"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "TOP 1000 finished runs",
+    "description": "Each entry is a claimed run. Names may appear more than once.",
+    "rank": "Rank",
+    "nickname": "Nickname",
+    "ore": "Ore nuggets",
+    "chests": "Opened chests",
+    "finished": "Finished (UTC)",
+    "loading": "Loading ranking…",
+    "empty": "No runs have been claimed yet.",
+    "error": "Could not load the ranking. Try again.",
+    "expired": "This ranking snapshot has expired. Refresh to see the latest scores.",
+    "retry": "Retry",
+    "refresh": "Refresh ranking",
+    "previous": "Previous",
+    "next": "Next",
+    "pagination": "Ranking pages",
+    "page": "Page {page}",
+    "view": "View ranking"
   }
 }

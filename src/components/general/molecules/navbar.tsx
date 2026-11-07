@@ -23,7 +23,7 @@ import { type Locale, locales } from "@/i18n/types";
 import { cn } from "@/lib/utils";
 import Logo from "../atoms/logo";
 
-type NavItemKey = "language" | "solver" | "about" | "howToPlay";
+type NavItemKey = "language" | "solver" | "about" | "howToPlay" | "leaderboard";
 
 type NavItem =
   | {
@@ -37,6 +37,7 @@ type NavItem =
 
 const NAV_ITEMS: NavItem[] = [
   // { key: "solver", href: "/solver" },
+  { key: "leaderboard", href: "/leaderboard" },
   { key: "about", href: "/about" },
   { key: "howToPlay", href: "/how-to-play" },
   {

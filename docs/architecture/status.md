@@ -8,9 +8,9 @@ Gameplay has migrated from browser-owned state to server-authoritative PostgreSQ
 | Persistence | Neon/PostgreSQL, Drizzle migrations, atomic versioned actions and replay records | Scheduling/monitoring of conservative manual retention |
 | Identity | Anonymous hashed-token sessions; protected cookie; authenticated private eligibility, nickname claims and localized Game Over entry | Deployed expiry/reconnect checks |
 | Transport | Vercel-native WebSocket, ordered inputs, immediate visual prediction and reconciliation; HTTP recovery/fallback | Deployed WebSocket performance and reconnect verification |
-| Client | React adapter over a framework-independent session controller; no gameplay localStorage/sessionStorage | Ranking UI |
+| Client | React adapter over a framework-independent session controller; no gameplay localStorage/sessionStorage; localized public ranking UI | Browser/device verification |
 | Balance | Approved deterministic ore; reset and continuation preserve pick damage; endless ore ranking approved under #51 | Pick replenishment calibration and release abuse controls |
-| Ranking | Finished runs/metrics, ordering policy, claim storage, public frozen TOP 1000 pagination, atomic private eligibility/claims and shared HTTP request budgets | Ranking screen, traffic calibration/edge abuse controls and deployed verification |
+| Ranking | Finished runs/metrics, ordering policy, claim storage, public frozen TOP 1000 pagination, atomic private eligibility/claims and shared HTTP request budgets | Traffic calibration/edge abuse controls and deployed verification |
 | Audio/assets | Existing visual assets | Provenance audit; optional music/SFX controls |
 
 ## Verification boundaries
@@ -217,3 +217,20 @@ Game Over offers **Leaderboard**, **New run** and **Exit**. Leaderboard opens th
 Verification here is local automated coverage, not browser/device or deployed verification. No API, database, scoring, asset or persistence change is required. Rollback is a source-only revert. No migration, deployment or GitHub issue mutation was performed.
 
 Local verification: `pnpm test` passed 346 tests; 36 opt-in PostgreSQL tests were skipped because `TEST_DATABASE_URL` was unset. `pnpm test:coverage --testTimeout=20000` passed the same tests (59.16% overall statement coverage); the first coverage attempt exceeded the existing lock benchmark's five-second timeout while the build ran. Type checking and `pnpm lint` passed, with the existing cursor `!important` warning. `pnpm build` passed outside the sandbox after the restricted build stalled and was stopped.
+
+## Public ranking UI (#25) — 2026-11-07
+
+`/{lang}/leaderboard` displays ten entries per page through TOP 1000, using only the public server API. A separate `features/leaderboard` owns presentation and `client/leaderboard.ts` validates read responses. Desktop/mobile navigation and the post-run qualification modal link to the ranking. Each row shows server rank, nickname, ore, opened chests and a localized UTC finish date. Duplicate nicknames and tied scores retain server order; there is no player profile or nickname-based identity.
+
+Visited pages remain in memory within one frozen ranking snapshot. Next uses the server cursor; Previous reuses that snapshot. Refresh starts a new snapshot; expired cursors explicitly offer refresh. Loading, empty, retry and request cancellation are covered. Existing server-confirmed Game Over statistics, separate qualification modal, atomic name claims and replay behavior remain intact, following the approved #7 modal flow.
+
+| Issue #25 acceptance criterion | Status | Evidence |
+| --- | --- | --- |
+| Anonymous visitors can browse and play without name onboarding | PASS | Public client test asserts requests omit credentials; four-language UI tests assert play links and no name form; navigation test covers desktop/mobile ranking links |
+| Qualifying finished run prompts once and confirms server submission | PASS | Existing `leaderboard-claim.test.tsx` covers qualified form, confirmed success, synchronous duplicate suppression and exact retry; modal now links to public ranking |
+| Nonqualifiers and cutoff races are handled | PASS | Existing claim regressions cover all rejection reasons, race displacement, session expiry and retry; server claim implementation unchanged |
+| Pagination, ties and all translations tested | PASS | Public feature tests traverse all 100 pages to rank 1000, preserve server tie order/duplicate names, cache Previous, handle snapshot expiry/refresh and exercise en/pl/de/ru labels and date formatting; read-client tests reject malformed ranks/data |
+
+Verification is local automated evidence; browser/device and deployed behavior are not established. No API/schema change, migration, deployment or GitHub issue mutation is included. Rollback is a source-only revert.
+
+Local verification: `pnpm test` passed 370 tests; 36 opt-in PostgreSQL tests were skipped because `TEST_DATABASE_URL` was unset. `pnpm test:coverage --testTimeout=20000` passed 369 tests before the final navigation regression was added (60.48% overall statement coverage); the final full test run includes that regression. `pnpm typecheck`, `pnpm lint` (including naming/architecture) and `pnpm build` passed. Lint retains the existing cursor CSS `!important` warning. The production build generated all four localized leaderboard routes.

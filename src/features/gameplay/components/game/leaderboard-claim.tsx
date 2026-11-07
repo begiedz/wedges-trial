@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import type {
   LeaderboardClaimRequest,
@@ -10,7 +11,7 @@ import {
   getLeaderboardEligibility,
   submitLeaderboardEntry,
 } from "@/client/game/leaderboard";
-import { useGameDictionary } from "@/i18n/provider";
+import { useDictionary, useGameDictionary, useLocale } from "@/i18n/provider";
 import { DialogAction } from "./game-dialog";
 
 type Status =
@@ -26,6 +27,8 @@ type Status =
 /** Mounted only for a server-confirmed finish; keyed by run ID by the caller. */
 export function LeaderboardClaim({ runId }: { runId: string }) {
   const t = useGameDictionary().leaderboardClaim;
+  const ranking = useDictionary().leaderboard;
+  const locale = useLocale();
   const id = useId();
   const [status, setStatus] = useState<Status>("checking");
   const [reason, setReason] = useState<LeaderboardQualification>();
@@ -173,6 +176,9 @@ export function LeaderboardClaim({ runId }: { runId: string }) {
           {t.retry}
         </DialogAction>
       )}
+      <DialogAction asChild>
+        <Link href={`/${locale}/leaderboard`}>{ranking.view}</Link>
+      </DialogAction>
     </section>
   );
 }

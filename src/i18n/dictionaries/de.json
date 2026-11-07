@@ -71,7 +71,8 @@
       "language": "Sprache",
       "solver": "Löser",
       "about": "Über das Spiel",
-      "howToPlay": "Spielanleitung"
+      "howToPlay": "Spielanleitung",
+      "leaderboard": "Bestenliste"
     },
     "locales": {
       "en": "English",
@@ -319,5 +320,26 @@
     },
     "subtitle": "Textbasierter Browser-Harness zur Validierung von Schlossgenerierung, Zugregeln, Schaden durch ungültige Züge und manuellem Zurücksetzen.",
     "title": "Wedge's Trial Schlossharness"
+  },
+  "leaderboard": {
+    "title": "Bestenliste",
+    "subtitle": "TOP 1000 abgeschlossene Durchläufe",
+    "description": "Jeder Eintrag ist ein eingereichter Durchlauf. Namen können mehrfach vorkommen.",
+    "rank": "Platz",
+    "nickname": "Spitzname",
+    "ore": "Erzbrocken",
+    "chests": "Geöffnete Truhen",
+    "finished": "Beendet (UTC)",
+    "loading": "Bestenliste wird geladen…",
+    "empty": "Es wurden noch keine Durchläufe eingereicht.",
+    "error": "Die Bestenliste konnte nicht geladen werden. Versuche es erneut.",
+    "expired": "Diese Ranglistenansicht ist abgelaufen. Aktualisiere sie für die neuesten Ergebnisse.",
+    "retry": "Erneut versuchen",
+    "refresh": "Bestenliste aktualisieren",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "pagination": "Ranglistenseiten",
+    "page": "Seite {page}",
+    "view": "Bestenliste ansehen"
   }
 }

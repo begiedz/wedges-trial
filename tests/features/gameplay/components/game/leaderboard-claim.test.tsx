@@ -74,6 +74,11 @@ describe("post-run nickname entry", () => {
         }),
       ).toBeTruthy();
       expect(
+        screen
+          .getByRole("link", { name: dictionary.leaderboard.view })
+          .getAttribute("href"),
+      ).toBe("/en/leaderboard");
+      expect(
         screen.getByText(dictionary.game.leaderboardClaim.help),
       ).toBeTruthy();
     },
