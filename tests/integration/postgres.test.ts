@@ -454,7 +454,9 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
       reason: { code: "VERSION_CONFLICT" },
     });
     const opened = await readRun(ownerId, run.id);
-    expect(opened?.reward?.oreNuggets).toBe(5);
+    expect(opened?.difficulty).toBe(1);
+    // Tier 1 base 2, five cumulative mistakes: floor(2 * 0.5) = 1.
+    expect(opened?.reward?.oreNuggets).toBe(1);
     expect(opened?.oreNuggets).toBe(0);
     const pending = (await storedGame(run.id)).reward;
     const claim = { actionId: actionId(), expectedVersion: version };
@@ -490,7 +492,7 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
       reason: { code: "VERSION_CONFLICT" },
     });
     const credited = await readRun(ownerId, run.id);
-    expect(credited?.oreNuggets).toBe(5);
+    expect(credited?.oreNuggets).toBe(1);
     expect(credited?.lockpicks).toBe(2 + (pending?.lockpicks ?? 0));
     expect(credited?.currentLock.invalidMovesOnCurrentPick).toBe(1);
     expect((await storedGame(run.id)).chestMetrics).toEqual({
