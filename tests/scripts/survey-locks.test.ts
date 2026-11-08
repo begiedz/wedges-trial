@@ -32,7 +32,7 @@ describe("lock survey", () => {
       { samples: 0 },
       { samples: 1001 },
       { chests: [] },
-      { chests: [999] },
+      { chests: [0] },
     ])
       expect(() => runSurvey(engine, config)).toThrow(RangeError);
   });

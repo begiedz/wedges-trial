@@ -14,6 +14,13 @@ function seededRandom(seed) {
   };
 }
 
+function mixSeed(seed) {
+  let mixed = seed >>> 0;
+  mixed = Math.imul(mixed ^ (mixed >>> 16), 0x21f0aaad);
+  mixed = Math.imul(mixed ^ (mixed >>> 15), 0x735a2d97);
+  return (mixed ^ (mixed >>> 15)) >>> 0;
+}
+
 function summarize(values) {
   if (!values.length) throw new RangeError("Empty measurement set");
   const sorted = [...values].sort((a, b) => a - b);
@@ -62,7 +69,7 @@ function load(name) {
   if (!cache[id]) { const module = {exports: {}}; cache[id] = module; factories[id](load, module, module.exports); }
   return cache[id].exports;
 }
-module.exports = { ...load("create-lock"), ...load("solver"), ...load("create-run"), ...load("progress-difficulty"), ...load("apply-move"), ...load("check-solved"), ...load("rewards"), ...load("constants"), ...load("ruleset") };`;
+module.exports = { ...load("create-lock"), ...load("solver"), ...load("create-run"), ...load("progress-difficulty"), ...load("apply-move"), ...load("check-solved"), ...load("rewards"), ...load("constants"), ...load("ruleset"), ...load("learning-progression"), ...load("analyze-connections") };`;
   return { source, hash: hash.digest("hex") };
 }
 
@@ -74,7 +81,13 @@ function loadEngine(source) {
 
 function runBenchmark(
   engine,
-  { samples = 100, warmups = 3, chests = CHESTS, seed = 28 } = {},
+  {
+    samples = 100,
+    warmups = 3,
+    chests = CHESTS,
+    seed = 28,
+    rulesetVersion = engine.RULESET_VERSION,
+  } = {},
 ) {
   if (
     !Number.isInteger(samples) ||
@@ -92,13 +105,16 @@ function runBenchmark(
   const raw = [];
   const started = performance.now();
   for (const chest of chests) {
-    const config = engine.getDifficultyForChest(chest - 1);
+    const config =
+      rulesetVersion === engine.LEARNING_RULESET_VERSION
+        ? engine.getLearningProgression(chest - 1, seededRandom(seed))
+        : engine.getDifficultyForChest(chest - 1);
     const measurements = { createLock: [], solveLock: [], openSolvedChest: [] };
     let unavailableOptimum = 0;
     let solverNulls = 0;
     let belowTarget = 0;
     for (let i = -warmups; i < samples; i++) {
-      const sampleSeed = (seed + chest * 100003 + i) >>> 0;
+      const sampleSeed = mixSeed(seed + chest * 100003 + i);
       const measure = (operation, fn) => {
         const cpu = process.cpuUsage();
         const start = performance.now();
@@ -119,7 +135,11 @@ function runBenchmark(
         return result;
       };
       const lock = measure("createLock", () =>
-        engine.createLock(config, seededRandom(sampleSeed)),
+        engine.createChestLock(
+          chest - 1,
+          seededRandom(sampleSeed),
+          rulesetVersion,
+        ),
       );
       const solution = measure("solveLock", () => engine.solveLock(lock));
       if (i >= 0) {
@@ -148,9 +168,10 @@ function runBenchmark(
       // Measure generating the same destination difficulty. A legitimate solved
       // predecessor is prepared outside the timer, never by setting isSolved alone.
       if (chest > 1) {
-        let previous = engine.createLock(
-          engine.getDifficultyForChest(chest - 2),
+        let previous = engine.createChestLock(
+          chest - 2,
           seededRandom(sampleSeed ^ 0xabcdef),
+          rulesetVersion,
         );
         const moves = engine.solveLock(previous);
         if (!moves)
@@ -174,6 +195,7 @@ function runBenchmark(
               currentLock: previous,
             },
             seededRandom(sampleSeed),
+            rulesetVersion,
           ),
         );
         if (next.chestIndex !== chest || next.currentLock.isSolved)
@@ -196,6 +218,7 @@ function runBenchmark(
   return {
     metadata: {
       date: new Date().toISOString(),
+      rulesetVersion,
       node: process.version,
       platform: process.platform,
       arch: process.arch,
@@ -227,6 +250,7 @@ if (require.main === module) {
 module.exports = {
   CHESTS,
   seededRandom,
+  mixSeed,
   summarize,
   buildEngineSource,
   loadEngine,

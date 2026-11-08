@@ -1,5 +1,7 @@
 # Lock generation benchmark — post-#61 (2026-11-06)
 
+> Preserved post-#61 baseline. New `learning-ramp-v1` progression and matched measurements are documented in the [2026-11-08 report](learning-progression-report.md).
+
 Current results for 4–7 plates and four invalid moves per pick. Historical [#28 report](archive/2026-11-05-lock-benchmarks.md) and [raw archive/checksums](../../benchmarks/results/archive/manifest.json) remain available; raw bytes are unchanged and report links are repaired.
 
 ## Provenance and method

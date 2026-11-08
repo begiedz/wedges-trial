@@ -5,6 +5,7 @@ import {
 } from "@/game/constants";
 import type { DifficultyConfig, LockDifficulty } from "@/game/types";
 
+/** Legacy fixed-stage display for saved cohorts only. */
 export function getDifficultyBand(chestIndex: number): LockDifficulty {
   if (chestIndex >= 24) {
     return 4;
@@ -21,6 +22,7 @@ export function getDifficultyBand(chestIndex: number): LockDifficulty {
   return 1;
 }
 
+/** Legacy generator settings. New runs use getLearningProgression(). */
 export function getDifficultyForChest(chestIndex: number): DifficultyConfig {
   const index = Math.max(0, chestIndex);
   // Grow beyond the final display band without rapidly increasing complexity.

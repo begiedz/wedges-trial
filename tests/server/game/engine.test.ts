@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { getDeterministicOre } from "@/game/rewards";
-import { LEGACY_RULESET_VERSION, RULESET_VERSION } from "@/game/ruleset";
+import {
+  LEGACY_RULESET_VERSION,
+  RULESET_VERSION,
+  SCARCE_PICKS_RULESET_VERSION,
+} from "@/game/ruleset";
 import { newRun, publicRun, transition } from "@/server/game/engine";
 
 function fixture() {
@@ -147,6 +151,7 @@ it.each([
   "continues displayed chest %i into a lock with %i plates and correct band",
   (chest, plates) => {
     const run = fixture();
+    run.rulesetVersion = SCARCE_PICKS_RULESET_VERSION;
     run.game.state.chestIndex = chest;
     run.status = "chest_opened";
     run.game.reward = { oreNuggets: 0, lockpicks: 0 };
@@ -193,5 +198,48 @@ it("selects the correct drop table without changing saved or pending inventory",
     }
   } finally {
     random.mockRestore();
+  }
+});
+
+it("derives stable tiers from immutable rules through moves, reset and refresh", () => {
+  const run = fixture();
+  run.game.state.chestIndex = 17;
+  run.status = "chest_opened";
+  run.game.reward = { oreNuggets: 90, lockpicks: 2 };
+  run.game.state.currentLock.invalidMovesOnCurrentPick = 3;
+  const next = transition(run, "continue", {}).run;
+  expect(publicRun(next).difficulty).toBe(3);
+  expect(next.game.state.chestIndex).toBe(18);
+  expect(next.game.state.lockpicks).toBe(5);
+  expect(next.game.state.oreNuggets).toBe(90);
+  expect(next.game.state.currentLock.invalidMovesOnCurrentPick).toBe(3);
+  const moved = transition(next, "move", { pinId: 0, direction: 1 }).run;
+  expect(publicRun(moved).difficulty).toBe(3);
+  if (moved.status === "playing") {
+    const reset = transition(moved, "reset", {}).run;
+    expect(publicRun(structuredClone(reset)).difficulty).toBe(3);
+  }
+  // Classification is based on immutable initial rules, not positions or chest labels.
+  next.game.state.chestIndex = 1;
+  expect(publicRun(next).difficulty).toBe(3);
+});
+
+it("uses identical scarce-pick rewards in new and saved scarce-pick runs", () => {
+  for (const roll of [0, 0.79, 0.8, 0.96, 0.97]) {
+    const spy = vi.spyOn(Math, "random").mockReturnValue(roll);
+    try {
+      const rewards = [RULESET_VERSION, SCARCE_PICKS_RULESET_VERSION].map(
+        (version) => {
+          let run = fixture();
+          run.rulesetVersion = version;
+          run = transition(run, "move", { pinId: 0, direction: 1 }).run;
+          return transition(run, "move", { pinId: 0, direction: 1 }).run.game
+            .reward;
+        },
+      );
+      expect(rewards[0]).toEqual(rewards[1]);
+    } finally {
+      spy.mockRestore();
+    }
   }
 });

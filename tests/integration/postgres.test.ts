@@ -14,6 +14,8 @@ import { claimEntry, readEligibility } from "@/server/leaderboard/service";
 const { WebSocket, WebSocketServer } = createRequire(import.meta.url)("ws");
 
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { analyzeConnections } from "@/game/analyze-connections";
+import { SCARCE_PICKS_RULESET_VERSION } from "@/game/ruleset";
 import { cleanupExpiredRuns } from "@/server/db/retention";
 import * as schema from "@/server/db/schema";
 import { newRun } from "@/server/game/engine";
@@ -110,6 +112,79 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
       await admin.query(`DROP SCHEMA "${schemaName}" CASCADE`);
       await admin.end();
     }
+  });
+  it("persists the structural floor through racing continuation, refresh, reset and exact replay", async () => {
+    const run = await seed();
+    run.game.state.chestIndex = 17;
+    run.game.state.currentLock.invalidMovesOnCurrentPick = 3;
+    run.status = "chest_opened";
+    run.game.reward = { oreNuggets: 90, lockpicks: 2 };
+    await pool.query("UPDATE runs SET game=$2,status=$3 WHERE id=$1", [
+      run.id,
+      JSON.stringify(run.game),
+      run.status,
+    ]);
+    const command = { actionId: actionId(), expectedVersion: 1 };
+    const replies = await Promise.all([
+      execute(ownerId, "continue", run.id, command),
+      execute(ownerId, "continue", run.id, command),
+    ]);
+    expect(replies[0]).toEqual(replies[1]);
+    const dto = replies[0].body.run;
+    expect(dto).toMatchObject({
+      chestIndex: 18,
+      difficulty: 3,
+      lockpicks: 5,
+      oreNuggets: 90,
+    });
+    const stored = await storedGame(run.id);
+    expect(analyzeConnections(stored.initialLock.rules)).toMatchObject({
+      coreSize: 4,
+      dependencies: 6,
+      tier: 3,
+    });
+    expect(stored.state.currentLock.invalidMovesOnCurrentPick).toBe(3);
+    expect((await readRun(ownerId, run.id))?.difficulty).toBe(3);
+    const reset = await execute(ownerId, "reset", run.id, {
+      actionId: actionId(),
+      expectedVersion: 2,
+    });
+    expect(reset.body.run.difficulty).toBe(3);
+    expect(reset.body.run.currentLock.invalidMovesOnCurrentPick).toBe(3);
+    expect(await execute(ownerId, "continue", run.id, command)).toEqual(
+      replies[0],
+    );
+    await execute(ownerId, "abandon", run.id, {
+      actionId: actionId(),
+      expectedVersion: 3,
+    });
+  });
+  it("continues a saved scarce-picks run with its original generator and pending reward", async () => {
+    const run = await seed();
+    run.rulesetVersion = SCARCE_PICKS_RULESET_VERSION;
+    run.game.state.chestIndex = 12;
+    run.status = "chest_opened";
+    run.game.reward = { oreNuggets: 65, lockpicks: 2 };
+    await pool.query(
+      "UPDATE runs SET game=$2,status=$3,ruleset_version=$4 WHERE id=$1",
+      [run.id, JSON.stringify(run.game), run.status, run.rulesetVersion],
+    );
+    const result = await execute(ownerId, "continue", run.id, {
+      actionId: actionId(),
+      expectedVersion: 1,
+    });
+    expect(result.body.run).toMatchObject({
+      chestIndex: 13,
+      difficulty: 3,
+      lockpicks: 5,
+      oreNuggets: 65,
+      rulesetVersion: SCARCE_PICKS_RULESET_VERSION,
+    });
+    expect(result.body.run.currentLock.pins).toHaveLength(6);
+    await execute(ownerId, "abandon", run.id, {
+      actionId: actionId(),
+      expectedVersion: 2,
+    });
   });
   it("upgrades existing finished documents and backfills the indexed finish instant", async () => {
     const { rows } = await pool.query(

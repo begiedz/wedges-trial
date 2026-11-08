@@ -29,10 +29,11 @@ This is a localization/accessibility correction only. It changes no mechanics, v
 - Manual reset restores initial plate positions, preserving partial damage, spent picks, ore and accumulated chest/run metrics. Continuing to another chest also preserves partial pick damage.
 - Server metrics record moves, invalid moves and broken picks per chest and for the run. Reset does not clear them. Continue begins new chest metrics while retaining run totals.
 - Solving records a stable pending reward and increments openedChests. Continue credits that reward exactly once and generates the next lock in one transaction. Abandoning an opened chest discards its pending reward.
-- Plates: chests 1–5 have 4; 6–12 have 5; 13–24 have 6; 25+ have 7. Generation accepts zero-based indices; displayed chest numbers are one-based.
-- Difficulty display uses the same zero-based progression input as generation. Further calibration remains open.
+- New `learning-ramp-v1` runs start with four plates and one connected pair. Explicit core/connection budgets grow gradually; four to seven total plates are eligible. Early connections move in the same direction. Additional independent plates start at target before joining the core. Generation accepts zero-based indices; displayed chest numbers are one-based.
+- Saved `scarce-picks-v1` and `deterministic-ore-v1` runs retain four plates on chests 1–5, five on 6–12, six on 13–24 and seven on 25+.
+- New-run difficulty is classified from immutable initial movement rules, so moves/reset/refresh do not change the tier. Tier floors are nondecreasing, with Tier 3 at chest 18. Saved cohorts retain their chest-based labels. Human calibration remains open.
 
-The main ranking uses `scarce-picks-v1`, with four-mistake durability and the 4–7-plate progression.
+The main ranking uses `learning-ramp-v1`; older results remain in separate cohorts. See the [implementation and benchmark report](learning-progression-report.md) and [approved implementation decision](decisions.md#approved-learning-ramp--2026-11-08-48).
 
 ### Progression decision history
 
@@ -49,7 +50,7 @@ ore = floor(base * max(4, 10 - invalidMovesOnChest) / 10)
 
 Each invalid move removes 10 percentage points of the base reward, down to a 40% floor. All invalid moves count across resets and pick breaks. Integer arithmetic avoids floating-point rounding errors. There is no excess-valid-move or unverified-optimum penalty.
 
-New `scarce-picks-v1` runs roll 2 picks above 0.96, 1 above 0.79, otherwise 0: 79% none, 17% one, 4% two. This halves both nonzero drop probabilities and expected replenishment to 0.25 picks/chest. Existing `deterministic-ore-v1` runs keep their saved inventory and original 58%/34%/8% drops; pending rewards are never rerolled. Inventory remains uncapped. The legacy random-ore helper remains for debug tooling/fixtures; the authoritative game uses the approved formula.
+New `learning-ramp-v1` runs and saved `scarce-picks-v1` runs roll 2 picks above 0.96, 1 above 0.79, otherwise 0: 79% none, 17% one, 4% two. This halves both nonzero drop probabilities and expected replenishment to 0.25 picks/chest. Existing `deterministic-ore-v1` runs keep their saved inventory and original 58%/34%/8% drops; pending rewards are never rerolled. Inventory remains uncapped. The legacy random-ore helper remains for debug tooling/fixtures; the authoritative game uses the approved formula.
 
 ## Lifecycle and prediction
 

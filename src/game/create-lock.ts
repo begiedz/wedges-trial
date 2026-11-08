@@ -1,6 +1,9 @@
 import { checkSolved } from "@/game/check-solved";
 import { MAX_INVALID_MOVES_PER_PICK } from "@/game/constants";
 import { generateRules } from "@/game/generate-rules";
+import { getLearningProgression } from "@/game/learning-progression";
+import { getDifficultyForChest } from "@/game/progress-difficulty";
+import { LEARNING_RULESET_VERSION, RULESET_VERSION } from "@/game/ruleset";
 import { solveLockDetailed, verifySolution } from "@/game/solver";
 import type {
   DifficultyConfig,
@@ -34,6 +37,13 @@ function createMixedLock(
 ): { lock: LockState; boundedLock: LockState; boundedSolution: LockMove[] } {
   const solvedPins = createSolvedPins(config);
   const rules = generateRules(config, random);
+  // Extra independent plates are introduced at target, before joining a core.
+  // The original four remain available for independent alignment practice.
+  const coupledIds = new Set(
+    rules.flatMap((rule) =>
+      rule.effects.length > 1 ? rule.effects.map((effect) => effect.pinId) : [],
+    ),
+  );
   let mixedPins = clonePins(solvedPins);
   let boundedPins = mixedPins;
   const mixingPath: LockMove[] = [];
@@ -42,6 +52,12 @@ function createMixedLock(
 
   for (let move = 0; move < mixingMoves; move += 1) {
     const candidates = rules
+      .filter(
+        (rule) =>
+          !config.topology ||
+          rule.sourcePinId < 4 ||
+          coupledIds.has(rule.sourcePinId),
+      )
       .map((rule) => {
         const result = evaluateRule(mixedPins, rule);
         return result.kind === "valid" ? { pins: result.pins, rule } : null;
@@ -201,4 +217,18 @@ export function createLock(
   random: RandomSource = Math.random,
 ): LockState {
   return createLockWithDiagnostics(config, random).lock;
+}
+
+/** Saved cohorts keep the exact legacy generation path and RNG consumption. */
+export function createChestLock(
+  chestIndex: number,
+  random: RandomSource = Math.random,
+  rulesetVersion: string = RULESET_VERSION,
+): LockState {
+  return createLock(
+    rulesetVersion === LEARNING_RULESET_VERSION
+      ? getLearningProgression(chestIndex, random)
+      : getDifficultyForChest(chestIndex),
+    random,
+  );
 }

@@ -26,6 +26,8 @@ The domain engine remains **pure TypeScript** and is executed by the server for 
 | [status.md](status.md) | Present implementation, target, migration boundaries |
 | [decisions.md](decisions.md) | Approved decisions and open design questions |
 | [gameplay.md](gameplay.md) | Domain invariants, progression and reward design |
+| [new-player-progression-plan.md](new-player-progression-plan.md) | Original #48 learning-ramp plan; lockpick balance preserved |
+| [learning-progression-report.md](learning-progression-report.md) | Implemented learning-ramp-v1, paired benchmark evidence and pending human/Preview acceptance |
 | [competitive-ranking.md](competitive-ranking.md) | Approved endless ore ordering, qualification, sustainability and version boundaries (#51) |
 | [backend.md](backend.md) | API, run lifecycle, transactions, error semantics |
 | [api-contract.md](api-contract.md) | Canonical v1 requests, DTOs, lifecycle, examples and retry rules (#29) |
@@ -50,6 +52,6 @@ Product-specific React code belongs in `src/features/<name>/`. Gameplay owns its
 
 ## Current and historical engine measurements
 
-- [Current post-#61 performance](lock-benchmarks.md) and [difficulty/resource sustain](lock-validation.md).
+- [Post-#61 baseline performance](lock-benchmarks.md) and [difficulty/resource sustain](lock-validation.md).
 - [2026-11-05 performance](archive/2026-11-05-lock-benchmarks.md) and [2026-11-05 validation](archive/2026-11-05-lock-validation.md).
 - [Archive checksums and source snapshot](../../benchmarks/results/archive/manifest.json). Historical raw files are byte-for-byte copies; only relative report links were repaired.

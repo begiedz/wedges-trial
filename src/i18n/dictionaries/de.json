@@ -94,14 +94,14 @@
       "about": {
         "title": "Über Wedge's Trial",
         "eyebrow": "Hinter der Prüfung",
-        "lead": "Wedge’s Trial ist ein endloses Schlossknack-Puzzlespiel im Browser, in dem jede geöffnete Truhe zu einer schwierigeren Prüfung führt.",
+        "lead": "Wedge’s Trial ist ein endloses Schlossknack-Puzzlespiel im Browser mit allmählich wachsenden Herausforderungen.",
         "whatItIs": {
           "title": "Was ist Wedge’s Trial?",
           "body": "Wedge fordert dich mit einer Folge generierter, stets lösbarer Schlösser heraus. Ihre verbundenen Mechanismen belohnen Beobachtung und Planung statt Schnelligkeit; die gesammelten Erzbrocken zeigen, wie weit du gekommen bist."
         },
         "trial": {
           "title": "Die endlose Prüfung",
-          "body": "Mit jeder Truhe steigt die Schwierigkeit: mehr Platten, dichtere Abhängigkeiten und längere Lösungen. Sammle so viel Erz wie möglich, bevor dir die Dietriche ausgehen."
+          "body": "Die ersten Schlösser führen ein verbundenes Plattenpaar ein. Im weiteren Verlauf sorgen größere verbundene Gruppen und längere Lösungen schrittweise für mehr Herausforderung. Sammle so viel Erz wie möglich, bevor dir die Dietriche ausgehen."
         },
         "inspiration": {
           "eyebrow": "Aus Inspiration geschmiedet",
@@ -311,7 +311,7 @@
       "invalid": "Ungültige Züge lassen alle Platten an Ort und Stelle und beschädigen nur den aktuellen Dietrich.",
       "noEvents": "Noch keine Spielereignisse.",
       "saved": "Ein zuvor gespeicherter Lauf vom zuletzt geöffneten Schloss ist verfügbar.",
-      "solved": "Schloss gelöst. Gehe zur nächsten Truhe weiter, um ein schwereres Testschloss zu erzeugen und den Lauf zu speichern."
+      "solved": "Schloss geöffnet. Gehe zur nächsten Truhe, um ein weiteres generiertes Schloss zu prüfen."
     },
     "states": {
       "active": "Aktiv",

@@ -6,7 +6,7 @@ Approved by the task author on 2026-11-03: endless remains primary and ranks ore
 
 1. Use the immutable server-finished run, after the final pick breaks. Only credited ore counts. Pending loot, browser predictions and submitted scores never count. Abandonment does not qualify.
 2. Order by ore DESC, opened chests DESC, finish instant ASC, run UUID ASC. PostgreSQL queries must use these exact tie breakers. Canonical lowercase UUID strings give the same final ordering in the policy. Do not use nickname, claim time, owner identity, move count or guessed optimum to break ties.
-3. Use the single main ranking under `scarce-picks-v1`; existing results retain their original ruleset. Preserve the approved integer ore formula and existing pick replenishment. This decision introduces no efficiency penalty, run cap, new resource or bounded ranked challenge.
+3. Use the single main ranking under `learning-ramp-v1`; existing results retain their original ruleset. Preserve the approved integer ore formula and existing pick replenishment. This decision introduces no efficiency penalty, run cap, new resource or bounded ranked challenge.
 4. Count claimed runs only. With 0–999 claims, any valid finished run may claim, including zero ore. At capacity it must strictly outrank the 1000th. A UUID resolves otherwise identical results. Multiple runs from one owner and duplicate nicknames are allowed; a run can claim only once.
 5. Eligibility is a snapshot. Before accepting a nickname, authenticate the live owning session, validate name/origin and recheck cutoff atomically with insertion. A provisional qualifier may lose eligibility. Keep displaced claims and query TOP 1000 rather than delete claims and allow resubmission. Never accept a caller-provided list of claims or result as trusted input to the policy.
 
@@ -28,7 +28,7 @@ Retain server-recorded ore, opened chests, total/per-chest moves, invalid moves 
 
 No new claim TTL or automatic deletion is introduced. Existing 30-day anonymous session expiry limits authenticated access; qualification does not extend it or reserve a place. The conservative manual retention policy under #31 preserves active runs, live-session retry/submission access, claimed-run references and one-claim history. A future claim-expiry policy must be explicit in the API/UI before enforcement.
 
-The main ranking uses `scarce-picks-v1`; old results/claims/replays are preserved separately under `deterministic-ore-v1`. Future score-affecting reward, replenishment, difficulty or run-limit changes require a version review, a new cohort for incomparable runs and an explicit rollout; never rewrite historical results. This pre-release change needs no SQL migration or data backfill. Rollback is an application-code revert; see decisions.md.
+The main ranking uses `learning-ramp-v1`; old results/claims/replays are preserved separately under `scarce-picks-v1` and `deterministic-ore-v1`. Future score-affecting reward, replenishment, difficulty or run-limit changes require a version review, a new cohort for incomparable runs and an explicit rollout; never rewrite historical results. This pre-release change needs no SQL migration or data backfill. Rollback switches new-run/ranking defaults while retaining all handlers needed by saved runs; see decisions.md.
 
 ## Linked issue alignment and verification
 

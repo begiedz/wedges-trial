@@ -234,3 +234,8 @@ Visited pages remain in memory within one frozen ranking snapshot. Next uses the
 Verification is local automated evidence; browser/device and deployed behavior are not established. No API/schema change, migration, deployment or GitHub issue mutation is included. Rollback is a source-only revert.
 
 Local verification: `pnpm test` passed 370 tests; 36 opt-in PostgreSQL tests were skipped because `TEST_DATABASE_URL` was unset. `pnpm test:coverage --testTimeout=20000` passed 369 tests before the final navigation regression was added (60.48% overall statement coverage); the final full test run includes that regression. `pnpm typecheck`, `pnpm lint` (including naming/architecture) and `pnpm build` passed. Lint retains the existing cursor CSS `!important` warning. The production build generated all four localized leaderboard routes.
+
+
+## Learning progression (#48) — 2026-11-08
+
+Implemented locally: `learning-ramp-v1` separates core size, directional dependency budget, plate eligibility and solution targets. New runs begin with one connected pair; the actual immutable connection structure determines the public tier, with a nondecreasing floor and Tier 3 at chest 18. Scarce lockpick behavior and deterministic ore are unchanged. Saved cohorts keep their generation/reward handlers and results; no migration or deployment is part of this work. The final 53,000-lock survey has no adjacent median solution-length increase above one move through chest 50, and all final optima/witnesses are verified. Local latency acceptance remains NO-GO (p95 117.91 ms, max 5,538.48 ms). See the [report](learning-progression-report.md) for retained outliers, exact-seed investigation and remaining human/browser/Preview acceptance.

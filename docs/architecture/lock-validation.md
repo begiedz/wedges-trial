@@ -1,5 +1,7 @@
 # Lock validation and difficulty — post-#61 (2026-11-06)
 
+> Preserved post-#61 baseline. New `learning-ramp-v1` progression and matched measurements are documented in the [2026-11-08 report](learning-progression-report.md).
+
 Current 4–7-plate engine and four-mistake durability. [Historical #50 report](archive/2026-11-05-lock-validation.md), [historical #28 report](archive/2026-11-05-lock-benchmarks.md) and [archive manifest](../../benchmarks/results/archive/manifest.json) preserve the earlier 3–6-plate/three-mistake evidence. Raw bytes and measurement/provenance text are preserved; only relative report links were repaired.
 
 ## Contract and provenance

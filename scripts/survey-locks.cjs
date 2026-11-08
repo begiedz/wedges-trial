@@ -4,6 +4,7 @@ const { createHash } = require("node:crypto");
 const {
   CHESTS,
   seededRandom,
+  mixSeed,
   summarize,
   buildEngineSource,
   loadEngine,
@@ -12,7 +13,12 @@ const {
 // Same bounded corpus locally and in the private standalone Preview fixture.
 function runSurvey(
   engine,
-  { samples = 1000, chests = CHESTS, seed = 50 } = {},
+  {
+    samples = 1000,
+    chests = CHESTS,
+    seed = 50,
+    rulesetVersion = engine.RULESET_VERSION,
+  } = {},
 ) {
   if (
     !Number.isInteger(samples) ||
@@ -20,13 +26,14 @@ function runSurvey(
     samples > 1000 ||
     !Number.isInteger(seed) ||
     !chests.length ||
-    chests.some((chest) => !CHESTS.includes(chest))
+    chests.some(
+      (chest) => !Number.isSafeInteger(chest) || chest < 1 || chest > 100000,
+    )
   )
     throw new RangeError("Invalid survey configuration");
   const rows = [];
   const raw = [];
   for (const chest of chests) {
-    const config = engine.getDifficultyForChest(chest - 1);
     const fingerprints = new Set();
     const ruleFingerprints = new Set();
     const lengths = [];
@@ -39,13 +46,17 @@ function runSurvey(
     const attempts = [];
     const visited = [];
     for (let i = 0; i < samples; i++) {
-      const sampleSeed = (seed + chest * 100003 + i) >>> 0;
+      // Mix adjacent input seeds before the LCG so the first configuration draw
+      // does not correlate plate counts with nearby sample indices.
+      const sampleSeed = mixSeed(seed + chest * 100003 + i);
+      const random = seededRandom(sampleSeed);
       const cpu = process.cpuUsage();
       const start = performance.now();
-      const generated = engine.createLockWithDiagnostics(
-        config,
-        seededRandom(sampleSeed),
-      );
+      const config =
+        rulesetVersion === engine.LEARNING_RULESET_VERSION
+          ? engine.getLearningProgression(chest - 1, random)
+          : engine.getDifficultyForChest(chest - 1);
+      const generated = engine.createLockWithDiagnostics(config, random);
       const ms = performance.now() - start;
       const used = process.cpuUsage(cpu);
       const { lock, solution, diagnostics } = generated;
@@ -98,6 +109,14 @@ function runSurvey(
         seed: sampleSeed,
         ms,
         cpuMs: (used.user + used.system) / 1000,
+        config,
+        structure: engine.analyzeConnections(lock.rules),
+        plateCount: lock.pins.length,
+        initialLegalActions: lock.rules.filter(
+          (rule) =>
+            engine.applyMoveToLock(lock, rule.sourcePinId, rule.direction)
+              .kind === "valid",
+        ).length,
         diagnostics,
         optimum: lock.optimalMoves,
         witnessLength: solution.length,
@@ -110,7 +129,21 @@ function runSurvey(
     if (shortestMismatch) throw new Error("Optimum mismatch");
     rows.push({
       chest,
-      config,
+      plateCounts: Object.fromEntries(
+        [4, 5, 6, 7].map((count) => [
+          count,
+          raw.filter((row) => row.chest === chest && row.plateCount === count)
+            .length,
+        ]),
+      ),
+      tiers: Object.fromEntries(
+        [1, 2, 3, 4].map((tier) => [
+          tier,
+          raw.filter(
+            (row) => row.chest === chest && row.structure.tier === tier,
+          ).length,
+        ]),
+      ),
       outcomes,
       budgetExhausted,
       fullyIndependent,
@@ -127,6 +160,7 @@ function runSurvey(
   return {
     metadata: {
       date: new Date().toISOString(),
+      rulesetVersion,
       node: process.version,
       platform: process.platform,
       arch: process.arch,
@@ -144,6 +178,7 @@ if (require.main === module) {
   const built = buildEngineSource();
   const report = runSurvey(loadEngine(built.source), {
     samples: Number(process.argv[2] ?? 1000),
+    chests: [...Array.from({ length: 50 }, (_, i) => i + 1), 100, 1000, 10000],
   });
   report.metadata.engineSha256 = built.hash;
   const json = `${JSON.stringify(report, null, 2)}\n`;

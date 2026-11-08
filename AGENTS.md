@@ -12,13 +12,13 @@
 
 ## Gameplay invariants (preserve unless explicitly changed)
 
-- Primary mode: **endless**. Each chest has a randomly constructed, solvable lock; new runs use 4/5/6/7 plates at displayed chests 1/6/13/25. Difficulty generally increases with progress.
+- Primary mode: **endless**. Each chest has a randomly constructed, solvable lock; new `learning-ramp-v1` runs start with four plates and one connected pair, then grow a connected core and explicit connection budget gradually. Four to seven total plates remain eligible; tier comes from actual connections, with a nondecreasing floor (Tier 3 at chest 18). Saved runs retain their original progression.
 - Players select and slide **plates** left/right beneath stationary **pins**. Each plate has seven holes and seven bounded integer positions; the middle hole is the target. Sliding one plate may slide connected plates, sometimes in the opposite direction; both directions have inverse effects.
 - An **invalid move** would push at least one affected plate outside its legal position range; it changes no plate positions.
 - A lockpick **breaks after exactly four invalid moves on that pick**. Breaking it does **not** reset the lock. A separate manual reset button restores plate positions; **reset must not restore spent picks, clear accumulated per-chest scoring penalties, or grant free durability**. Preserve regression coverage for partial damage across reset and chest continuation.
 - Player resources: **lockpicks and ore nuggets only**. Ore is the score resource. Do not silently introduce XP, energy, lives or currencies.
 - Pure, deterministic *given inputs* domain functions belong in `src/game/`, independent of React, database, network and sound.
-- New runs use `scarce-picks-v1`: one starting lockpick and 0/1/2-pick drops of 79%/17%/4%. Existing `deterministic-ore-v1` runs retain their original inventory and drop table; the ore formula is unchanged.
+- New runs use `learning-ramp-v1` with the unchanged scarce-pick balance: one starting lockpick and 0/1/2-pick drops of 79%/17%/4%. Existing `scarce-picks-v1` and `deterministic-ore-v1` runs retain their original generation, inventory and drop table; the ore formula is unchanged.
 - Randomness in **lock generation** remains. **Ore rewards are deterministic** under approved deterministic-ore-v1: floor((10 + 5 * (chestNumber - 1)) * max(4, 10 - invalidMovesOnChest) / 10). Endless ore ranking is approved (ore DESC, opened chests DESC, finished time ASC, run UUID ASC); further efficiency tuning and lockpick replenishment remain **open balancing decisions**; see `docs/architecture/decisions.md` and GitHub Issues #47, #51.
 - Do not claim a generated lock's shortest solution is proven if `solveLock()` returns `null` because its search budget was exhausted. Do not penalize players against an unverified optimum.
 

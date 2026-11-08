@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createLock } from "@/game/create-lock";
+import { createChestLock } from "@/game/create-lock";
 import { createRun, openSolvedChest } from "@/game/create-run";
-import { getDifficultyForChest } from "@/game/progress-difficulty";
+import { RULESET_VERSION } from "@/game/ruleset";
 
 vi.mock("@/game/create-lock", () => ({
-  createLock: vi.fn(() => ({
+  createChestLock: vi.fn(() => ({
     pins: [{ id: 0, min: 0, max: 6, target: 3, position: 2 }],
     rules: [],
     invalidMovesOnCurrentPick: 0,
@@ -26,10 +26,7 @@ describe("run progression", () => {
 
     expect(run.chestIndex).toBe(1);
     expect(run.lockpicks).toBe(1);
-    expect(createLock).toHaveBeenLastCalledWith(
-      getDifficultyForChest(0),
-      random,
-    );
+    expect(createChestLock).toHaveBeenLastCalledWith(0, random);
 
     for (let chestIndex = 2; chestIndex <= 26; chestIndex += 1) {
       run = openSolvedChest(
@@ -38,9 +35,10 @@ describe("run progression", () => {
       );
 
       expect(run.chestIndex).toBe(chestIndex);
-      expect(createLock).toHaveBeenLastCalledWith(
-        getDifficultyForChest(chestIndex - 1),
+      expect(createChestLock).toHaveBeenLastCalledWith(
+        chestIndex - 1,
         random,
+        RULESET_VERSION,
       );
     }
   });
@@ -74,6 +72,6 @@ describe("run progression", () => {
       ...run,
       reward: { oreNuggets: 0, lockpicks: 0 },
     });
-    expect(createLock).not.toHaveBeenCalled();
+    expect(createChestLock).not.toHaveBeenCalled();
   });
 });

@@ -94,14 +94,14 @@
       "about": {
         "title": "About Wedge's Trial",
         "eyebrow": "Behind the trial",
-        "lead": "Wedge’s Trial is an endless browser lockpicking puzzle in which every opened chest leads to a tougher test.",
+        "lead": "Wedge’s Trial is an endless browser lockpicking puzzle with gradually growing challenges.",
         "whatItIs": {
           "title": "What is Wedge’s Trial?",
           "body": "Wedge challenges you with a chain of generated, always-solvable locks. Their connected mechanisms reward observation and planning rather than speed, while ore nuggets record how far your run has carried you."
         },
         "trial": {
           "title": "The endless trial",
-          "body": "Each chest raises the difficulty through more plates, denser dependencies between them, and longer solutions. Your goal is simple: gather as much ore as possible before your supply of lockpicks is exhausted."
+          "body": "The first locks introduce a connected pair of plates. As you progress, larger connected groups and longer solutions add to the challenge gradually. Gather as much ore as possible before your lockpicks run out."
         },
         "inspiration": {
           "eyebrow": "Forged by inspiration",
@@ -311,7 +311,7 @@
       "invalid": "Invalid moves leave every plate in place and only damage the current lockpick.",
       "noEvents": "No gameplay events yet.",
       "saved": "A previously saved run is available from the last opened chest.",
-      "solved": "Lock solved. Advance to the next chest to generate a harder test lock and save the run."
+      "solved": "Lock solved. Continue to the next chest to inspect another generated lock."
     },
     "states": {
       "active": "Active",

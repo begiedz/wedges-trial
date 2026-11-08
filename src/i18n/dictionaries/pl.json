@@ -94,14 +94,14 @@
       "about": {
         "title": "O Próbie Klina",
         "eyebrow": "Za kulisami próby",
-        "lead": "Próba Klina to niekończąca się przeglądarkowa łamigłówka z otwieraniem zamków, w której każda otwarta skrzynia prowadzi do trudniejszej próby.",
+        "lead": "Próba Klina to niekończąca się przeglądarkowa łamigłówka z otwieraniem zamków i stopniowo rosnącym wyzwaniem.",
         "whatItIs": {
           "title": "Czym jest Próba Klina?",
           "body": "Klin rzuca ci wyzwanie w postaci szeregu generowanych, zawsze rozwiązywalnych zamków. Połączone mechanizmy nagradzają spostrzegawczość i planowanie, nie szybkość, a zebrane bryłki rudy pokazują, jak daleko udało ci się dotrzeć."
         },
         "trial": {
           "title": "Niekończąca się próba",
-          "body": "Każda skrzynia podnosi poziom trudności: pojawia się więcej płytek, więcej zależności między nimi i dłuższe rozwiązania. Cel jest prosty: zbierz jak najwięcej rudy, zanim skończą ci się wytrychy."
+          "body": "Pierwsze zamki wprowadzają parę połączonych płytek. W miarę postępów większe grupy połączonych płytek i dłuższe rozwiązania stopniowo zwiększają wyzwanie. Zbierz jak najwięcej rudy, zanim skończą ci się wytrychy."
         },
         "inspiration": {
           "eyebrow": "Wykute z inspiracji",
@@ -311,7 +311,7 @@
       "invalid": "Nieprawidłowe ruchy pozostawiają wszystkie płytki na miejscu i uszkadzają tylko bieżący wytrych.",
       "noEvents": "Brak zdarzeń rozgrywki.",
       "saved": "Dostępny jest wcześniej zapisany bieg z ostatnio otwartej skrzyni.",
-      "solved": "Zamek rozwiązany. Przejdź do następnej skrzyni, aby wygenerować trudniejszy zamek testowy i zapisać bieg."
+      "solved": "Zamek otwarty. Przejdź do następnej skrzyni, aby sprawdzić kolejny wygenerowany zamek."
     },
     "states": {
       "active": "Aktywny",

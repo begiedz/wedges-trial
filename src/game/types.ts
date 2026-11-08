@@ -46,6 +46,15 @@ export type RunState = {
 };
 
 export type DifficultyConfig = {
+  /** Generation-only constraints; never trusted from requests or persisted. */
+  /** Offline calibration range before an early-chest exact target is sampled. */
+  solutionLengthRange?: readonly [number, number];
+  topology?: {
+    coreSize: number;
+    dependencies: number;
+    maxFanout: number;
+    sameDirectionOnly: boolean;
+  };
   plateCount: number;
   minPosition: number;
   maxPosition: number;

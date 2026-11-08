@@ -26,6 +26,7 @@ describe("lock benchmark", () => {
     const built = buildEngineSource();
     const engine = loadEngine(built.source);
     const report = runBenchmark(engine, {
+      rulesetVersion: engine.SCARCE_PICKS_RULESET_VERSION,
       samples: 2,
       warmups: 1,
       chests: [1, 25, 10000],

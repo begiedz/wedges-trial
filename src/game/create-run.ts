@@ -1,7 +1,7 @@
 import { STARTING_LOCKPICKS } from "@/game/constants";
-import { createLock } from "@/game/create-lock";
-import { getDifficultyForChest } from "@/game/progress-difficulty";
+import { createChestLock } from "@/game/create-lock";
 import { getChestReward } from "@/game/rewards";
+import { RULESET_VERSION } from "@/game/ruleset";
 import type { ChestReward, RandomSource, RunState } from "@/game/types";
 
 export function createRun(random: RandomSource = Math.random): RunState {
@@ -9,13 +9,14 @@ export function createRun(random: RandomSource = Math.random): RunState {
     chestIndex: 1,
     oreNuggets: 0,
     lockpicks: STARTING_LOCKPICKS,
-    currentLock: createLock(getDifficultyForChest(0), random),
+    currentLock: createChestLock(0, random),
   };
 }
 
 export function openSolvedChest(
   run: RunState,
   random: RandomSource = Math.random,
+  rulesetVersion: string = RULESET_VERSION,
 ): RunState & { reward: ChestReward } {
   if (!run.currentLock.isSolved) {
     return {
@@ -30,9 +31,10 @@ export function openSolvedChest(
   const reward = getChestReward(run.chestIndex, random);
   const nextChestIndex = run.chestIndex + 1;
 
-  const currentLock = createLock(
-    getDifficultyForChest(nextChestIndex - 1),
+  const currentLock = createChestLock(
+    nextChestIndex - 1,
     random,
+    rulesetVersion,
   );
   currentLock.invalidMovesOnCurrentPick =
     run.currentLock.invalidMovesOnCurrentPick;
