@@ -24,13 +24,13 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("public ranking HTTP client", () => {
-  it("uses public API with ten entries and no session or score", async () => {
+  it("uses public API with ten entries and same-origin protection cookies", async () => {
     respond(page);
     expect(await getLeaderboardPage(0)).toEqual(page);
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/leaderboard?limit=10",
       expect.objectContaining({
-        credentials: "omit",
+        credentials: "same-origin",
         cache: "no-store",
         signal: expect.any(AbortSignal),
       }),

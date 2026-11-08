@@ -12,7 +12,8 @@ export async function getLeaderboardPage(
   const query = new URLSearchParams({ limit: String(LEADERBOARD_PAGE_SIZE) });
   if (cursor) query.set("cursor", cursor);
   const response = await fetch(`/api/leaderboard?${query}`, {
-    credentials: "omit",
+    // Protected Preview deployments require Vercel's same-origin access cookie.
+    credentials: "same-origin",
     cache: "no-store",
     signal: signal
       ? AbortSignal.any([signal, AbortSignal.timeout(15000)])
