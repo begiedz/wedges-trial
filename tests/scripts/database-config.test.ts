@@ -4,10 +4,8 @@ import { describe, expect, it } from "vitest";
 const { getMigrationConnection } = createRequire(import.meta.url)(
   "../../scripts/database-config.cjs",
 );
-const direct =
-  "postgresql://user:password@ep-dev.region.neon.tech/app?sslmode=require";
-const pooled =
-  "postgresql://user:password@ep-dev-pooler.region.neon.tech/app?sslmode=require";
+const direct = "postgresql://ep-dev.db.invalid/app?sslmode=require";
+const pooled = "postgresql://ep-dev-pooler.db.invalid/app?sslmode=require";
 describe("migration database target guard", () => {
   it("accepts matching direct and pooled endpoints", () => {
     expect(

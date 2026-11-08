@@ -244,3 +244,6 @@ Implemented locally: `learning-ramp-v1` separates core size, directional depende
 ## Native Vercel release gate — 2026-11-08
 
 Configured and observed remotely: `Quality Checks` from GitHub is required for Production promotion on the `wedges-trial` Vercel project; Production Branch remains `master`, with automatic aliasing enabled. Implemented locally: Vercel build-time migration command, a direct-session migration mutex with bounded lock waiting, and PostgreSQL-backed CI checks. Ordinary local/CI builds remain migration-free. Migration failure aborts the build; SQL may still run before CI completes, so compatible schema evolution is required. See [operational setup](server-setup.md#autodeploy-and-required-production-checks). No production migration/deploy or push was performed, and end-to-end production promotion is not yet verified.
+
+
+Build-command follow-up: the task author chose dashboard-managed Build Command, so the repository override was removed. Automated migrations now depend on that dashboard value including `pnpm db:migrate`; a plain `pnpm build` does not migrate. The remote production check remains configured. The task author confirmed `pnpm db:migrate && pnpm build`; the actual dashboard edit has not been verified.

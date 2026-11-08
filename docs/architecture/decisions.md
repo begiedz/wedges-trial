@@ -142,3 +142,8 @@ The task author selected native Vercel Git autodeploy with Deployment Checks. Ve
 The repository’s Vercel build command applies committed Drizzle migrations before Next.js build, with a session advisory lock on the same direct PostgreSQL connection used by Drizzle. Migration failure stops the build. CI uses ephemeral PostgreSQL 17 and runs real database tests. Normal local/CI `pnpm build` does not migrate. Deployment Checks do not delay build-time migrations; schema changes must remain compatible with the previously deployed application and are not automatically undone when CI/build/promotion fails. See [setup, concurrency and rollback](server-setup.md#autodeploy-and-required-production-checks).
 
 Only the deployment-check setting was changed remotely. No production migration, deployment, push or environment-secret download was performed. Repository changes must reach the release commit before build-time migration automation takes effect; live blocked/successful promotion has not been exercised.
+
+
+### Build command managed in Vercel — 2026-11-08
+
+The task author subsequently chose to edit Build Command in the Vercel dashboard. Remove the repository’s `vercel.json` override so it cannot supersede that setting. The production `Quality Checks` gate, PostgreSQL-backed CI and serialized migration runner remain useful independently of where Build Command is configured. Use `pnpm db:migrate && pnpm build` for automatic migrations or `pnpm build` for build-only deployments. The task author confirmed `pnpm db:migrate && pnpm build` as the intended dashboard value, preserving automatic migrations. The actual dashboard edit is user-managed and was not changed or verified in this follow-up.

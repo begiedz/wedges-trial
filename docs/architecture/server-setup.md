@@ -6,7 +6,7 @@ Use Node.js 22 and pnpm 10.18.3. Development uses the configured Neon database t
 
 1. Run pnpm install --frozen-lockfile and copy .env.example to gitignored .env if needed.
 2. Set DATABASE_URL to a direct development connection and DATABASE_URL_POOLED to its pooled equivalent. Both must belong to the same Neon endpoint/branch and database. The application prefers the pooled URL, falling back to DATABASE_URL.
-3. Review committed drizzle/ SQL, then run pnpm db:migrate against the isolated development database. Migrations use DATABASE_URL_UNPOOLED when supplied, otherwise DATABASE_URL. Request handlers do not initialize tables. Vercel Git builds apply committed migrations automatically through the repository build command described below; ordinary local/CI `pnpm build` does not.
+3. Review committed drizzle/ SQL, then run pnpm db:migrate against the isolated development database. Migrations use DATABASE_URL_UNPOOLED when supplied, otherwise DATABASE_URL. Request handlers do not initialize tables. Vercel builds apply migrations only if their dashboard Build Command includes `pnpm db:migrate`; ordinary local/CI `pnpm build` does not.
 4. Keep database variables in .env for both Next.js and the native migration loader. Next.js also loads .env.local with higher priority; avoid conflicting database overrides there.
 
 Use matching ASCII quotes or no surrounding quotes in local env files. Typographic/mismatched quotes can become part of the URL. In Vercel's environment variable editor, paste the raw value without surrounding quotes. Restart local development after changes; redeploy the relevant Vercel environment after changing its variables.
@@ -35,7 +35,7 @@ Development Neon migration and Preview HTTPS session/run flows were verified. Na
 
 ## Autodeploy and required production checks
 
-Vercel’s native Git integration remains the deploy owner. Production Branch is `master`; `development` builds remain Preview. `vercel.json` sets:
+Vercel’s native Git integration remains the deploy owner. Production Branch is `master`; `development` builds remain Preview. Build Command is managed in the Vercel dashboard, not overridden in the repository. To keep automatic migrations, set **Settings → Build and Deployment → Build Command** to:
 
 ```sh
 pnpm db:migrate && pnpm build
@@ -45,7 +45,7 @@ A migration error stops the build and prevents that deployment from being publis
 
 The Vercel project’s **Settings → Build and Deployment → Deployment Checks** now requires the GitHub check **Quality Checks** for **Production**. This was saved and observed in the dashboard on 2026-11-08. Automatic production aliasing remains enabled, and the production branch was verified as `master`. Preserve that exact job name in `.github/workflows/ci.yml`; Vercel matches check results on the deployment’s commit. The workflow runs for pushes and PRs targeting `development` and `master`. A failed or missing required check holds publication to production domains. Preview publication is not gated by this production-only check.
 
-Commit and merge the workflow, migration runner and `vercel.json` into `master` together before the next production release. The gate is already configured remotely, but these repository changes are not yet pushed. An older branch exposing only `Run tests` does not fulfill the new `Quality Checks` gate. Push/PR triggers report ordinary GitHub job results; no `repository_dispatch` notifier or Vercel deployment token in GitHub is needed.
+Keep the workflow and migration runner available on `master` before the next production release. The production gate was configured remotely. The repository build-command override was subsequently removed at the task author’s request so dashboard changes take effect. The confirmed intended dashboard command is `pnpm db:migrate && pnpm build`; the dashboard edit is user-managed and has not been verified here. An older branch exposing only `Run tests` does not fulfill the new `Quality Checks` gate. Push/PR triggers report ordinary GitHub job results; no `repository_dispatch` notifier or Vercel deployment token in GitHub is needed.
 
 Set matching direct and pooled URLs in each Vercel environment separately. Production points at production, Preview at an isolated development database. `DATABASE_URL_UNPOOLED` overrides the direct migration URL; otherwise `DATABASE_URL` must be direct. `DATABASE_URL_POOLED` remains the app connection. The runner rejects a pooled migration URL or a direct/app database mismatch. Existing variable names/scopes were inspected; secret values were not downloaded or validated locally. Automatic approval review rejected that download, so URL validation remains inside the build environment. No production migration or deployment was executed while configuring this flow.
 
@@ -53,7 +53,7 @@ Set matching direct and pooled URLs in each Vercel environment separately. Produ
 
 **Concurrent builds:** `scripts/migrate.cjs` pins Drizzle and its PostgreSQL session advisory lock to one direct connection. It acquires the database-scoped lock before Drizzle creates or reads its journal, waits up to 60 seconds for locks, then applies migrations. Closing the dedicated session releases the advisory lock after success, error or timeout. Another build sees the committed journal before deciding what remains pending. Failed migration SQL rolls back; existing data and prior successful migrations remain. Lock timeout fails the build rather than waiting indefinitely. This serializes migration execution, not application requests or whole deployments.
 
-**Rollback:** retain database tables, data and migration history. To disable build-time migration automation, revert the `vercel.json` build override to `pnpm build`; the production check can remain enabled. Roll back application code only to a version compatible with the expanded schema. Do not automatically drop tables or reverse committed migrations after a failed deployment.
+**Rollback:** retain database tables, data and migration history. To disable build-time migration automation, set the Vercel dashboard Build Command to `pnpm build`; the production check can remain enabled. Roll back application code only to a version compatible with the expanded schema. Do not automatically drop tables or reverse committed migrations after a failed deployment.
 
 Local verification on 2026-11-08: `pnpm test` and `pnpm test:coverage` each pass all 441 tests, including 41 real PostgreSQL tests. New runner tests cover concurrent full-schema initialization, no-op retries, failed SQL rollback, session-lock release, lock timeout before journal access and credential-safe CLI errors. TypeScript, lint/names/architecture and `pnpm build --webpack` pass; the existing cursor CSS warning remains. A remote blocked/successful production promotion has not been triggered or verified.
 
