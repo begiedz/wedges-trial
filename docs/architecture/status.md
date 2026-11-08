@@ -239,3 +239,8 @@ Local verification: `pnpm test` passed 370 tests; 36 opt-in PostgreSQL tests wer
 ## Learning progression (#48) — 2026-11-08
 
 Implemented locally: `learning-ramp-v1` separates core size, directional dependency budget, plate eligibility and solution targets. New runs begin with one connected pair; the actual immutable connection structure determines the public tier, with a nondecreasing floor and Tier 3 at chest 18. Scarce lockpick behavior and deterministic ore are unchanged. Saved cohorts keep their generation/reward handlers and results; no migration or deployment is part of this work. The final 53,000-lock survey has no adjacent median solution-length increase above one move through chest 50, and all final optima/witnesses are verified. Local latency acceptance remains NO-GO (p95 117.91 ms, max 5,538.48 ms). See the [report](learning-progression-report.md) for retained outliers, exact-seed investigation and remaining human/browser/Preview acceptance.
+
+
+## Native Vercel release gate — 2026-11-08
+
+Configured and observed remotely: `Quality Checks` from GitHub is required for Production promotion on the `wedges-trial` Vercel project; Production Branch remains `master`, with automatic aliasing enabled. Implemented locally: Vercel build-time migration command, a direct-session migration mutex with bounded lock waiting, and PostgreSQL-backed CI checks. Ordinary local/CI builds remain migration-free. Migration failure aborts the build; SQL may still run before CI completes, so compatible schema evolution is required. See [operational setup](server-setup.md#autodeploy-and-required-production-checks). No production migration/deploy or push was performed, and end-to-end production promotion is not yet verified.

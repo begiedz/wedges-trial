@@ -8,6 +8,7 @@
 - Use **pnpm, Next.js 16, React 19, TypeScript (strict), Radix/shadcn UI, Tailwind CSS, Biome and Vitest**. Follow existing patterns; avoid new infrastructure and dependencies without justification.
 - The **chosen target** is **Vercel (Next.js Route Handlers) + Neon PostgreSQL + Drizzle ORM**. Gameplay uses **Vercel-native WebSockets** with visual prediction and authoritative reconciliation; HTTPS remains for bootstrap, lifecycle and recovery. No standalone Express/Docker server is required.
 - The repository is in **migration**: gameplay now commits on the server in Neon; the client predicts visuals only, and gameplay browser persistence has been removed. Distinguish implemented code, verified development/Preview behavior and production readiness; never infer deployment from a commit or build. See `docs/architecture/status.md`.
+- Releases use native Vercel Git autodeploy with the GitHub `Quality Checks` result required for Production promotion (`master`). `vercel.json` runs committed migrations before the Vercel build; plain local/CI `pnpm build` does not migrate. Migration locking serializes concurrent runners, but database changes can precede CI completion/promotion: keep schema changes compatible with the currently deployed app. See `docs/architecture/server-setup.md`.
 - Consult the version-matched Next.js docs at `node_modules/next/dist/docs/` before modifying framework-specific code, and follow local documentation over assumptions.
 
 ## Gameplay invariants (preserve unless explicitly changed)

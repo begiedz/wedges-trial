@@ -133,3 +133,12 @@ Generation affects survival and ranked score comparability, so the new cohort is
 Measured calibration also samples exact path targets uniformly within the scheduled window before the connected core reaches seven plates. This removes the constructor’s bias toward the longest attainable path; the original 12-attempt/20,000-state limits and honest target shortfalls remain. Mature cores retain bounded windows to avoid forcing expensive exact late paths.
 
 The [implementation report](learning-progression-report.md) records local tests and paired measurements. Human calibration, browser/device checks and deployed Preview acceptance remain pending; implementation and local benchmarks do not establish production readiness. No GitHub issue mutation or deployment is implied.
+
+
+## Approved Vercel autodeploy and production checks — 2026-11-08
+
+The task author selected native Vercel Git autodeploy with Deployment Checks. Vercel owns builds/deploys; GitHub CI reports `Quality Checks` on the exact commit, and Vercel waits for that check before assigning production domains. The check was saved remotely for Production; Production Branch `master` and automatic aliasing were verified. Preview retains native automatic publication. No separate Actions deployment workflow or Vercel token in GitHub is introduced.
+
+The repository’s Vercel build command applies committed Drizzle migrations before Next.js build, with a session advisory lock on the same direct PostgreSQL connection used by Drizzle. Migration failure stops the build. CI uses ephemeral PostgreSQL 17 and runs real database tests. Normal local/CI `pnpm build` does not migrate. Deployment Checks do not delay build-time migrations; schema changes must remain compatible with the previously deployed application and are not automatically undone when CI/build/promotion fails. See [setup, concurrency and rollback](server-setup.md#autodeploy-and-required-production-checks).
+
+Only the deployment-check setting was changed remotely. No production migration, deployment, push or environment-secret download was performed. Repository changes must reach the release commit before build-time migration automation takes effect; live blocked/successful promotion has not been exercised.

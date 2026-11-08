@@ -159,3 +159,6 @@ Start with [AGENTS.md](AGENTS.md), the [architecture overview](docs/architecture
 Created by [Dariusz Begiedza](https://begiedz.dev). Inspired by the Gothic series, Gothic Remake’s lockpicking mechanics, and Fingers Challenge.
 
 This is a noncommercial fan project with no official affiliation with THQ Nordic or Piranha Bytes. Third-party names and assets remain subject to their owners’ rights. Noncommercial status and attribution do not grant redistribution permission; see the [asset provenance and licensing notes](docs/architecture/audio-assets.md) before adding or redistributing media.
+
+
+Native Vercel Git builds apply committed migrations before building the app. Production promotion requires the GitHub `Quality Checks` result; local/CI `pnpm build` stays migration-free. See [autodeploy, database locking and rollback](docs/architecture/server-setup.md#autodeploy-and-required-production-checks).
