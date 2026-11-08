@@ -3,7 +3,7 @@ import { MAX_INVALID_MOVES_PER_PICK } from "@/game/constants";
 import { generateRules } from "@/game/generate-rules";
 import { getLearningProgression } from "@/game/learning-progression";
 import { getDifficultyForChest } from "@/game/progress-difficulty";
-import { LEARNING_RULESET_VERSION, RULESET_VERSION } from "@/game/ruleset";
+import { RULESET_VERSION, usesLearningProgression } from "@/game/ruleset";
 import { solveLockDetailed, verifySolution } from "@/game/solver";
 import type {
   DifficultyConfig,
@@ -226,7 +226,7 @@ export function createChestLock(
   rulesetVersion: string = RULESET_VERSION,
 ): LockState {
   return createLock(
-    rulesetVersion === LEARNING_RULESET_VERSION
+    usesLearningProgression(rulesetVersion)
       ? getLearningProgression(chestIndex, random)
       : getDifficultyForChest(chestIndex),
     random,

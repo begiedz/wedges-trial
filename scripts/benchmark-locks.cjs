@@ -69,7 +69,7 @@ function load(name) {
   if (!cache[id]) { const module = {exports: {}}; cache[id] = module; factories[id](load, module, module.exports); }
   return cache[id].exports;
 }
-module.exports = { ...load("create-lock"), ...load("solver"), ...load("create-run"), ...load("progress-difficulty"), ...load("apply-move"), ...load("check-solved"), ...load("rewards"), ...load("constants"), ...load("ruleset"), ...load("learning-progression"), ...load("analyze-connections") };`;
+module.exports = { ...load("create-lock"), ...load("solver"), ...load("create-run"), ...load("progress-difficulty"), ...load("apply-move"), ...load("check-solved"), ...load("rewards"), ...load("constants"), ...load("ruleset"), ...load("learning-progression"), ...load("analyze-connections"), ...load("generate-rules") };`;
   return { source, hash: hash.digest("hex") };
 }
 
@@ -105,10 +105,9 @@ function runBenchmark(
   const raw = [];
   const started = performance.now();
   for (const chest of chests) {
-    const config =
-      rulesetVersion === engine.LEARNING_RULESET_VERSION
-        ? engine.getLearningProgression(chest - 1, seededRandom(seed))
-        : engine.getDifficultyForChest(chest - 1);
+    const config = engine.usesLearningProgression(rulesetVersion)
+      ? engine.getLearningProgression(chest - 1, seededRandom(seed))
+      : engine.getDifficultyForChest(chest - 1);
     const measurements = { createLock: [], solveLock: [], openSolvedChest: [] };
     let unavailableOptimum = 0;
     let solverNulls = 0;

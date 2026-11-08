@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getDeterministicOre, getLockpickReward } from "@/game/rewards";
+import {
+  getDeterministicOre,
+  getDifficultyOre,
+  getLockpickReward,
+} from "@/game/rewards";
 import { LEGACY_RULESET_VERSION } from "@/game/ruleset";
 
 describe("deterministic-ore-v1 rewards", () => {
@@ -61,4 +65,20 @@ it("preserves original drops for saved runs", () => {
     expect(getLockpickReward(() => roll, LEGACY_RULESET_VERSION)).toBe(
       expected,
     );
+});
+
+describe("difficulty-ore-v1 rewards", () => {
+  it.each([
+    [1, [2, 1, 1, 1, 1, 1, 0]],
+    [2, [5, 4, 4, 3, 3, 2, 2]],
+    [3, [10, 9, 8, 7, 6, 5, 4]],
+    [4, [20, 18, 16, 14, 12, 10, 8]],
+  ] as const)(
+    "applies cumulative mistakes and final flooring at tier %i",
+    (tier, awards) => {
+      for (const [mistakes, expected] of awards.entries())
+        expect(getDifficultyOre(tier, mistakes)).toBe(expected);
+      expect(getDifficultyOre(tier, 100)).toBe(awards[6]);
+    },
+  );
 });

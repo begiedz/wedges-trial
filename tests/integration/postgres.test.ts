@@ -386,7 +386,7 @@ describe.skipIf(!url)("PostgreSQL ownership, concurrency and rollback", () => {
       execute(ownerId, "continue", run.id, next),
     ]);
     expect(replies[0]).toEqual(replies[1]);
-    expect(replies[0].body.run.oreNuggets).toBe(10);
+    expect(replies[0].body.run.oreNuggets).toBe(2);
     const continued = await storedGame(run.id);
     expect(continued.chestMetrics).toEqual({
       moves: 0,

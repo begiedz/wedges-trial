@@ -52,10 +52,9 @@ function runSurvey(
       const random = seededRandom(sampleSeed);
       const cpu = process.cpuUsage();
       const start = performance.now();
-      const config =
-        rulesetVersion === engine.LEARNING_RULESET_VERSION
-          ? engine.getLearningProgression(chest - 1, random)
-          : engine.getDifficultyForChest(chest - 1);
+      const config = engine.usesLearningProgression(rulesetVersion)
+        ? engine.getLearningProgression(chest - 1, random)
+        : engine.getDifficultyForChest(chest - 1);
       const generated = engine.createLockWithDiagnostics(config, random);
       const ms = performance.now() - start;
       const used = process.cpuUsage(cpu);

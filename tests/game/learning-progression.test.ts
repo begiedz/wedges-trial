@@ -11,7 +11,9 @@ import { generateRules } from "@/game/generate-rules";
 import { getLearningProgression } from "@/game/learning-progression";
 import { getDifficultyForChest } from "@/game/progress-difficulty";
 import {
+  LEARNING_RULESET_VERSION,
   LEGACY_RULESET_VERSION,
+  RULESET_VERSION,
   SCARCE_PICKS_RULESET_VERSION,
 } from "@/game/ruleset";
 import { solveLockDetailed } from "@/game/solver";
@@ -180,6 +182,7 @@ it("keeps the saved learning handler when the new-run default is rolled back", a
       dependencies: 6,
       tier: 3,
     });
+    expect(dispatch(17, random(42), "difficulty-ore-v1")).toEqual(learning);
     expect(dispatch(17, random(42))).toEqual(
       createLock(getDifficultyForChest(17), random(42)),
     );
@@ -204,4 +207,11 @@ it("samples early solution lengths instead of favoring the longest path in a win
   const mature = getLearningProgression(9999, () => 0);
   expect(mature.minSolutionLength).toBe(10);
   expect(mature.maxSolutionLength).toBe(16);
+});
+
+it("keeps new ore and saved learning cohorts on identical seeded generation", () => {
+  for (const index of [0, 4, 17, 29, 99, 9999])
+    expect(createChestLock(index, random(42), RULESET_VERSION)).toEqual(
+      createChestLock(index, random(42), LEARNING_RULESET_VERSION),
+    );
 });

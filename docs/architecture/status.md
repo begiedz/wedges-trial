@@ -247,3 +247,10 @@ Configured and observed remotely: `Quality Checks` from GitHub is required for P
 
 
 Build-command follow-up: the task author chose dashboard-managed Build Command, so the repository override was removed. Automated migrations now depend on that dashboard value including `pnpm db:migrate`; a plain `pnpm build` does not migrate. The remote production check remains configured. The task author confirmed `pnpm db:migrate && pnpm build`; the actual dashboard edit has not been verified.
+
+
+## Difficulty-based ore — 2026-11-08
+
+Implemented locally: new runs and the main leaderboard use `difficulty-ore-v1`, awarding bases 2/5/10/20 for the four structural difficulty tiers, with the existing cumulative invalid-move penalty and final flooring. Generation and lockpick supply are unchanged. Saved learning-ramp/scarce-picks/deterministic-ore runs, pending rewards, claims and replay records retain their original scoring. No SQL migration or data rewrite is required. See the [decision](decisions.md#approved-difficulty-based-ore--2026-11-08) and [simulation evidence](gameplay.md#difficulty-based-ore-evidence--2026-11-08).
+
+Local verification: `pnpm test` passed 412 tests; 41 opt-in PostgreSQL tests were skipped because TEST_DATABASE_URL was unset and no local PostgreSQL executable was available. `pnpm test:coverage` passed (reward and ruleset modules: 100% statement/branch coverage); subsequent simulation compatibility edits passed the full regular suite. `pnpm exec tsc --noEmit`, `pnpm lint` (existing CSS cursor warning), naming/architecture checks and `pnpm build` passed. The sandboxed Turbopack build stalled and was stopped; the local build passed outside the sandbox. No database integration run, browser end-to-end check, remote migration, deployment or GitHub issue change was performed.

@@ -10,7 +10,12 @@ const {
 // are censored. Use engine rewards and durability, without modeling human skill.
 function simulateResources(
   engine,
-  { samples = 10000, cap = 1000, seed = 47 } = {},
+  {
+    samples = 10000,
+    cap = 1000,
+    seed = 47,
+    rulesetVersion = engine.RULESET_VERSION,
+  } = {},
 ) {
   if (
     !Number.isInteger(samples) ||
@@ -22,6 +27,12 @@ function simulateResources(
     !Number.isInteger(seed)
   )
     throw new RangeError("Invalid simulation configuration");
+  // Isolate structural sampling from pick RNG so supply scenarios remain paired.
+  const tiers = Array.from({ length: cap }, (_, index) => {
+    const random = seededRandom(seed + index);
+    const config = engine.getLearningProgression(index, random);
+    return engine.analyzeConnections(engine.generateRules(config, random)).tier;
+  });
   const rows = [];
   const raw = [];
   for (const durability of [3, engine.MAX_INVALID_MOVES_PER_PICK]) {
@@ -45,8 +56,11 @@ function simulateResources(
           }
           if (picks === 0) break;
           chests++;
-          ore += engine.getDeterministicOre(chest, mistakes);
-          picks += engine.getLockpickReward(random);
+          ore +=
+            rulesetVersion === engine.DIFFICULTY_ORE_RULESET_VERSION
+              ? engine.getDifficultyOre(tiers[chest - 1], mistakes)
+              : engine.getDeterministicOre(chest, mistakes);
+          picks += engine.getLockpickReward(random, rulesetVersion);
         }
         const run = {
           durability,
@@ -78,7 +92,7 @@ function simulateResources(
       samples,
       cap,
       seed,
-      ruleset: engine.RULESET_VERSION,
+      ruleset: rulesetVersion,
     },
     rows,
     raw,

@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { getDeterministicOre } from "@/game/rewards";
 import {
+  LEARNING_RULESET_VERSION,
   LEGACY_RULESET_VERSION,
   RULESET_VERSION,
   SCARCE_PICKS_RULESET_VERSION,
 } from "@/game/ruleset";
+import type { LockDifficulty } from "@/game/types";
 import { newRun, publicRun, transition } from "@/server/game/engine";
 
 function fixture() {
@@ -51,11 +53,11 @@ describe("authoritative domain lifecycle", () => {
     run = transition(run, "move", { pinId: 0, direction: 1 }).run;
     run = transition(run, "move", { pinId: 0, direction: 1 }).run;
     expect(run.status).toBe("chest_opened");
-    expect(run.game.reward?.oreNuggets).toBe(9);
+    expect(run.game.reward?.oreNuggets).toBe(1);
     expect(run.game.state.oreNuggets).toBe(0);
     expect(() => transition(run, "reset", {})).toThrow();
     const next = transition(run, "continue", {}).run;
-    expect(next.game.state.oreNuggets).toBe(9);
+    expect(next.game.state.oreNuggets).toBe(1);
     expect(next.game.state.currentLock.invalidMovesOnCurrentPick).toBe(1);
     expect(next.game.chestMetrics.moves).toBe(0);
     expect(next.game.totalMetrics.moves).toBe(3);
@@ -104,7 +106,7 @@ describe("authoritative domain lifecycle", () => {
     expect(run.game.totalMetrics).toEqual(metrics);
     move(1);
     move(1);
-    expect(run.game.reward?.oreNuggets).toBe(5);
+    expect(run.game.reward?.oreNuggets).toBe(1);
     run = transition(run, "continue", {}).run;
     expect(run.game.chestMetrics).toEqual({
       moves: 0,
@@ -237,9 +239,80 @@ it("uses identical scarce-pick rewards in new and saved scarce-pick runs", () =>
             .reward;
         },
       );
-      expect(rewards[0]).toEqual(rewards[1]);
+      expect(rewards[0]?.lockpicks).toEqual(rewards[1]?.lockpicks);
     } finally {
       spy.mockRestore();
     }
   }
 });
+
+it.each([
+  LEGACY_RULESET_VERSION,
+  SCARCE_PICKS_RULESET_VERSION,
+  LEARNING_RULESET_VERSION,
+])("preserves the saved chest-based ore formula for %s", (version) => {
+  let run = fixture();
+  run.rulesetVersion = version;
+  run.game.state.chestIndex = 10;
+  run = transition(run, "move", { pinId: 0, direction: -1 }).run;
+  run = transition(run, "reset", {}).run;
+  run = transition(run, "move", { pinId: 0, direction: 1 }).run;
+  run = transition(run, "move", { pinId: 0, direction: 1 }).run;
+  expect(run.game.reward?.oreNuggets).toBe(49);
+});
+
+// Other plates start at target; their dependency rules define a real structural
+// tier while the independent first plate gives a short, known solution.
+function tierFixture(tier: LockDifficulty) {
+  const run = fixture();
+  const count = [1, 1, 3, 4, 5][tier];
+  const edgeCount = [0, 0, 2, 6, 10][tier];
+  const lock = run.game.state.currentLock;
+  for (let id = 1; id < count; id++)
+    lock.pins.push({ id, position: 2, min: 0, max: 2, target: 2 });
+  let edges = 0;
+  for (let id = 1; id < count; id++) {
+    const targets: number[] = [];
+    for (let target = 0; target < count && edges < edgeCount; target++) {
+      if (target === id) continue;
+      targets.push(target);
+      edges++;
+    }
+    for (const direction of [1, -1] as const)
+      lock.rules.push({
+        sourcePinId: id,
+        direction,
+        effects: [id, ...targets].map((pinId) => ({ pinId, delta: direction })),
+      });
+  }
+  run.game.initialLock = structuredClone(lock);
+  return run;
+}
+
+it.each([1, 2, 3, 4] as const)(
+  "awards ore from tier %i, independent of chest number, across reset, break and refresh",
+  (tier) => {
+    const bases = { 1: 2, 2: 5, 3: 10, 4: 20 };
+    for (const chest of [1, 18, 10000]) {
+      for (const mistakes of [0, 1, 5, 6, 9]) {
+        let run = tierFixture(tier);
+        run.game.state.chestIndex = chest;
+        for (let i = 0; i < mistakes; i++)
+          run = transition(run, "move", { pinId: 0, direction: -1 }).run;
+        run = transition(run, "reset", {}).run;
+        run = structuredClone(run); // Reload persisted authoritative state.
+        expect(publicRun(run).difficulty).toBe(tier);
+        run = transition(run, "move", { pinId: 0, direction: 1 }).run;
+        run = transition(run, "move", { pinId: 0, direction: 1 }).run;
+        const expected = Math.floor(
+          (bases[tier] * Math.max(4, 10 - mistakes)) / 10,
+        );
+        expect(run.game.reward?.oreNuggets).toBe(expected);
+        expect(run.game.state.oreNuggets).toBe(0);
+        const next = transition(run, "continue", {}).run;
+        expect(next.game.state.oreNuggets).toBe(expected);
+        expect(() => transition(next, "continue", {})).toThrow();
+      }
+    }
+  },
+);

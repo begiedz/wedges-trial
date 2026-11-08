@@ -147,3 +147,10 @@ Only the deployment-check setting was changed remotely. No production migration,
 ### Build command managed in Vercel — 2026-11-08
 
 The task author subsequently chose to edit Build Command in the Vercel dashboard. Remove the repository’s `vercel.json` override so it cannot supersede that setting. The production `Quality Checks` gate, PostgreSQL-backed CI and serialized migration runner remain useful independently of where Build Command is configured. Use `pnpm db:migrate && pnpm build` for automatic migrations or `pnpm build` for build-only deployments. The task author confirmed `pnpm db:migrate && pnpm build` as the intended dashboard value, preserving automatic migrations. The actual dashboard edit is user-managed and was not changed or verified in this follow-up.
+
+
+## Approved difficulty-based ore — 2026-11-08
+
+The task author approved lowering early ore and awarding a fixed base for each existing difficulty tier: Tier 1 = 2, Tier 2 = 5, Tier 3 = 10, Tier 4 = 20. The existing cumulative invalid-move penalty stays: `floor(base * max(4, 10 - invalidMovesOnChest) / 10)`. Reset and pick breaks preserve mistakes; valid moves add no penalty. Final integer flooring is unchanged, including zero ore at Tier 1 after six mistakes. Difficulty is derived from authoritative initial connection rules, matching the public tier; chest number no longer increases ore within a tier.
+
+New runs and the main leaderboard use `difficulty-ore-v1`. Generation and scarce-pick supply remain exactly those of `learning-ramp-v1`. Saved learning-ramp, scarce-picks and deterministic-ore cohorts retain their exact scoring, pending rewards, generators, resources, claims and historical replays. No SQL migration or data rewrite is required. Rollback changes the default cohort and retains the explicit new handler for saved difficulty-ore runs; never rewrite their rewards. This decision supersedes the chest-based ore requirement for new runs only. No GitHub issue mutation or deployment is part of this task.

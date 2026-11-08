@@ -17,8 +17,15 @@ it("models censoring and fourth-mistake survival with reproducible engine reward
   )) {
     expect(row.censored).toBe(5);
     expect(row.chests.min).toBe(10);
-    expect(row.ore.min).toBe(325);
+    expect(row.ore.min).toBe(38);
   }
+  const saved = simulateResources(engine, {
+    samples: 5,
+    cap: 10,
+    rulesetVersion: engine.LEARNING_RULESET_VERSION,
+  });
+  expect(saved.metadata.ruleset).toBe(engine.LEARNING_RULESET_VERSION);
+  expect(saved.rows[0].ore.min).toBe(325);
   const final = report.raw.filter(
     (r: { mistakes: number }) => r.mistakes === 6,
   );

@@ -4,5 +4,14 @@ export const LEGACY_RULESET_VERSION = "deterministic-ore-v1";
 export const SCARCE_PICKS_RULESET_VERSION = "scarce-picks-v1";
 /** Structural learning ramp; retains scarce-picks resources. */
 export const LEARNING_RULESET_VERSION = "learning-ramp-v1";
-/** Defaults may change without removing handlers for saved cohorts. */
-export const RULESET_VERSION = LEARNING_RULESET_VERSION;
+/** Tier-based ore; preserves the learning ramp and scarce-pick balance. */
+export const DIFFICULTY_ORE_RULESET_VERSION = "difficulty-ore-v1";
+export const RULESET_VERSION = DIFFICULTY_ORE_RULESET_VERSION;
+
+/** Both cohorts use the same generator, including its RNG consumption. */
+export function usesLearningProgression(rulesetVersion: string): boolean {
+  return (
+    rulesetVersion === LEARNING_RULESET_VERSION ||
+    rulesetVersion === DIFFICULTY_ORE_RULESET_VERSION
+  );
+}

@@ -6,8 +6,16 @@ import { createChestLock } from "@/game/create-lock";
 import { createRun } from "@/game/create-run";
 import { getDifficultyBand } from "@/game/progress-difficulty";
 import { cloneLockState, resetCurrentLock } from "@/game/reset-lock";
-import { getDeterministicOre, getLockpickReward } from "@/game/rewards";
-import { LEARNING_RULESET_VERSION, RULESET_VERSION } from "@/game/ruleset";
+import {
+  getDeterministicOre,
+  getDifficultyOre,
+  getLockpickReward,
+} from "@/game/rewards";
+import {
+  DIFFICULTY_ORE_RULESET_VERSION,
+  RULESET_VERSION,
+  usesLearningProgression,
+} from "@/game/ruleset";
 import type { Direction } from "@/game/types";
 import { GameError } from "./errors";
 import { emptyMetrics, type StoredRun } from "./types";
@@ -48,10 +56,9 @@ export function publicRun(run: StoredRun): RunDto {
     openedChests,
     oreNuggets: state.oreNuggets,
     lockpicks: state.lockpicks,
-    difficulty:
-      run.rulesetVersion === LEARNING_RULESET_VERSION
-        ? analyzeConnections(run.game.initialLock.rules).tier
-        : getDifficultyBand(state.chestIndex - 1),
+    difficulty: usesLearningProgression(run.rulesetVersion)
+      ? analyzeConnections(run.game.initialLock.rules).tier
+      : getDifficultyBand(state.chestIndex - 1),
     currentLock: {
       pins: state.currentLock.pins.map((pin) => ({ ...pin })),
       invalidMovesOnCurrentPick: state.currentLock.invalidMovesOnCurrentPick,
@@ -140,10 +147,16 @@ function moveRun(
     game.openedChests++;
     game.reward = {
       lockpicks: getLockpickReward(Math.random, run.rulesetVersion),
-      oreNuggets: getDeterministicOre(
-        game.state.chestIndex,
-        game.chestMetrics.invalidMoves,
-      ),
+      oreNuggets:
+        run.rulesetVersion === DIFFICULTY_ORE_RULESET_VERSION
+          ? getDifficultyOre(
+              analyzeConnections(game.initialLock.rules).tier,
+              game.chestMetrics.invalidMoves,
+            )
+          : getDeterministicOre(
+              game.state.chestIndex,
+              game.chestMetrics.invalidMoves,
+            ),
     };
   }
 }

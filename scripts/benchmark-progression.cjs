@@ -53,7 +53,10 @@ function runComparison(
   }
   write(
     "learning-ramp-v1-resources",
-    simulateResources(engine, { samples: resourceSamples }),
+    simulateResources(engine, {
+      samples: resourceSamples,
+      rulesetVersion: engine.LEARNING_RULESET_VERSION,
+    }),
   );
 }
 if (require.main === module) {

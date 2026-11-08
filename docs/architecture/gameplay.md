@@ -41,6 +41,10 @@ On 2026-11-06, #61 changed the plate progression from 3–6 to 4–7 and pick du
 
 ## Approved ore formula
 
+New runs use `difficulty-ore-v1` (approved 2026-11-08): the base is **2/5/10/20** nuggets for structural difficulty tiers **1/2/3/4**, determined from the server-owned immutable initial lock rules, matching the displayed difficulty. Chest number adds no ore within a tier. The final award is `floor(base * max(4, 10 - invalidMovesOnChest) / 10)`. Each mistake subtracts ten percentage points, capped at a 40% multiplier. Flooring still occurs last, so Tier 1 awards 0 nuggets with six or more mistakes. Correct moves have no penalty; reset and pick breaks do not clear mistakes. Solving stores a pending reward; continue credits it once.
+
+Saved `learning-ramp-v1`, `scarce-picks-v1` and `deterministic-ore-v1` runs retain the following original formula, including already-pending rewards. Generation and pick supply are unchanged by the new scoring cohort.
+
 For deterministic-ore-v1, with 1-based chestNumber:
 
 ~~~text
@@ -132,3 +136,10 @@ No stored-state change, SQL migration, backfill, response contract change or new
 | Reward UI scope | PASS | The task author explicitly superseded the issue’s breakdown UI request: the original dialog and four dictionaries are retained; calculation is documented at `getDeterministicOre()`. |
 
 Local verification does not establish deployed browser behavior or production readiness.
+
+
+## Difficulty-based ore evidence — 2026-11-08
+
+`difficulty-ore-v1` uses tier bases 2/5/10/20. Existing structural progression yields Tier 1 on chests 1–4, Tier 2 on 5–17, Tier 3 on 18–29 and Tier 4 from 30 onward. Authoritative scoring reads the initial rules rather than hardcoding those chest thresholds. Unit regressions cover all four tiers at chest numbers 1, 18 and 10,000, accumulated mistakes across reset/pick breaks, cloned-state recovery, once-only continuation, all saved scoring handlers and identical seeded old/new learning generation (including chest 10,000).
+
+Resource simulation: `node scripts/simulate-rewards.cjs`, seed 47, 10,000 runs/profile, cap 1,000 credited chests. Structure is sampled separately from pick RNG; no solver or human skill model is used. Pick durability/supply and survival distribution are unchanged. At zero mistakes per chest, all runs reach the cap and score 19,613 ore (old chest-based formula: 2,507,500); the first ten chests yield 38 instead of 325. With one mistake per chest, median credited chests remain 7 and median ore is 16; 377/10,000 runs reach the cap. Capped runs are censored, not finished leaderboard candidates. These results measure the approved curve, not human balance calibration. Historical learning-ramp resource comparisons explicitly select their original ruleset.
