@@ -3,7 +3,11 @@ import { MAX_INVALID_MOVES_PER_PICK } from "@/game/constants";
 import { generateRules } from "@/game/generate-rules";
 import { getLearningProgression } from "@/game/learning-progression";
 import { getDifficultyForChest } from "@/game/progress-difficulty";
-import { RULESET_VERSION, usesLearningProgression } from "@/game/ruleset";
+import {
+  ALL_PLATES_RULESET_VERSION,
+  RULESET_VERSION,
+  usesLearningProgression,
+} from "@/game/ruleset";
 import { solveLockDetailed, verifySolution } from "@/game/solver";
 import type {
   DifficultyConfig,
@@ -37,8 +41,8 @@ function createMixedLock(
 ): { lock: LockState; boundedLock: LockState; boundedSolution: LockMove[] } {
   const solvedPins = createSolvedPins(config);
   const rules = generateRules(config, random);
-  // Extra independent plates are introduced at target, before joining a core.
-  // The original four remain available for independent alignment practice.
+  // Saved cohorts leave extra independent plates at target. New all-plates
+  // generation mixes every rule and samples independent positions at finish.
   const coupledIds = new Set(
     rules.flatMap((rule) =>
       rule.effects.length > 1 ? rule.effects.map((effect) => effect.pinId) : [],
@@ -54,6 +58,7 @@ function createMixedLock(
     const candidates = rules
       .filter(
         (rule) =>
+          config.mixAllPlates ||
           !config.topology ||
           rule.sourcePinId < 4 ||
           coupledIds.has(rule.sourcePinId),
@@ -146,6 +151,84 @@ export function createLockWithDiagnostics(
     target: { min: minLength, max: maxLength },
   };
   const finish = (lock: LockState, solution: LockMove[]) => {
+    if (config.mixAllPlates) {
+      // Independent moves commute with the core. Replace their part of the
+      // witness by a direct path, even after solver shortening or fallback.
+      const coupled = new Set(
+        lock.rules.flatMap((rule) =>
+          rule.effects.length > 1
+            ? rule.effects.map((effect) => effect.pinId)
+            : [],
+        ),
+      );
+      let distanceChange = 0;
+      const independentMoves: LockMove[] = [];
+      const pins = lock.pins.map((pin) => {
+        if (coupled.has(pin.id)) return pin;
+        const position =
+          pin.min + Math.floor(random() * (pin.max - pin.min + 1));
+        const distance = Math.abs(position - pin.target);
+        distanceChange += distance - Math.abs(pin.position - pin.target);
+        for (let step = 0; step < distance; step++)
+          independentMoves.push({
+            pinId: pin.id,
+            direction: position < pin.target ? 1 : -1,
+          });
+        return { ...pin, position };
+      });
+      solution = [
+        ...independentMoves,
+        ...solution.filter((move) => coupled.has(move.pinId)),
+      ];
+      lock = {
+        ...lock,
+        pins,
+        optimalMoves:
+          lock.optimalMoves == null ? null : lock.optimalMoves + distanceChange,
+      };
+      // Keep independent draws unbiased even if they happen to solve the lock.
+      // In that case scramble the connected core by one legal move instead.
+      if (checkSolved(lock)) {
+        const candidate = lock.rules
+          .filter((rule) => rule.effects.length > 1)
+          .map((rule) => ({ rule, result: evaluateRule(lock.pins, rule) }))
+          .find(({ result }) => result.kind === "valid");
+        if (!candidate || candidate.result.kind !== "valid")
+          throw new RangeError(
+            "Lock configuration has no valid core mixing move",
+          );
+        lock = {
+          ...lock,
+          pins: candidate.result.pins,
+          optimalMoves: lock.optimalMoves == null ? null : 1,
+        };
+        solution = [
+          {
+            pinId: candidate.rule.sourcePinId,
+            direction: candidate.rule.direction === 1 ? -1 : 1,
+          },
+        ];
+      }
+      // A construction witness may contain core loops. With newly centered
+      // independent plates the lock can open before those loops finish.
+      let witnessPins = lock.pins;
+      for (let index = 0; index < solution.length; index++) {
+        const move = solution[index];
+        const rule = lock.rules.find(
+          (rule) =>
+            rule.sourcePinId === move.pinId &&
+            rule.direction === move.direction,
+        );
+        if (!rule) break;
+        const result = evaluateRule(witnessPins, rule);
+        if (result.kind !== "valid") break;
+        witnessPins = result.pins;
+        if (checkSolved({ pins: witnessPins })) {
+          solution = solution.slice(0, index + 1);
+          break;
+        }
+      }
+    }
     if (!verifySolution(lock, solution))
       throw new Error("Generator produced an illegal solution");
     diagnostics.outcome =
@@ -219,16 +302,17 @@ export function createLock(
   return createLockWithDiagnostics(config, random).lock;
 }
 
-/** Saved cohorts keep the exact legacy generation path and RNG consumption. */
+/** Dispatch by cohort; saved runs retain their generation path and RNG consumption. */
 export function createChestLock(
   chestIndex: number,
   random: RandomSource = Math.random,
   rulesetVersion: string = RULESET_VERSION,
 ): LockState {
+  const config = usesLearningProgression(rulesetVersion)
+    ? getLearningProgression(chestIndex, random)
+    : getDifficultyForChest(chestIndex);
   return createLock(
-    usesLearningProgression(rulesetVersion)
-      ? getLearningProgression(chestIndex, random)
-      : getDifficultyForChest(chestIndex),
+    { ...config, mixAllPlates: rulesetVersion === ALL_PLATES_RULESET_VERSION },
     random,
   );
 }

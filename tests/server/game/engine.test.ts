@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { getDeterministicOre } from "@/game/rewards";
 import {
+  DIFFICULTY_ORE_RULESET_VERSION,
   LEARNING_RULESET_VERSION,
   LEGACY_RULESET_VERSION,
   RULESET_VERSION,
@@ -316,3 +317,15 @@ it.each([1, 2, 3, 4] as const)(
     }
   },
 );
+
+it("retains tier-based ore for saved difficulty-ore runs", () => {
+  let run = tierFixture(4);
+  run.rulesetVersion = DIFFICULTY_ORE_RULESET_VERSION;
+  run.game.state.chestIndex = 10000;
+  run = transition(run, "move", { pinId: 0, direction: 1 }).run;
+  run = transition(run, "move", { pinId: 0, direction: 1 }).run;
+  expect(run.game.reward?.oreNuggets).toBe(20);
+  expect(transition(run, "continue", {}).run.rulesetVersion).toBe(
+    DIFFICULTY_ORE_RULESET_VERSION,
+  );
+});

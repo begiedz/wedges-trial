@@ -154,3 +154,13 @@ The task author subsequently chose to edit Build Command in the Vercel dashboard
 The task author approved lowering early ore and awarding a fixed base for each existing difficulty tier: Tier 1 = 2, Tier 2 = 5, Tier 3 = 10, Tier 4 = 20. The existing cumulative invalid-move penalty stays: `floor(base * max(4, 10 - invalidMovesOnChest) / 10)`. Reset and pick breaks preserve mistakes; valid moves add no penalty. Final integer flooring is unchanged, including zero ore at Tier 1 after six mistakes. Difficulty is derived from authoritative initial connection rules, matching the public tier; chest number no longer increases ore within a tier.
 
 New runs and the main leaderboard use `difficulty-ore-v1`. Generation and scarce-pick supply remain exactly those of `learning-ramp-v1`. Saved learning-ramp, scarce-picks and deterministic-ore cohorts retain their exact scoring, pending rewards, generators, resources, claims and historical replays. No SQL migration or data rewrite is required. Rollback changes the default cohort and retains the explicit new handler for saved difficulty-ore runs; never rewrite their rewards. This decision supersedes the chest-based ore requirement for new runs only. No GitHub issue mutation or deployment is part of this task.
+
+
+## Approved full plate participation — 2026-11-08
+
+The task author requested random connected plates from the entire visible lock, including the last positions, and mixing of independent plates. New `all-plates-v1` runs implement this: unbiased core membership, all rules eligible during mixing, and uniformly random independent positions including the target after shortening/fallback. Existing structural progression and tier-based ore, one starting pick, drops, damage and reset penalties remain unchanged. Final independent sampling may put path length outside the former target window; see gameplay.md for the algorithm and paired measurements.
+
+This affects difficulty and score comparability. New runs and the main ranking use the separate all-plates cohort. All saved cohorts, including difficulty-ore-v1, retain their original generator and rewards on continuation. No SQL migration/data rewrite is needed. Rollback switches the default cohort while retaining the new handler for saved all-plates runs. No issue mutation, migration or deployment is authorized by this implementation.
+
+
+The task author clarified that independent positions must include the center with equal probability, rather than always requiring alignment. The final draw now covers all seven positions uniformly. If every plate ends aligned, one legal core move ensures an unsolved chest without changing the independent draws. Construction witnesses stop at the first solved state to respect runtime solved guards.

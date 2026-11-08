@@ -56,10 +56,9 @@ function simulateResources(
           }
           if (picks === 0) break;
           chests++;
-          ore +=
-            rulesetVersion === engine.DIFFICULTY_ORE_RULESET_VERSION
-              ? engine.getDifficultyOre(tiers[chest - 1], mistakes)
-              : engine.getDeterministicOre(chest, mistakes);
+          ore += engine.usesDifficultyOre(rulesetVersion)
+            ? engine.getDifficultyOre(tiers[chest - 1], mistakes)
+            : engine.getDeterministicOre(chest, mistakes);
           picks += engine.getLockpickReward(random, rulesetVersion);
         }
         const run = {

@@ -12,8 +12,8 @@ import {
   getLockpickReward,
 } from "@/game/rewards";
 import {
-  DIFFICULTY_ORE_RULESET_VERSION,
   RULESET_VERSION,
+  usesDifficultyOre,
   usesLearningProgression,
 } from "@/game/ruleset";
 import type { Direction } from "@/game/types";
@@ -147,16 +147,15 @@ function moveRun(
     game.openedChests++;
     game.reward = {
       lockpicks: getLockpickReward(Math.random, run.rulesetVersion),
-      oreNuggets:
-        run.rulesetVersion === DIFFICULTY_ORE_RULESET_VERSION
-          ? getDifficultyOre(
-              analyzeConnections(game.initialLock.rules).tier,
-              game.chestMetrics.invalidMoves,
-            )
-          : getDeterministicOre(
-              game.state.chestIndex,
-              game.chestMetrics.invalidMoves,
-            ),
+      oreNuggets: usesDifficultyOre(run.rulesetVersion)
+        ? getDifficultyOre(
+            analyzeConnections(game.initialLock.rules).tier,
+            game.chestMetrics.invalidMoves,
+          )
+        : getDeterministicOre(
+            game.state.chestIndex,
+            game.chestMetrics.invalidMoves,
+          ),
     };
   }
 }

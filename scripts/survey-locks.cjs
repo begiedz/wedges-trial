@@ -55,6 +55,8 @@ function runSurvey(
       const config = engine.usesLearningProgression(rulesetVersion)
         ? engine.getLearningProgression(chest - 1, random)
         : engine.getDifficultyForChest(chest - 1);
+      config.mixAllPlates =
+        rulesetVersion === engine.ALL_PLATES_RULESET_VERSION;
       const generated = engine.createLockWithDiagnostics(config, random);
       const ms = performance.now() - start;
       const used = process.cpuUsage(cpu);

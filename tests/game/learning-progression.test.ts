@@ -11,9 +11,9 @@ import { generateRules } from "@/game/generate-rules";
 import { getLearningProgression } from "@/game/learning-progression";
 import { getDifficultyForChest } from "@/game/progress-difficulty";
 import {
+  DIFFICULTY_ORE_RULESET_VERSION,
   LEARNING_RULESET_VERSION,
   LEGACY_RULESET_VERSION,
-  RULESET_VERSION,
   SCARCE_PICKS_RULESET_VERSION,
 } from "@/game/ruleset";
 import { solveLockDetailed } from "@/game/solver";
@@ -209,9 +209,9 @@ it("samples early solution lengths instead of favoring the longest path in a win
   expect(mature.maxSolutionLength).toBe(16);
 });
 
-it("keeps new ore and saved learning cohorts on identical seeded generation", () => {
+it("keeps saved difficulty-ore and learning cohorts on identical seeded generation", () => {
   for (const index of [0, 4, 17, 29, 99, 9999])
-    expect(createChestLock(index, random(42), RULESET_VERSION)).toEqual(
-      createChestLock(index, random(42), LEARNING_RULESET_VERSION),
-    );
+    expect(
+      createChestLock(index, random(42), DIFFICULTY_ORE_RULESET_VERSION),
+    ).toEqual(createChestLock(index, random(42), LEARNING_RULESET_VERSION));
 });

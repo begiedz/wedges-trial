@@ -108,6 +108,7 @@ function runBenchmark(
     const config = engine.usesLearningProgression(rulesetVersion)
       ? engine.getLearningProgression(chest - 1, seededRandom(seed))
       : engine.getDifficultyForChest(chest - 1);
+    config.mixAllPlates = rulesetVersion === engine.ALL_PLATES_RULESET_VERSION;
     const measurements = { createLock: [], solveLock: [], openSolvedChest: [] };
     let unavailableOptimum = 0;
     let solverNulls = 0;
