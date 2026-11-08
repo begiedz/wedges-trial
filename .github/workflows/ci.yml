@@ -1,0 +1,66 @@
+
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - development
+      - master
+  push:
+    branches:
+      - development
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: test-${{ github.run_id }}-${{ github.run_attempt }}
+          POSTGRES_DB: wedges_trial_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d wedges_trial_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      TEST_DATABASE_URL: postgresql://127.0.0.1:5432/wedges_trial_test
+      PGUSER: postgres
+      PGPASSWORD: test-${{ github.run_id }}-${{ github.run_attempt }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests with coverage
+        run: pnpm test:coverage
+
+      - name: Check TypeScript
+        run: pnpm typecheck
+
+      - name: Run lint
+        run: pnpm lint
+
+      - name: Build production application
+        run: pnpm build

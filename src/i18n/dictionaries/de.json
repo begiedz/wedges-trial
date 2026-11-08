@@ -71,7 +71,8 @@
       "language": "Sprache",
       "solver": "Löser",
       "about": "Über das Spiel",
-      "howToPlay": "Spielanleitung"
+      "howToPlay": "Spielanleitung",
+      "leaderboard": "Bestenliste"
     },
     "locales": {
       "en": "English",
@@ -93,14 +94,14 @@
       "about": {
         "title": "Über Wedge's Trial",
         "eyebrow": "Hinter der Prüfung",
-        "lead": "Wedge’s Trial ist ein endloses Schlossknack-Puzzlespiel im Browser, in dem jede geöffnete Truhe zu einer schwierigeren Prüfung führt.",
+        "lead": "Wedge’s Trial ist ein endloses Schlossknack-Puzzlespiel im Browser mit allmählich wachsenden Herausforderungen.",
         "whatItIs": {
           "title": "Was ist Wedge’s Trial?",
           "body": "Wedge fordert dich mit einer Folge generierter, stets lösbarer Schlösser heraus. Ihre verbundenen Mechanismen belohnen Beobachtung und Planung statt Schnelligkeit; die gesammelten Erzbrocken zeigen, wie weit du gekommen bist."
         },
         "trial": {
           "title": "Die endlose Prüfung",
-          "body": "Mit jeder Truhe steigt die Schwierigkeit: mehr Zuhaltungen, dichtere Verbindungen und längere Lösungen. Sammle so viel Erz wie möglich, bevor dir die Dietriche ausgehen."
+          "body": "Die ersten Schlösser führen ein verbundenes Plattenpaar ein. Im weiteren Verlauf sorgen größere verbundene Gruppen und längere Lösungen schrittweise für mehr Herausforderung. Sammle so viel Erz wie möglich, bevor dir die Dietriche ausgehen."
         },
         "inspiration": {
           "eyebrow": "Aus Inspiration geschmiedet",
@@ -115,37 +116,37 @@
       "howToPlay": {
         "title": "Spielanleitung",
         "eyebrow": "Verstehe das Schloss",
-        "lead": "Drehe die Zuhaltungen, bis jeder Stift—der bewegliche Punkt auf einer Zuhaltung—seine markierte Zielposition erreicht.",
+        "lead": "Verschiebe die Platten nach links oder rechts, bis jeder feststehende Stift mit dem mittleren Loch seiner Platte ausgerichtet ist.",
         "objective": {
           "title": "Dein Ziel",
           "body": "Öffne jede Truhe, sammle Erzbrocken und gelegentlich Dietriche und stelle dich dann dem nächsten, schwierigeren Schloss. Der Lauf endet, wenn keine Dietriche mehr übrig sind."
         },
         "mechanism": {
-          "title": "Zuhaltungen und Stifte",
-          "body": "Wähle eine Zuhaltung und drehe sie nach links oder rechts. Eine Drehung bewegt ihren Stift und kann auch Stifte auf verbundenen Zuhaltungen verschieben, manchmal in die Gegenrichtung. Behalte deshalb das ganze Schloss im Blick."
+          "title": "Platten und Stifte",
+          "body": "Jede Platte hat sieben Löcher und sieben erlaubte Positionen unter einem feststehenden Stift. Wähle eine Platte und verschiebe sie nach links oder rechts. Durch Plattenabhängigkeiten können sich auch verbundene Platten verschieben, manchmal in die Gegenrichtung. Behalte deshalb das ganze Schloss im Blick."
         },
         "stepsTitle": "Eine Truhe öffnen",
         "steps": [
-          "Wähle eine Zuhaltung per Klick oder Tippen.",
-          "Drehe sie mit den sichtbaren Tasten, A/D oder den Pfeiltasten Links/Rechts.",
-          "Beobachte, wie sich ihr Stift und die Stifte verbundener Zuhaltungen ihren Zielen nähern oder davon entfernen.",
-          "Bringe jeden Stift auf sein Ziel, um die Truhe zu öffnen.",
+          "Wähle eine Platte per Klick oder Tippen.",
+          "Verschiebe sie mit den sichtbaren Tasten, A/D oder den Pfeiltasten Links/Rechts nach links oder rechts.",
+          "Beobachte, wie die ausgewählte Platte und verbundene Platten unter ihren feststehenden Stiften gleiten.",
+          "Richte das mittlere Loch jeder Platte an ihrem Stift aus, um die Truhe zu öffnen.",
           "Nimm die Belohnung und gehe zum nächsten, schwierigeren Schloss weiter."
         ],
         "rulesTitle": "Dietriche und ungültige Züge",
         "rules": [
-          "Ein Zug ist ungültig, wenn ein betroffener Stift seinen erlaubten Bereich verlassen würde.",
-          "Ein ungültiger Zug verändert keine Stiftposition und beschädigt den aktuellen Dietrich.",
-          "Ein Dietrich bricht nach genau 3 ungültigen Zügen.",
-          "Ein gebrochener Dietrich setzt weder das Schloss noch die Stiftpositionen zurück.",
+          "Ein Zug ist ungültig, wenn eine betroffene Platte ihren erlaubten Positionsbereich verlassen würde.",
+          "Ein ungültiger Zug verändert keine Plattenposition und beschädigt den aktuellen Dietrich.",
+          "Ein Dietrich bricht nach genau 4 ungültigen Zügen.",
+          "Ein gebrochener Dietrich setzt weder das Schloss noch die Plattenpositionen zurück.",
           "Manuelles Zurücksetzen stellt die Ausgangslage des aktuellen Schlosses wieder her.",
           "Wenn der letzte Dietrich bricht, endet der Lauf."
         ],
         "controlsTitle": "Steuerung",
         "controls": [
-          "Klick oder Tippen: Zuhaltung auswählen",
-          "W / Pfeil nach oben und S / Pfeil nach unten: vorherige oder nächste Zuhaltung",
-          "A / Pfeil nach links und D / Pfeil nach rechts: ausgewählte Zuhaltung drehen",
+          "Klick oder Tippen: Platte auswählen",
+          "W / Pfeil nach oben und S / Pfeil nach unten: vorherige oder nächste Platte auswählen",
+          "A / Pfeil nach links und D / Pfeil nach rechts: ausgewählte Platte verschieben",
           "R: aktuelles Schloss zurücksetzen",
           "N: nach dem Öffnen einer Truhe fortfahren",
           "Die sichtbaren Tasten bieten dieselben Aktionen auf Desktop und Mobilgerät."
@@ -162,7 +163,8 @@
   "game": {
     "title": "Truhe öffnen",
     "actions": {
-      "newRun": "Neuer Lauf"
+      "newRun": "Neuer Lauf",
+      "exitGame": "Verlassen"
     },
     "labels": {
       "chest": "Truhe",
@@ -186,19 +188,70 @@
         "next": "Weiter",
         "reset": "Zurücksetzen"
       }
+    },
+    "dialogs": {
+      "reward": {
+        "title": "Truhe",
+        "description": "Das Schloss ist offen. Nimm deine Beute und stelle dich der nächsten Prüfung.",
+        "takeAll": "Alles nehmen",
+        "totalOre": "Gesammeltes Erz"
+      },
+      "failed": {
+        "title": "Prüfung beendet",
+        "description": "Dein letzter Dietrich ist zerbrochen. Deine Beute steht am Ende dieser Prüfung fest.",
+        "openedChests": "Geöffnete Truhen",
+        "moves": "Züge insgesamt",
+        "invalidMoves": "Ungültige Züge",
+        "brokenPicks": "Zerbrochene Dietriche",
+        "unavailable": "Nicht verfügbar",
+        "leaderboard": "Bestenliste"
+      },
+      "restart": {
+        "title": "Eine neue Prüfung beginnen?",
+        "description": "Dein aktueller Fortschritt geht verloren. Dies kann nicht rückgängig gemacht werden.",
+        "confirm": "Neuen Durchlauf starten",
+        "cancel": "Weiterspielen"
+      },
+      "close": "Schließen",
+      "backToReward": "Truhenbeute ansehen",
+      "closeKey": "Esc"
+    },
+    "connection": {
+      "loading": "Warten auf den Server…",
+      "error": "Die Aktion konnte nicht bestätigt werden. Versuche es erneut, um das Spiel wiederherzustellen.",
+      "retry": "Erneut versuchen"
+    },
+    "leaderboardClaim": {
+      "title": "TOP 1000",
+      "checking": "Bestenlistenqualifikation wird geprüft…",
+      "qualified": "Dein Ergebnis qualifiziert sich. Gib einen öffentlichen Spitznamen ein, um es einzutragen.",
+      "nickname": "Spitzname",
+      "help": "1–24 Zeichen, ohne Steuerzeichen. Dies ist eine öffentliche Bezeichnung, kein Konto.",
+      "invalid": "Gib einen Spitznamen mit 1–24 Zeichen ohne Steuerzeichen ein.",
+      "submit": "Ergebnis eintragen",
+      "submitting": "Wird eingetragen…",
+      "retry": "Erneut versuchen",
+      "network": "Die Bestenliste ist nicht erreichbar. Versuche es erneut, um die Eintragung zu prüfen oder abzuschließen.",
+      "expired": "Deine Sitzung ist nicht mehr verfügbar. Dieses Ergebnis kann in diesem Browser nicht eingetragen werden.",
+      "noLongerQualified": "Dieses Ergebnis qualifiziert sich nicht mehr für die TOP 1000. Du kannst eine neue Runde starten.",
+      "alreadyClaimed": "Dieses Ergebnis wurde bereits eingetragen.",
+      "saved": "Dein Ergebnis wurde eingetragen.",
+      "notQualified": "Dieses Ergebnis qualifiziert sich nicht für die TOP 1000. Du kannst eine neue Runde starten.",
+      "continue": "Weiter",
+      "description": "Trage deine abgeschlossene Runde ein, wenn sie sich qualifiziert."
     }
   },
   "debug": {
     "actions": {
       "continueRun": "Gespeicherten Lauf fortsetzen",
       "continueToNextChest": "Zur nächsten Truhe weiter",
-      "moveLeft": "Nach links bewegen",
-      "moveRight": "Nach rechts bewegen",
+      "moveLeft": "Nach links verschieben",
+      "moveRight": "Nach rechts verschieben",
       "newRun": "Neuen Testlauf starten",
       "reset": "Aktuelles Schloss zurücksetzen",
-      "selectNextPin": "Nächsten Stift auswählen",
-      "selectPreviousPin": "Vorherigen Stift auswählen",
-      "selectPin": "Stift auswählen"
+      "selectNextPin": "Nächste Platte auswählen",
+      "selectPreviousPin": "Vorherige Platte auswählen",
+      "selectPin": "Platte auswählen"
     },
     "labels": {
       "chest": "Truhe",
@@ -208,30 +261,30 @@
       "invalidMoveEvent": "ungültiger Zug",
       "ignoredEvent": "ignoriert",
       "keyboardHelp": "Tastaturhilfe",
-      "keyboardMoveLeft": "`A` oder `ArrowLeft` bewegt den ausgewählten Stift nach links",
-      "keyboardMoveRight": "`D` oder `ArrowRight` bewegt den ausgewählten Stift nach rechts",
+      "keyboardMoveLeft": "`A` oder `ArrowLeft` verschiebt die ausgewählte Platte nach links",
+      "keyboardMoveRight": "`D` oder `ArrowRight` verschiebt die ausgewählte Platte nach rechts",
       "keyboardReset": "`R` setzt das aktuelle Schloss zurück",
-      "keyboardSelectPreviousPin": "`W` oder `ArrowUp` wählt den vorherigen Stift aus",
-      "keyboardSelectNextPin": "`S` oder `ArrowDown` wählt den nächsten Stift aus",
-      "keyboardSelectPin": "`1-9` wählt einen Stift nach Index aus",
+      "keyboardSelectPreviousPin": "`W` oder `ArrowUp` wählt die vorherige Platte aus",
+      "keyboardSelectNextPin": "`S` oder `ArrowDown` wählt die nächste Platte aus",
+      "keyboardSelectPin": "`1-9` wählt eine Platte nach Index aus",
       "left": "links",
       "lockpickBrokeEvent": "Dietrich brach nach ungültigem Zug",
       "lockpicks": "Dietriche",
       "maxInvalidMoves": "Max. ungültige Züge pro Dietrich",
-      "moveHint": "Wähle einen Stift und bewege ihn direkt",
-      "moveHorizontal": "Links/rechts bewegen",
-      "moveVertical": "Hoch/runter bewegen",
-      "movedEvent": "bewegt",
+      "moveHint": "Wähle eine Platte und verschiebe sie nach links oder rechts",
+      "moveHorizontal": "Links/rechts verschieben",
+      "moveVertical": "Vorherige/nächste Platte auswählen",
+      "movedEvent": "verschoben",
       "next": "Weiter",
       "noValue": "Nicht gestartet",
       "onTarget": "am Ziel",
       "oreUnit": "Erz",
       "openedChestEvent": "Truhe geöffnet",
       "oreNuggets": "Erznuggets",
-      "pin": "Stift",
-      "pinColumns": "Stiftspalten",
-      "pinControls": "Stiftsteuerung",
-      "pinPrefix": "stift",
+      "pin": "Platte",
+      "pinColumns": "Plattenpositionen",
+      "pinControls": "Plattensteuerung",
+      "pinPrefix": "Platte",
       "position": "Position",
       "range": "Bereich",
       "resetChestEvent": "Truhe zurückgesetzt",
@@ -239,10 +292,10 @@
       "rewardLockpicks": "Dietriche",
       "rewardSummary": "Letzte Truhenbelohnung",
       "right": "rechts",
-      "rules": "Regeln",
-      "selectedPin": "Ausgewählter Stift",
-      "selectedPinEvent": "Stift ausgewählt",
-      "selectedPinFromKeyboardEvent": "Stift per Tastatur ausgewählt",
+      "rules": "Plattenabhängigkeiten",
+      "selectedPin": "Ausgewählte Platte",
+      "selectedPinEvent": "Platte ausgewählt",
+      "selectedPinFromKeyboardEvent": "Platte per Tastatur ausgewählt",
       "solvedChestEvent": "Truhe gelöst",
       "solverHint": "Länge des Löserpfads",
       "startedChestEvent": "Truhe gestartet",
@@ -252,13 +305,13 @@
       "continuedSavedChestEvent": "gespeicherte Truhe fortgesetzt"
     },
     "messages": {
-      "active": "Nutze die Textsteuerung, um Abhängigkeiten zu prüfen, gültige Züge zu verifizieren und Schaden durch ungültige Züge nachzustellen.",
+      "active": "Nutze die Textsteuerung, um Plattenabhängigkeiten zu prüfen, gültige Verschiebungen zu verifizieren und Schaden durch ungültige Züge nachzustellen.",
       "failed": "Lauf fehlgeschlagen. Es sind keine Dietriche mehr übrig, daher ist die Schlossinteraktion blockiert, bis ein neuer Lauf startet.",
       "idle": "Starte einen Lauf, um das generierte Schloss zu prüfen und das Zugverhalten zu testen.",
-      "invalid": "Ungültige Züge lassen alle Stifte an Ort und Stelle und beschädigen nur den aktuellen Dietrich.",
+      "invalid": "Ungültige Züge lassen alle Platten an Ort und Stelle und beschädigen nur den aktuellen Dietrich.",
       "noEvents": "Noch keine Spielereignisse.",
       "saved": "Ein zuvor gespeicherter Lauf vom zuletzt geöffneten Schloss ist verfügbar.",
-      "solved": "Schloss gelöst. Gehe zur nächsten Truhe weiter, um ein schwereres Testschloss zu erzeugen und den Lauf zu speichern."
+      "solved": "Schloss geöffnet. Gehe zur nächsten Truhe, um ein weiteres generiertes Schloss zu prüfen."
     },
     "states": {
       "active": "Aktiv",
@@ -267,5 +320,26 @@
     },
     "subtitle": "Textbasierter Browser-Harness zur Validierung von Schlossgenerierung, Zugregeln, Schaden durch ungültige Züge und manuellem Zurücksetzen.",
     "title": "Wedge's Trial Schlossharness"
+  },
+  "leaderboard": {
+    "title": "Bestenliste",
+    "subtitle": "TOP 1000 abgeschlossene Durchläufe",
+    "description": "Jeder Eintrag ist ein eingereichter Durchlauf. Namen können mehrfach vorkommen.",
+    "rank": "Platz",
+    "nickname": "Spitzname",
+    "ore": "Erzbrocken",
+    "chests": "Geöffnete Truhen",
+    "finished": "Beendet (UTC)",
+    "loading": "Bestenliste wird geladen…",
+    "empty": "Es wurden noch keine Durchläufe eingereicht.",
+    "error": "Die Bestenliste konnte nicht geladen werden. Versuche es erneut.",
+    "expired": "Diese Ranglistenansicht ist abgelaufen. Aktualisiere sie für die neuesten Ergebnisse.",
+    "retry": "Erneut versuchen",
+    "refresh": "Bestenliste aktualisieren",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "pagination": "Ranglistenseiten",
+    "page": "Seite {page}",
+    "view": "Bestenliste ansehen"
   }
 }

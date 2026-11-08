@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1793533931699,
+      "tag": "0000_needy_alice",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793732078448,
+      "tag": "0001_pink_power_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794002911963,
+      "tag": "0002_graceful_wolfpack",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794003457545,
+      "tag": "0003_charming_the_fury",
+      "breakpoints": true
+    }
+  ]
+}

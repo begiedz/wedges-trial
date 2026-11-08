@@ -71,7 +71,8 @@
       "language": "Język",
       "solver": "Solver",
       "about": "O grze",
-      "howToPlay": "Jak grać"
+      "howToPlay": "Jak grać",
+      "leaderboard": "Ranking"
     },
     "locales": {
       "en": "English",
@@ -93,14 +94,14 @@
       "about": {
         "title": "O Próbie Klina",
         "eyebrow": "Za kulisami próby",
-        "lead": "Próba Klina to niekończąca się przeglądarkowa łamigłówka z otwieraniem zamków, w której każda otwarta skrzynia prowadzi do trudniejszej próby.",
+        "lead": "Próba Klina to niekończąca się przeglądarkowa łamigłówka z otwieraniem zamków i stopniowo rosnącym wyzwaniem.",
         "whatItIs": {
           "title": "Czym jest Próba Klina?",
           "body": "Klin rzuca ci wyzwanie w postaci szeregu generowanych, zawsze rozwiązywalnych zamków. Połączone mechanizmy nagradzają spostrzegawczość i planowanie, nie szybkość, a zebrane bryłki rudy pokazują, jak daleko udało ci się dotrzeć."
         },
         "trial": {
           "title": "Niekończąca się próba",
-          "body": "Każda skrzynia podnosi poziom trudności: pojawia się więcej zapadek, więcej zależności między nimi i dłuższe rozwiązania. Cel jest prosty: zbierz jak najwięcej rudy, zanim skończą ci się wytrychy."
+          "body": "Pierwsze zamki wprowadzają parę połączonych płytek. W miarę postępów większe grupy połączonych płytek i dłuższe rozwiązania stopniowo zwiększają wyzwanie. Zbierz jak najwięcej rudy, zanim skończą ci się wytrychy."
         },
         "inspiration": {
           "eyebrow": "Wykute z inspiracji",
@@ -115,37 +116,37 @@
       "howToPlay": {
         "title": "Jak grać",
         "eyebrow": "Poznaj zamek",
-        "lead": "Obracaj zapadki, aż każdy pin—ruchomy punkt na zapadce—znajdzie się na oznaczonej pozycji docelowej.",
+        "lead": "Przesuwaj płytki w lewo lub w prawo, aż każda zapadka znajdzie się w środkowym otworze swojej płytki.",
         "objective": {
           "title": "Twój cel",
           "body": "Otwieraj kolejne skrzynie, zbieraj bryłki rudy i sporadycznie wytrychy, a następnie mierz się z coraz trudniejszymi zamkami. Gra kończy się, gdy zabraknie wytrychów."
         },
         "mechanism": {
-          "title": "Zapadki i piny",
-          "body": "Wybierz zapadkę i obróć ją w lewo lub w prawo. Obrót przesuwa jej pin i może też przesunąć piny na powiązanych zapadkach, czasem w przeciwnym kierunku, dlatego obserwuj cały zamek."
+          "title": "Płytki i zapadki",
+          "body": "Każda płytka ma siedem otworów i siedem dozwolonych pozycji pod nieruchomą zapadką. Wybierz płytkę i przesuń ją w lewo lub w prawo. Zależności płytek mogą też powodować przesunięcie powiązanych płytek, czasem w przeciwnym kierunku, dlatego obserwuj cały zamek."
         },
         "stepsTitle": "Otwieranie skrzyni",
         "steps": [
-          "Wybierz zapadkę kliknięciem lub dotknięciem.",
-          "Obróć ją widocznymi przyciskami, klawiszami A/D albo strzałkami w lewo/w prawo.",
-          "Obserwuj, jak jej pin oraz piny na powiązanych zapadkach zbliżają się do celów lub od nich oddalają.",
-          "Ustaw wszystkie piny na celach, aby otworzyć skrzynię.",
+          "Wybierz płytkę kliknięciem lub dotknięciem.",
+          "Przesuń ją w lewo lub w prawo widocznymi przyciskami, klawiszami A/D albo strzałkami w lewo/w prawo.",
+          "Obserwuj, jak wybrana płytka i powiązane płytki przesuwają się pod nieruchomymi zapadkami.",
+          "Ustaw środkowy otwór każdej płytki pod jej zapadką, aby otworzyć skrzynię.",
           "Odbierz nagrodę i przejdź do następnego, trudniejszego zamka."
         ],
         "rulesTitle": "Wytrychy i nieprawidłowe ruchy",
         "rules": [
-          "Ruch jest nieprawidłowy, jeśli wypchnąłby którykolwiek poruszany pin poza dozwolony zakres.",
-          "Nieprawidłowy ruch nie zmienia położenia pinów i uszkadza bieżący wytrych.",
-          "Wytrych łamie się dokładnie po 3 nieprawidłowych ruchach.",
-          "Złamany wytrych nie resetuje zamka ani pozycji pinów.",
+          "Ruch jest nieprawidłowy, jeśli wypchnąłby którąkolwiek objętą nim płytkę poza dozwolony zakres pozycji.",
+          "Nieprawidłowy ruch nie zmienia położenia płytek i uszkadza bieżący wytrych.",
+          "Wytrych łamie się dokładnie po 4 nieprawidłowych ruchach.",
+          "Złamany wytrych nie resetuje zamka ani pozycji płytek.",
           "Ręczny reset przywraca początkowy układ bieżącego zamka.",
           "Gra kończy się po złamaniu ostatniego wytrycha."
         ],
         "controlsTitle": "Sterowanie",
         "controls": [
-          "Kliknięcie lub dotknięcie: wybór zapadki",
-          "W / strzałka w górę i S / strzałka w dół: poprzednia lub następna zapadka",
-          "A / strzałka w lewo i D / strzałka w prawo: obrót wybranej zapadki",
+          "Kliknięcie lub dotknięcie: wybór płytki",
+          "W / strzałka w górę i S / strzałka w dół: wybór poprzedniej lub następnej płytki",
+          "A / strzałka w lewo i D / strzałka w prawo: przesunięcie wybranej płytki",
           "R: reset bieżącego zamka",
           "N: przejście dalej po otwarciu skrzyni",
           "Widoczne przyciski zapewniają te same działania na komputerze i urządzeniu mobilnym."
@@ -162,7 +163,8 @@
   "game": {
     "title": "Otwórz skrzynię",
     "actions": {
-      "newRun": "Nowa gra"
+      "newRun": "Nowa gra",
+      "exitGame": "Wyjdź"
     },
     "labels": {
       "chest": "Skrzynia",
@@ -186,6 +188,57 @@
         "next": "Dalej",
         "reset": "Reset"
       }
+    },
+    "dialogs": {
+      "reward": {
+        "title": "Skrzynia",
+        "description": "Zamek otwarty. Zabierz łupy i zmierz się z kolejną próbą.",
+        "takeAll": "Weź wszystko",
+        "totalOre": "Zebrana ruda"
+      },
+      "failed": {
+        "title": "Koniec próby",
+        "description": "Twój ostatni wytrych się złamał. Zebrane łupy wieńczą tę próbę.",
+        "openedChests": "Otwarte skrzynie",
+        "moves": "Wszystkie ruchy",
+        "invalidMoves": "Błędne ruchy",
+        "brokenPicks": "Złamane wytrychy",
+        "unavailable": "Brak danych",
+        "leaderboard": "Ranking"
+      },
+      "restart": {
+        "title": "Rozpocząć nową próbę?",
+        "description": "Utracisz bieżące postępy. Tej czynności nie można cofnąć.",
+        "confirm": "Rozpocznij nową grę",
+        "cancel": "Graj dalej"
+      },
+      "close": "Zamknij",
+      "backToReward": "Pokaż łupy ze skrzyni",
+      "closeKey": "Esc"
+    },
+    "connection": {
+      "loading": "Oczekiwanie na serwer…",
+      "error": "Nie udało się potwierdzić akcji. Ponów, aby odzyskać stan gry.",
+      "retry": "Ponów"
+    },
+    "leaderboardClaim": {
+      "title": "TOP 1000",
+      "checking": "Sprawdzanie kwalifikacji do rankingu…",
+      "qualified": "Twój wynik kwalifikuje się. Wpisz publiczny pseudonim, aby go zgłosić.",
+      "nickname": "Pseudonim",
+      "help": "1–24 znaki, bez znaków sterujących. To publiczna etykieta, nie konto.",
+      "invalid": "Wpisz pseudonim o długości 1–24 znaków, bez znaków sterujących.",
+      "submit": "Zgłoś wynik",
+      "submitting": "Wysyłanie…",
+      "retry": "Ponów",
+      "network": "Nie udało się połączyć z rankingiem. Ponów, aby sprawdzić lub dokończyć zgłoszenie.",
+      "expired": "Twoja sesja nie jest już dostępna. Nie można zgłosić tego wyniku z tej przeglądarki.",
+      "noLongerQualified": "Ten wynik nie kwalifikuje się już do TOP 1000. Możesz rozpocząć nową grę.",
+      "alreadyClaimed": "Ten wynik został już zgłoszony.",
+      "saved": "Twój wynik został zgłoszony.",
+      "notQualified": "Ten wynik nie kwalifikuje się do TOP 1000. Możesz rozpocząć nową grę.",
+      "continue": "Dalej",
+      "description": "Zgłoś ukończoną grę do rankingu, jeśli wynik się kwalifikuje."
     }
   },
   "debug": {
@@ -196,9 +249,9 @@
       "moveRight": "Przesuń w prawo",
       "newRun": "Rozpocznij nowy bieg testowy",
       "reset": "Zresetuj bieżący zamek",
-      "selectNextPin": "Wybierz następny pin",
-      "selectPreviousPin": "Wybierz poprzedni pin",
-      "selectPin": "Wybierz pin"
+      "selectNextPin": "Wybierz następną płytkę",
+      "selectPreviousPin": "Wybierz poprzednią płytkę",
+      "selectPin": "Wybierz płytkę"
     },
     "labels": {
       "chest": "Skrzynia",
@@ -208,19 +261,19 @@
       "invalidMoveEvent": "nieprawidłowy ruch",
       "ignoredEvent": "zignorowano",
       "keyboardHelp": "Skróty klawiaturowe",
-      "keyboardMoveLeft": "`A` lub `ArrowLeft` przesuwa wybrany pin w lewo",
-      "keyboardMoveRight": "`D` lub `ArrowRight` przesuwa wybrany pin w prawo",
+      "keyboardMoveLeft": "`A` lub `ArrowLeft` przesuwa wybraną płytkę w lewo",
+      "keyboardMoveRight": "`D` lub `ArrowRight` przesuwa wybraną płytkę w prawo",
       "keyboardReset": "`R` resetuje bieżący zamek",
-      "keyboardSelectPreviousPin": "`W` lub `ArrowUp` wybiera poprzedni pin",
-      "keyboardSelectNextPin": "`S` lub `ArrowDown` wybiera następny pin",
-      "keyboardSelectPin": "`1-9` wybiera pin według indeksu",
+      "keyboardSelectPreviousPin": "`W` lub `ArrowUp` wybiera poprzednią płytkę",
+      "keyboardSelectNextPin": "`S` lub `ArrowDown` wybiera następną płytkę",
+      "keyboardSelectPin": "`1-9` wybiera płytkę według indeksu",
       "left": "lewo",
       "lockpickBrokeEvent": "wytrych złamał się po nieprawidłowym ruchu",
       "lockpicks": "Wytrychy",
       "maxInvalidMoves": "Maks. nieprawidłowych ruchów na wytrych",
-      "moveHint": "Wybierz pin i przesuń go bezpośrednio",
-      "moveHorizontal": "Ruch w lewo/prawo",
-      "moveVertical": "Ruch w górę/dół",
+      "moveHint": "Wybierz płytkę i przesuń ją w lewo lub w prawo",
+      "moveHorizontal": "Przesuwanie w lewo/prawo",
+      "moveVertical": "Wybór poprzedniej/następnej płytki",
       "movedEvent": "przesunięto",
       "next": "Dalej",
       "noValue": "Nie rozpoczęto",
@@ -228,10 +281,10 @@
       "oreUnit": "rudy",
       "openedChestEvent": "otwarto skrzynię",
       "oreNuggets": "Bryłki rudy",
-      "pin": "Pin",
-      "pinColumns": "Kolumny pinów",
-      "pinControls": "Sterowanie pinami",
-      "pinPrefix": "pin",
+      "pin": "Płytka",
+      "pinColumns": "Pozycje płytek",
+      "pinControls": "Sterowanie płytkami",
+      "pinPrefix": "płytka",
       "position": "Pozycja",
       "range": "Zakres",
       "resetChestEvent": "zresetowano skrzynię",
@@ -239,10 +292,10 @@
       "rewardLockpicks": "wytrychy",
       "rewardSummary": "Nagroda z ostatniej skrzyni",
       "right": "prawo",
-      "rules": "Reguły",
-      "selectedPin": "Wybrany pin",
-      "selectedPinEvent": "wybrano pin",
-      "selectedPinFromKeyboardEvent": "wybrano pin z klawiatury",
+      "rules": "Zależności płytek",
+      "selectedPin": "Wybrana płytka",
+      "selectedPinEvent": "wybrano płytkę",
+      "selectedPinFromKeyboardEvent": "wybrano płytkę z klawiatury",
       "solvedChestEvent": "rozwiązano skrzynię",
       "solverHint": "Długość ścieżki rozwiązania",
       "startedChestEvent": "uruchomiono skrzynię",
@@ -252,13 +305,13 @@
       "continuedSavedChestEvent": "wznowiono zapisaną skrzynię"
     },
     "messages": {
-      "active": "Użyj tekstowych kontrolek, aby sprawdzić zależności, zweryfikować poprawne ruchy i odtworzyć obrażenia od nieprawidłowych ruchów.",
+      "active": "Użyj tekstowych kontrolek, aby sprawdzić zależności płytek, zweryfikować poprawne przesunięcia i odtworzyć obrażenia od nieprawidłowych ruchów.",
       "failed": "Bieg zakończony. Nie zostały żadne wytrychy, więc interakcja z zamkiem jest zablokowana do czasu rozpoczęcia nowego biegu.",
       "idle": "Rozpocznij bieg, aby obejrzeć wygenerowany zamek i przetestować zachowanie ruchów.",
-      "invalid": "Nieprawidłowe ruchy pozostawiają wszystkie piny na miejscu i uszkadzają tylko bieżący wytrych.",
+      "invalid": "Nieprawidłowe ruchy pozostawiają wszystkie płytki na miejscu i uszkadzają tylko bieżący wytrych.",
       "noEvents": "Brak zdarzeń rozgrywki.",
       "saved": "Dostępny jest wcześniej zapisany bieg z ostatnio otwartej skrzyni.",
-      "solved": "Zamek rozwiązany. Przejdź do następnej skrzyni, aby wygenerować trudniejszy zamek testowy i zapisać bieg."
+      "solved": "Zamek otwarty. Przejdź do następnej skrzyni, aby sprawdzić kolejny wygenerowany zamek."
     },
     "states": {
       "active": "Aktywny",
@@ -267,5 +320,26 @@
     },
     "subtitle": "Tekstowy moduł testowy w przeglądarce do weryfikacji generowania zamków, reguł ruchu, obrażeń od nieprawidłowych ruchów i ręcznego resetu.",
     "title": "Moduł testowy zamków Próba Klina"
+  },
+  "leaderboard": {
+    "title": "Ranking",
+    "subtitle": "TOP 1000 ukończonych rozgrywek",
+    "description": "Każdy wpis to zgłoszona rozgrywka. Pseudonimy mogą się powtarzać.",
+    "rank": "Miejsce",
+    "nickname": "Pseudonim",
+    "ore": "Bryłki rudy",
+    "chests": "Otwarte skrzynie",
+    "finished": "Zakończono (UTC)",
+    "loading": "Wczytywanie rankingu…",
+    "empty": "Nie zgłoszono jeszcze żadnej rozgrywki.",
+    "error": "Nie udało się wczytać rankingu. Spróbuj ponownie.",
+    "expired": "Ten widok rankingu wygasł. Odśwież, aby zobaczyć aktualne wyniki.",
+    "retry": "Ponów",
+    "refresh": "Odśwież ranking",
+    "previous": "Poprzednia",
+    "next": "Następna",
+    "pagination": "Strony rankingu",
+    "page": "Strona {page}",
+    "view": "Zobacz ranking"
   }
 }

@@ -9,11 +9,11 @@ Read `docs/architecture/data-model.md`, `backend.md`, `security.md`, issues #30â
 
 ## Procedure
 
-1. Model `players`, `sessions`, `runs`, `run_actions` and indexes based on access patterns, not speculative abstractions.
+1. Extend the implemented sessions, runs and run_actions schema based on access patterns. No players/profile table is required for anonymous play; leaderboard storage remains planned.
 2. Enforce ownership, unique action IDs, nonnegative counters, status transitions and one-active-run policy with DB constraints where practical.
 3. Verify the *actual chosen* Neon driver supports required Drizzle transactions/row lock strategy; never assume the HTTP-based and session-based transports are interchangeable.
 4. Use parameterized queries, transaction boundaries and compare-and-swap/version guards for mutations.
-5. Separate Preview and Production. Generate versioned migrations; do not auto-apply them in request handlers.
+5. Separate Preview and Production. Generate and commit SQL, journal and snapshots; do not auto-apply migrations in request handlers. Direct and pooled URLs must target the same branch/database.
 6. Avoid importing server DB modules into `use client` code and never expose DB credentials.
 7. Test against PostgreSQL for concurrency, duplicates, rollback and ranking ties; unit mocks alone are insufficient.
 

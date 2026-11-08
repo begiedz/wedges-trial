@@ -9,12 +9,12 @@ Read `AGENTS.md`, `docs/architecture/status.md` and relevant layout/components. 
 
 ## Procedure
 
-1. Reuse existing patterns in `src/components/game/GameClient.tsx`, `src/components/lock`, `src/components/general` and `src/i18n/`.
-2. During migration replace browser-authoritative logic with API calls **only once the server counterpart works**; use server-confirmed DTOs to render.
-3. Prevent rapid double submissions; model pending, invalid move, pick break, solved chest, failed run and stale conflict states clearly.
+1. Read `docs/architecture/module-boundaries.md`. Put product-specific React code in its feature and tests in `tests/` mirroring source paths/basenames; expose minimal APIs for route composition and keep shared UI independent. Run `pnpm check:architecture`. Reuse existing patterns in `src/features/gameplay/components/game/game-client.tsx`, `src/features/gameplay/components/lock`, `src/components/general` and `src/i18n/`.
+2. Use useGameSession and the game channel for server snapshots, ordered input, transient prediction and reconciliation. Keep resource/reward/terminal dialogs server-confirmed.
+3. Preserve rapid movement input without a per-move loading lock; deduplicate lifecycle submissions and model pending, invalid move, pick break, solved chest, failed run and stale conflict states clearly.
 4. Preserve A/D/W/S, arrow keys, manual reset, next chest and touch/click controls; avoid key events inside text inputs.
 5. Keep UI accessible and screen-reader friendly; don't rely only on sound/color.
-6. Never hardcode copy; update en/pl/de/ru dictionaries.
+6. Never hardcode copy; update en/pl/de/ru dictionaries. Follow the [plate/pin glossary](../../../docs/architecture/gameplay.md#lock-component-terminology-60) in visible controls, accessible labels and debug UI: select/slide plates, keep pins stationary, align middle holes. Up/down selects plates. Preserve existing component paths, translation keys and `pinId`/`selectedPinId` identifiers unless a separate refactor is authorized.
 7. For audio, connect UI to a separate opt-in provider; never call audio from the pure engine.
 
 ## Done when

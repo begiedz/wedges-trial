@@ -53,16 +53,13 @@
 }
 
 @theme inline {
-
   --color-background: var(--background);
   --color-background-secondary: var(--background-secondary);
   --color-foreground: var(--foreground);
   --color-secondary: var(--secondary);
 
-
   --font-sans: var(--font-noto-serif);
   --font-heading: var(--font-boucherie);
-
 
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -80,13 +77,11 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-
 
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);

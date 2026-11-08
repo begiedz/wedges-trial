@@ -4,8 +4,6 @@ import { ChevronDown, Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
-import { START_NEW_RUN_EVENT } from "@/components/game/events";
-import Button from "@/components/general/atoms/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +23,7 @@ import { type Locale, locales } from "@/i18n/types";
 import { cn } from "@/lib/utils";
 import Logo from "../atoms/logo";
 
-type NavItemKey = "language" | "solver" | "about" | "howToPlay";
+type NavItemKey = "language" | "solver" | "about" | "howToPlay" | "leaderboard";
 
 type NavItem =
   | {
@@ -39,6 +37,7 @@ type NavItem =
 
 const NAV_ITEMS: NavItem[] = [
   // { key: "solver", href: "/solver" },
+  { key: "leaderboard", href: "/leaderboard" },
   { key: "about", href: "/about" },
   { key: "howToPlay", href: "/how-to-play" },
   {
@@ -65,19 +64,16 @@ function getLocaleHref(pathname: string, locale: Locale) {
   return pathWithoutLocale ? `/${locale}${pathWithoutLocale}` : `/${locale}`;
 }
 
-export function Navbar() {
+export function Navbar({
+  renderAction,
+}: {
+  renderAction?: (onNavigate: () => void) => React.ReactNode;
+}) {
   const [open, setOpen] = React.useState(false);
   const locale = useLocale();
   const pathname = usePathname();
   const dict = useDictionary();
   const nav = dict.nav;
-  const isGamePage = pathname === `/${locale}/game`;
-
-  const handleStartNewRun = React.useCallback(() => {
-    window.dispatchEvent(new Event(START_NEW_RUN_EVENT));
-    setOpen(false);
-  }, []);
-
   return (
     <header className="top-0 z-50 sticky bg-background/80 backdrop-blur border-border border-b w-full">
       <div className="relative items-center grid grid-cols-[1fr_auto_1fr] mx-auto px-4 sm:px-6 h-16">
@@ -162,11 +158,9 @@ export function Navbar() {
           </nav>
 
           {/* Desktop actions */}
-          {isGamePage ? (
+          {renderAction ? (
             <div className="flex items-center gap-2">
-              <Button onClick={handleStartNewRun}>
-                {dict.game.actions.newRun}
-              </Button>
+              {renderAction(() => setOpen(false))}
             </div>
           ) : null}
         </div>
@@ -222,14 +216,9 @@ export function Navbar() {
                 )}
               </nav>
 
-              {isGamePage ? (
+              {renderAction ? (
                 <div className="mt-6 pt-6 border-border border-t">
-                  <Button
-                    onClick={handleStartNewRun}
-                    className="justify-center w-full text-center"
-                  >
-                    {dict.game.actions.newRun}
-                  </Button>
+                  {renderAction(() => setOpen(false))}
                 </div>
               ) : null}
             </SheetContent>

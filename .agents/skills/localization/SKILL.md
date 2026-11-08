@@ -11,7 +11,7 @@ Read `AGENTS.md` and current `src/i18n/dictionaries.ts`, `src/i18n/provider.tsx`
 
 1. Make keys descriptive and consistent with existing namespaces; don't duplicate nearly identical strings.
 2. Update **all four** `src/i18n/dictionaries/{en,pl,de,ru}.json` files for every new visible string.
-3. Use English as fallback; preserve player-facing terminology (ore nuggets, lockpicks, chest difficulty).
+3. Use English as fallback; preserve player-facing terminology (ore nuggets, lockpicks, chest difficulty). Follow the [lock component glossary](../../../docs/architecture/gameplay.md#lock-component-terminology-60): moving plate / płytka / Platte / пластина; stationary pin / zapadka / Stift / штифт. Use horizontal sliding, never rotation, and describe dependencies between plates. Existing `*Pin`/`pin*` translation keys stay compatible while their displayed values describe plates where appropriate.
 4. Check number formats, pluralization, long German labels, non-Latin text, empty leaderboard, sound controls and errors.
 5. Keep literal error codes in HTTP responses separate from localized presentation strings.
 6. Test dictionary parity/usage and visual overflow where practical.

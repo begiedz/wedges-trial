@@ -1,35 +1,30 @@
 # Security and abuse model
 
-## Guarantees and non-guarantees
+## Implemented gameplay controls
 
-HTTPS encrypts requests in transit; WebSockets do not inherently prevent cheating. **Server authority** makes tampering with `localStorage`, JavaScript state and arbitrary score submissions ineffective, but it cannot fully prevent bots that send syntactically valid moves or solve puzzles automatically.
+The server computes all trusted state, damage, rewards and final results. Client prediction is rendering only. Editing browser state or submitting score fields cannot alter persisted resources; valid-action bots and automated solvers are still possible.
 
-## Threats and controls
+- Anonymous credentials are 256-bit random tokens in Secure, HttpOnly, SameSite=Strict cookies. Only SHA-256 hashes are stored. Sessions expire after 30 days; expiry and explicit revocation are rechecked under the mutation transaction lock.
+- HTTP mutations and WebSocket upgrade require the exact allowed Origin. Private gameplay and leaderboard eligibility/claim operations authorize ownership; foreign/unknown run IDs both return 404. A run UUID is not a credential.
+- Strict runtime schemas reject unknown fields, malformed IDs, invalid versions/directions and caller-owned state. HTTP bodies and socket frames are capped at 2 KiB.
+- Session-row locking, version checks and owner-scoped action IDs protect concurrent writes and exact retries. State, counters and replay responses commit atomically, including batched moves.
+- Socket queue, frame, rate, heartbeat and outgoing-buffer limits bound individual connections. They are not distributed abuse protection.
+- Public snapshots may include movement rules for prediction. Seeds, initial locks, internal solver metadata, ownership fields, token hashes and database credentials remain private. Concealing public mechanics is not an anti-bot guarantee.
+- Structured diagnostic logs use correlation IDs and allowlisted failure reasons, without raw SQL, connection strings or request secrets. Client errors remain generic and localized by code.
+- Debug/solver pages reject production access. Private HTTP responses use no-store. Old editable browser saves receive no trusted score credit.
 
-| Threat | Required control |
-| --- | --- |
-| Edited browser score or state | Ignore client state; server recomputes all actions and totals |
-| Forged player ownership | Cryptographically random opaque session token; ownership check on every private operation |
-| Session theft/leakage | Secure, HttpOnly, SameSite cookie; hash stored token; avoid log leaks |
-| CSRF on mutations | Origin checks, SameSite cookies and appropriate CSRF defense |
-| Replay / double click | Idempotency action ID + versioned transactional update |
-| Racing tabs | Row lock or atomic guarded update; conflict 409 and refetch |
-| Malformed or oversized input | Runtime schema validation and strict bounds |
-| Enumeration and scraping | Bounded leaderboard pages and rate limits |
-| Resource exhaustion / bots | Rate limits, compute budgets, suspicious play heuristics, monitoring |
-| Database error | Rollback, safe error, retry only if idempotent |
-| Asset copyright claims | Audit and clear rights before serving extracted media |
+## Remaining release controls
 
-## Secrets and environments
+Measured compute budgets, monitoring and deployed reconnect/expiry checks remain work. Private leaderboard claims authenticate finished-run ownership, validate names, recheck TOP 1000 cutoff under a cohort transaction lock and enforce one claim per run with atomic action replay. Public ranking reads use expiring PostgreSQL snapshots and signed cursors under #24; localized nickname entry is implemented under #34. Public reads expose only ranking DTOs and use no-store without creating a session. PostgreSQL-backed leaderboard request budgets (#46) cap public traversal starts/pages globally and private eligibility/claims per authenticated session; denied requests return 429 with Retry-After. See [admission boundaries](api-contract.md#leaderboard-admission-and-caching-46). These protect snapshot allocation across instances, but public global quotas can affect legitimate traffic and session creation remains outside these limits. Edge/session abuse controls, traffic calibration and broader distributed gameplay limits remain #43 release work. Nicknames are presentation only, never authentication.
 
-- Keep DB URLs, auth secrets and migration credentials on the server, in environment variables only.
-- Use separate Preview and Production data; do not connect tests to production.
-- Avoid returning rules/solver path/seed or internals not required for UI. Note that visible positions and public move outcomes inevitably give players information; do not pretend client-side concealment fully stops scripts.
-- Disable or restrict debug/testing routes in production (existing debug/solver pages currently reject production via `notFound()`).
-- Never grant score credit for migrated browser data, uncommitted states, or partially failed transactions.
+Keep Preview/development and Production databases isolated; tests must never use Production. Migration credentials remain server-only. Asset redistribution requires a provenance/licensing audit independently of application security.
 
-## Verification requirements
+## Verification
 
-Include focused tests for foreign run IDs, forged action payloads, duplicate IDs, reused IDs with changed payload, stale versions, concurrent continue, invalid cookie, expired session, reward once, and untrusted client values.
+Tests cover foreign ownership, malformed input, invalid/expired cookies, duplicate/reused IDs, stale versions, concurrent actions, reward once, rollback, DTO leaks and Origin/proxy configuration. Socket tests cover burst/replay, bounded frames, expiry and client recovery. See [setup](server-setup.md) for opt-in PostgreSQL tests and [status](status.md) for evidence limits.
 
-Related: #32, #33, #36–#43, #51.
+## Anonymous session lifecycle (#33)
+
+Bootstrap accepts `{}` and never a name/profile. A valid cookie restores its existing owner without rotating the credential or extending its fixed expiry. Refresh and tabs sharing that cookie see the same owner and coordinate through database locks/versions. An independent browser, deleted cookie, malformed/unknown token or expired/revoked cookie cannot recover the prior owner; bootstrap creates a fresh owner. The raw credential is returned only in Set-Cookie, never JSON, logs or stored game state. Concurrent first visits before any cookie exists can create distinct anonymous owners; there is no cross-browser identity mechanism.
+
+Expiry/revocation ends private reads, writes and claims, including exact action retries. No automatic reassignment of an old run takes place. Expired active runs remain protected by the conservative retention policy; claimed records survive loss of browser access. See [retention](data-model.md#conservative-retention-policy-31). Session expiry is not sliding and does not promise permanent result access. Explicit revocation is the existing internal database field; no public revoke endpoint is introduced.

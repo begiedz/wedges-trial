@@ -5,7 +5,7 @@ description: Use when implementing Next.js Route Handlers, sessions, server-auth
 
 # Backend API skill
 
-Read `AGENTS.md`, `docs/architecture/backend.md`, `security.md` and `data-model.md`. **Target backend is not yet implemented** on current master.
+Read `AGENTS.md`, `docs/architecture/backend.md`, `security.md` and `data-model.md`. Gameplay/session HTTP and WebSocket paths are implemented; ranking remains planned. Check status.md for verified environments.
 
 ## Procedure
 
@@ -15,7 +15,8 @@ Read `AGENTS.md`, `docs/architecture/backend.md`, `security.md` and `data-model.
 4. Apply existing pure `src/game/*` functions on the server; persist confirmed updated state and counters atomically.
 5. Return 400/401/403/404/409/429 or 5xx as appropriate with safe, actionable errors. A 409 should let the UI refetch authoritative state.
 6. Do not trust in-memory Maps across Vercel Functions or claim WebSockets make the endpoint secure.
-7. Test authorization, double submission, stale version, concurrent requests and DB rollback.
+7. Reuse strict action validation for WebSockets; authenticate Origin/session/ownership before upgrade and preserve per-action replay/version semantics in batches.
+8. Test authorization, double submission, stale version, concurrent requests and DB rollback.
 
 ## Done when
 

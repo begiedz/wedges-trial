@@ -71,7 +71,8 @@
       "language": "Language",
       "solver": "Solver",
       "about": "About",
-      "howToPlay": "How to play"
+      "howToPlay": "How to play",
+      "leaderboard": "Leaderboard"
     },
     "locales": {
       "en": "English",
@@ -93,14 +94,14 @@
       "about": {
         "title": "About Wedge's Trial",
         "eyebrow": "Behind the trial",
-        "lead": "Wedge’s Trial is an endless browser lockpicking puzzle in which every opened chest leads to a tougher test.",
+        "lead": "Wedge’s Trial is an endless browser lockpicking puzzle with gradually growing challenges.",
         "whatItIs": {
           "title": "What is Wedge’s Trial?",
           "body": "Wedge challenges you with a chain of generated, always-solvable locks. Their connected mechanisms reward observation and planning rather than speed, while ore nuggets record how far your run has carried you."
         },
         "trial": {
           "title": "The endless trial",
-          "body": "Each chest raises the difficulty through more tumblers, denser connections between them, and longer solutions. Your goal is simple: gather as much ore as possible before your supply of lockpicks is exhausted."
+          "body": "The first locks introduce a connected pair of plates. As you progress, larger connected groups and longer solutions add to the challenge gradually. Gather as much ore as possible before your lockpicks run out."
         },
         "inspiration": {
           "eyebrow": "Forged by inspiration",
@@ -115,37 +116,37 @@
       "howToPlay": {
         "title": "How to play",
         "eyebrow": "Know the lock",
-        "lead": "Turn the tumblers until every pin—the moving point on a tumbler—reaches its marked target.",
+        "lead": "Slide the plates left or right until each stationary pin aligns with the middle hole of its plate.",
         "objective": {
           "title": "Your objective",
           "body": "Open each chest, collect its ore nuggets and occasional lockpicks, then face the next, harder lock. The run ends when no lockpicks remain."
         },
         "mechanism": {
-          "title": "Tumblers and pins",
-          "body": "Select a tumbler and turn it left or right. A turn moves its pin and can also move pins on connected tumblers, sometimes in the opposite direction, so watch the whole lock before committing."
+          "title": "Plates and pins",
+          "body": "Each plate has seven holes and seven permitted positions beneath a stationary pin. Select a plate and slide it left or right. Plate dependencies can also slide connected plates, sometimes in the opposite direction, so watch the whole lock before committing."
         },
         "stepsTitle": "Opening a chest",
         "steps": [
-          "Select a tumbler by clicking or tapping it.",
-          "Turn it left or right with the visible controls, A/D, or the Left/Right Arrow keys.",
-          "Watch how its pin—and pins on connected tumblers—move toward or away from their targets.",
-          "Place every pin on its target to open the chest.",
+          "Select a plate by clicking or tapping it.",
+          "Slide it left or right with the visible controls, A/D, or the Left/Right Arrow keys.",
+          "Watch how the selected plate and connected plates slide beneath their stationary pins.",
+          "Align the middle hole of every plate with its pin to open the chest.",
           "Claim the reward and continue to the next, harder lock."
         ],
         "rulesTitle": "Lockpicks and invalid moves",
         "rules": [
-          "A move is invalid if it would push any affected pin outside its allowed range.",
-          "An invalid move changes no pin positions and damages the current lockpick.",
-          "A lockpick breaks after exactly 3 invalid moves.",
-          "A broken lockpick does not reset the lock or its pin positions.",
+          "A move is invalid if it would push any affected plate outside its permitted position range.",
+          "An invalid move changes no plate positions and damages the current lockpick.",
+          "A lockpick breaks after exactly 4 invalid moves.",
+          "A broken lockpick does not reset the lock or its plate positions.",
           "Manual reset restores the current lock’s starting layout.",
           "When the last lockpick breaks, the run ends."
         ],
         "controlsTitle": "Controls",
         "controls": [
-          "Click or tap: select a tumbler",
-          "W / Up Arrow and S / Down Arrow: select the previous or next tumbler",
-          "A / Left Arrow and D / Right Arrow: turn the selected tumbler",
+          "Click or tap: select a plate",
+          "W / Up Arrow and S / Down Arrow: select the previous or next plate",
+          "A / Left Arrow and D / Right Arrow: slide the selected plate",
           "R: reset the current lock",
           "N: continue after opening a chest",
           "Visible controls provide the same actions on desktop and mobile."
@@ -162,7 +163,8 @@
   "game": {
     "title": "Open Chest",
     "actions": {
-      "newRun": "New run"
+      "newRun": "New run",
+      "exitGame": "Exit"
     },
     "labels": {
       "chest": "Chest",
@@ -186,19 +188,70 @@
         "next": "Next",
         "reset": "Reset"
       }
+    },
+    "dialogs": {
+      "reward": {
+        "title": "Chest",
+        "description": "The lock is open. Take your spoils and face the next trial.",
+        "takeAll": "Take all",
+        "totalOre": "Total ore"
+      },
+      "failed": {
+        "title": "Trial ended",
+        "description": "Your last lockpick has broken. Your haul marks the end of this trial.",
+        "openedChests": "Opened chests",
+        "moves": "Total moves",
+        "invalidMoves": "Invalid moves",
+        "brokenPicks": "Broken lockpicks",
+        "unavailable": "Unavailable",
+        "leaderboard": "Leaderboard"
+      },
+      "restart": {
+        "title": "Start a new trial?",
+        "description": "Your current progress will be abandoned. This cannot be undone.",
+        "confirm": "Start new run",
+        "cancel": "Keep playing"
+      },
+      "close": "Close",
+      "backToReward": "View chest reward",
+      "closeKey": "Esc"
+    },
+    "connection": {
+      "loading": "Waiting for the server…",
+      "error": "The action could not be confirmed. Retry to recover your game.",
+      "retry": "Retry"
+    },
+    "leaderboardClaim": {
+      "title": "TOP 1000",
+      "checking": "Checking leaderboard eligibility…",
+      "qualified": "Your run qualifies. Enter a public nickname to submit it.",
+      "nickname": "Nickname",
+      "help": "1–24 characters, without control characters. This is a public label, not an account.",
+      "invalid": "Enter a nickname of 1–24 characters without control characters.",
+      "submit": "Submit score",
+      "submitting": "Submitting…",
+      "retry": "Retry",
+      "network": "Could not reach the leaderboard. Retry to check or complete your submission.",
+      "expired": "Your session is no longer available. This result cannot be submitted from this browser.",
+      "noLongerQualified": "This run no longer qualifies for TOP 1000. You can start a new run.",
+      "alreadyClaimed": "This run has already been submitted.",
+      "saved": "Your score was submitted.",
+      "notQualified": "This run does not qualify for TOP 1000. You can start a new run.",
+      "continue": "Continue",
+      "description": "Submit your finished run to the leaderboard if it qualifies."
     }
   },
   "debug": {
     "actions": {
       "continueRun": "Continue saved run",
       "continueToNextChest": "Continue to next chest",
-      "moveLeft": "Move left",
-      "moveRight": "Move right",
+      "moveLeft": "Slide left",
+      "moveRight": "Slide right",
       "newRun": "Start new test run",
       "reset": "Reset current lock",
-      "selectNextPin": "Select next pin",
-      "selectPreviousPin": "Select previous pin",
-      "selectPin": "Select pin"
+      "selectNextPin": "Select next plate",
+      "selectPreviousPin": "Select previous plate",
+      "selectPin": "Select plate"
     },
     "labels": {
       "chest": "Chest",
@@ -208,30 +261,30 @@
       "invalidMoveEvent": "invalid move",
       "ignoredEvent": "ignored",
       "keyboardHelp": "Keyboard help",
-      "keyboardMoveLeft": "`A` or `ArrowLeft` moves the selected pin left",
-      "keyboardMoveRight": "`D` or `ArrowRight` moves the selected pin right",
+      "keyboardMoveLeft": "`A` or `ArrowLeft` slides the selected plate left",
+      "keyboardMoveRight": "`D` or `ArrowRight` slides the selected plate right",
       "keyboardReset": "`R` resets the current lock",
-      "keyboardSelectPreviousPin": "`W` or `ArrowUp` selects the previous pin",
-      "keyboardSelectNextPin": "`S` or `ArrowDown` selects the next pin",
-      "keyboardSelectPin": "`1-9` select a pin by index",
+      "keyboardSelectPreviousPin": "`W` or `ArrowUp` selects the previous plate",
+      "keyboardSelectNextPin": "`S` or `ArrowDown` selects the next plate",
+      "keyboardSelectPin": "`1-9` select a plate by index",
       "left": "left",
       "lockpickBrokeEvent": "lockpick broke after invalid move",
       "lockpicks": "Lockpicks",
       "maxInvalidMoves": "Max invalid moves per pick",
-      "moveHint": "Pick a pin and move it directly",
-      "moveHorizontal": "Move left/right",
-      "moveVertical": "Move up/down",
-      "movedEvent": "moved",
+      "moveHint": "Select a plate and slide it left or right",
+      "moveHorizontal": "Slide left/right",
+      "moveVertical": "Select previous/next plate",
+      "movedEvent": "slid",
       "next": "Next",
       "noValue": "Not started",
       "onTarget": "on target",
       "oreUnit": "ore",
       "openedChestEvent": "opened chest",
       "oreNuggets": "Ore nuggets",
-      "pin": "Pin",
-      "pinColumns": "Pin columns",
-      "pinControls": "Pin controls",
-      "pinPrefix": "pin",
+      "pin": "Plate",
+      "pinColumns": "Plate positions",
+      "pinControls": "Plate controls",
+      "pinPrefix": "plate",
       "position": "Position",
       "range": "Range",
       "resetChestEvent": "reset chest",
@@ -239,10 +292,10 @@
       "rewardLockpicks": "lockpicks",
       "rewardSummary": "Latest chest reward",
       "right": "right",
-      "rules": "Rules",
-      "selectedPin": "Selected pin",
-      "selectedPinEvent": "selected pin",
-      "selectedPinFromKeyboardEvent": "selected pin from keyboard",
+      "rules": "Plate dependencies",
+      "selectedPin": "Selected plate",
+      "selectedPinEvent": "selected plate",
+      "selectedPinFromKeyboardEvent": "selected plate from keyboard",
       "solvedChestEvent": "solved chest",
       "solverHint": "Solver path length",
       "startedChestEvent": "started chest",
@@ -252,13 +305,13 @@
       "continuedSavedChestEvent": "continued saved chest"
     },
     "messages": {
-      "active": "Use the text controls to inspect dependencies, verify valid moves, and reproduce invalid move damage.",
+      "active": "Use the text controls to inspect plate dependencies, verify valid slides, and reproduce invalid move damage.",
       "failed": "Run failed. No lockpicks remain, so lock interaction is blocked until a new run starts.",
       "idle": "Start a run to inspect the generated lock and test move behavior.",
-      "invalid": "Invalid moves leave every pin in place and only damage the current lockpick.",
+      "invalid": "Invalid moves leave every plate in place and only damage the current lockpick.",
       "noEvents": "No gameplay events yet.",
       "saved": "A previously saved run is available from the last opened chest.",
-      "solved": "Lock solved. Advance to the next chest to generate a harder test lock and save the run."
+      "solved": "Lock solved. Continue to the next chest to inspect another generated lock."
     },
     "states": {
       "active": "Active",
@@ -267,5 +320,26 @@
     },
     "subtitle": "Text-first browser harness for validating lock generation, move rules, invalid move damage, and manual reset behavior.",
     "title": "Wedge's Trial Lock Harness"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "TOP 1000 finished runs",
+    "description": "Each entry is a claimed run. Names may appear more than once.",
+    "rank": "Rank",
+    "nickname": "Nickname",
+    "ore": "Ore nuggets",
+    "chests": "Opened chests",
+    "finished": "Finished (UTC)",
+    "loading": "Loading ranking…",
+    "empty": "No runs have been claimed yet.",
+    "error": "Could not load the ranking. Try again.",
+    "expired": "This ranking snapshot has expired. Refresh to see the latest scores.",
+    "retry": "Retry",
+    "refresh": "Refresh ranking",
+    "previous": "Previous",
+    "next": "Next",
+    "pagination": "Ranking pages",
+    "page": "Page {page}",
+    "view": "View ranking"
   }
 }

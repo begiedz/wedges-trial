@@ -1,0 +1,43 @@
+{
+  "candidateSourceSha256": "7be6bfab848f4cc894411052e69882258ebb50d4b7eaa78ee78b2e13222173e8",
+  "baselineSourceSha256": "f956a264c16ad712d4b9e5267b68309c279db3dc1c350984a50041e5947568c8",
+  "baseCommit": "ae885523174b189822c4c5c36b6733bff9a0ad15",
+  "runtime": "v22.23.4",
+  "limits": {
+    "network": "none",
+    "cpus": 1,
+    "memory": "2g"
+  },
+  "files": {
+    "learning-ramp-v1-resources.gz": {
+      "sha256": "a014187e7cf7261e6b921f5189c4c8cf1b6b235cdc6ce8c1f7fc3c931aaf3d62",
+      "bytes": 574863,
+      "engineSourceSha256": "7be6bfab848f4cc894411052e69882258ebb50d4b7eaa78ee78b2e13222173e8"
+    },
+    "learning-ramp-v1-survey.gz": {
+      "sha256": "2ff20d3e769b76f0399419a4481cebb7b5a0dd6d4fafbad8e876ea8d6b1d9ed0",
+      "bytes": 3899888,
+      "engineSourceSha256": "7be6bfab848f4cc894411052e69882258ebb50d4b7eaa78ee78b2e13222173e8"
+    },
+    "learning-ramp-v1-timing.gz": {
+      "sha256": "d12267532dc31cbc858c35bb57426c20a10f4fb68806ff1d17c7433e1ee189b7",
+      "bytes": 69299,
+      "engineSourceSha256": "7be6bfab848f4cc894411052e69882258ebb50d4b7eaa78ee78b2e13222173e8"
+    },
+    "scarce-picks-v1-survey.gz": {
+      "sha256": "a1c677519a8b4745228c8e0644e564cfa57e7978775c3a693c2d518969856240",
+      "bytes": 3946384,
+      "engineSourceSha256": "f956a264c16ad712d4b9e5267b68309c279db3dc1c350984a50041e5947568c8"
+    },
+    "scarce-picks-v1-timing.gz": {
+      "sha256": "13934d649b9acd6d1ac2e4c6d62703f52a5caaee80e9957493c4ff66b1a436bc",
+      "bytes": 70885,
+      "engineSourceSha256": "f956a264c16ad712d4b9e5267b68309c279db3dc1c350984a50041e5947568c8"
+    },
+    "learning-ramp-v1-outliers.gz": {
+      "sha256": "56154d6c7feb9ebb15dc6f88e213b5b2a339c4d2081d8a4c5b6447c48bc6359d",
+      "bytes": 1837,
+      "engineSourceSha256": "7be6bfab848f4cc894411052e69882258ebb50d4b7eaa78ee78b2e13222173e8"
+    }
+  }
+}

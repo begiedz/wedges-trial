@@ -4,7 +4,7 @@ import localFont from "next/font/local";
 import { notFound } from "next/navigation";
 import "../globals.css";
 import Footer from "@/components/general/molecules/footer";
-import { Navbar } from "@/components/general/molecules/navbar";
+import { GameplayNavigation } from "@/features/gameplay";
 import { getDictionary, hasLocale } from "@/i18n/dictionaries";
 import { I18nProvider } from "@/i18n/provider";
 import { locales } from "@/i18n/types";
@@ -55,7 +55,7 @@ export default async function RootLayout({
     >
       <body className="flex flex-col min-h-full">
         <I18nProvider dictionary={dict} locale={lang}>
-          <Navbar />
+          <GameplayNavigation />
           {children}
           <Footer />
         </I18nProvider>

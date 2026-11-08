@@ -24,8 +24,14 @@ export type MoveRule = {
 export type LockDifficulty = 1 | 2 | 3 | 4;
 
 export type LockState = {
+  /** Verified shortest distance from this chest’s initial layout.
+   * null/absent means unverified (including legacy locks and capped searches).
+   * Remains fixed as pins move; internal metadata, never a scoring penalty.
+   */
+  optimalMoves?: number | null;
   pins: Pin[];
   rules: MoveRule[];
+  /** Durability only; resets on break, unlike cumulative server metrics. */
   invalidMovesOnCurrentPick: number;
   maxInvalidMovesPerPick: number;
   isSolved: boolean;
@@ -40,7 +46,16 @@ export type RunState = {
 };
 
 export type DifficultyConfig = {
-  tumblerCount: number;
+  /** Generation-only constraints; never trusted from requests or persisted. */
+  /** Offline calibration range before an early-chest exact target is sampled. */
+  solutionLengthRange?: readonly [number, number];
+  topology?: {
+    coreSize: number;
+    dependencies: number;
+    maxFanout: number;
+    sameDirectionOnly: boolean;
+  };
+  plateCount: number;
   minPosition: number;
   maxPosition: number;
   targetPosition: number;

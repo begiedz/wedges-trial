@@ -1,14 +1,14 @@
-import os from 'node:os';
-import path from 'node:path';
-import type { NextConfig } from 'next';
-import packageJson from './package.json' with { type: 'json' };
+import os from "node:os";
+import path from "node:path";
+import type { NextConfig } from "next";
+import packageJson from "./package.json" with { type: "json" };
 
 function getLocalIPv4() {
   const interfaces = os.networkInterfaces();
 
   for (const entries of Object.values(interfaces)) {
     for (const entry of entries ?? []) {
-      if (entry.family === 'IPv4' && !entry.internal) {
+      if (entry.family === "IPv4" && !entry.internal) {
         return entry.address;
       }
     }

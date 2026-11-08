@@ -1,36 +1,164 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Wedge’s Trial
 
-## Getting Started
+An endless browser lockpicking puzzle inspired by Gothic Remake’s lock mechanics and [Fingers Challenge](https://fingerschallenge.com).
 
-First, run the development server:
+Open a chest, collect its ore, and face a harder lock. Connected plates make each move a small logic puzzle: sliding one plate can slide several others, sometimes in the opposite direction. Your goal is to gather as many **ore nuggets** as possible before your last lockpick breaks.
+
+## Project status
+
+Gameplay now runs on an authoritative server with Neon PostgreSQL persistence. Anonymous sessions resume committed moves, damage and resources. Vercel-native WebSockets provide ordered input with immediate visual prediction; the server confirms rewards and results. Browser gameplay saves have been removed.
+
+The global leaderboard, TOP 100 qualification and nickname claims remain planned. Development database/HTTPS flows and local native WebSockets have been verified; this does not establish production readiness. See [implementation status](docs/architecture/status.md) and [server setup](docs/architecture/server-setup.md).
+
+## How to play
+
+1. Select a plate by clicking or tapping it.
+2. Slide it left or right beneath its stationary pin. Connected plates may slide too.
+3. Align the middle hole of every plate with its stationary pin to open the chest. Each plate has seven holes and seven permitted positions.
+4. Choose **Take all** to collect the reward and advance to the next lock.
+5. Keep going until you run out of lockpicks.
+
+A move is invalid when any affected plate would leave its permitted position range. Invalid moves leave every plate in place and damage the current lockpick. **Exactly four invalid moves on that pick break it.** Breaking a pick does not reset the lock. The run ends when the last pick breaks.
+
+Manual reset restores the current lock’s starting layout. Starting a new run during an active trial requires confirmation; starting after Game Over does not.
+
+### Controls
+
+| Input                        | Action                                 |
+| ---------------------------- | -------------------------------------- |
+| Click / tap a plate          | Select it                              |
+| `A` / `←`                    | Slide the selected plate left          |
+| `D` / `→`                    | Slide the selected plate right         |
+| `W` / `↑`                    | Select the previous plate              |
+| `S` / `↓`                    | Select the next plate                  |
+| `R`                          | Reset the current lock                 |
+| `N`                          | Reopen a dismissed chest reward dialog |
+| `Space` in the reward dialog | Take all and advance                   |
+| `Esc` in the reward dialog   | Close it without collecting            |
+
+Visible buttons provide the same gameplay actions on desktop and mobile. Gameplay shortcuts are blocked while a dialog is open.
+
+### Server persistence
+
+Every accepted move and lifecycle action is persisted atomically. Refresh restores the last committed state, including partial pick damage and scoring penalties. Reset preserves damage and spent resources. The anonymous HttpOnly cookie owns the run; clearing it or letting it expire loses access. No old local save is imported.
+
+## Run locally
+
+Use **Node.js 22** (the version used by CI) and **pnpm 10.18.3** (pinned in `package.json`).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/begiedz/wedges-trial.git
+cd wedges-trial
+pnpm install --frozen-lockfile
+cp .env.example .env
+# Configure development database URLs, then:
+pnpm db:migrate
+# Set APP_ORIGIN=http://localhost:3000 in .env.local
+pnpm dev:ws
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [localhost:3000/en/game](http://localhost:3000/en/game) to play, or [localhost:3000/en](http://localhost:3000/en) for the home page.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Gameplay requires PostgreSQL. Direct and pooled URLs must reference the same development Neon branch/database. No Docker service is needed. The [setup guide](docs/architecture/server-setup.md) explains environment precedence, migrations, Vercel CLI linking and troubleshooting. Plain pnpm dev supports HTTP fallback; native WebSocket testing requires pnpm dev:ws.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Languages and routes
 
-## Learn More
+English (`en`), Polish (`pl`), German (`de`), and Russian (`ru`) use the same route structure:
 
-To learn more about Next.js, take a look at the following resources:
+| Route                 | Purpose                             |
+| --------------------- | ----------------------------------- |
+| `/{lang}`             | Home and introduction               |
+| `/{lang}/game`        | Play the trial                      |
+| `/{lang}/how-to-play` | Gameplay rules and controls         |
+| `/{lang}/about`       | Project background and inspiration  |
+| `/{lang}/debug`       | Development lock harness            |
+| `/{lang}/solver`      | Development solver information page |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Unprefixed page requests use browser language negotiation with English as the default fallback. The language menu switches between localized routes. The debug and solver pages return 404 in production builds.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Development commands
 
-## Deploy on Vercel
+| Command                  | Purpose                                                     |
+| ------------------------ | ----------------------------------------------------------- |
+| `pnpm dev`               | Start Next.js with HTTP gameplay fallback                   |
+| `pnpm dev:ws`            | Start Vercel CLI for native WebSocket development           |
+| `pnpm db:generate`       | Generate reviewable Drizzle migrations after schema changes |
+| `pnpm db:migrate`        | Apply committed migrations to the configured database       |
+| `pnpm test`              | Run the Vitest suite                                        |
+| `pnpm exec tsc --noEmit` | Check TypeScript types                                      |
+| `pnpm lint`              | Check formatting, imports and lint rules with Biome         |
+| `pnpm format`            | Apply formatting across the repository                      |
+| `pnpm build`             | Create a production build                                   |
+| `pnpm start`             | Serve an existing production build locally                  |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The app uses `next/font/google` for Noto Serif and a local heading font. A fresh build may need network access to fetch the Google font.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Tests and quality checks
+
+Tests cover plate dependencies, valid and invalid moves, pick damage and breakage, generated lock solvability, difficulty progression, solver behavior, server persistence, authorization, idempotency, concurrency, rollback and reset behavior. WebSocket tests cover burst input, prediction and reconnect/replay. Set TEST_DATABASE_URL explicitly to enable the isolated-schema PostgreSQL suite; otherwise it is skipped. React tests cover reward claims, duplicate inputs, dialog interactions, keyboard handling and restart flows.
+
+Run tests, type checking, lint and a production build before submitting relevant code changes. GitHub Actions runs coverage tests, type checking, lint (including naming and architecture guards) and a production build on Ubuntu for pushes and pull requests targeting `development` and `master`.
+
+Use `pnpm test:coverage` for source-mapped V8 coverage. Generated reports live in ignored `coverage/`.
+
+## Codebase and architecture
+
+The current stack is **Next.js 16, React 19, strict TypeScript, Radix/shadcn UI, Tailwind CSS 4, Biome and Vitest**, managed with pnpm. The game renders with React and CSS rather than Canvas.
+
+```text
+src/
+  api/                  HTTP and WebSocket wire types
+  app/[lang]/           Localized pages and layouts
+  app/api/              Gameplay HTTP handlers and socket upgrade
+  app/globals.css       Shared theme tokens and base styling
+  assets/               Fonts and images
+  client/game/          Ordered transport, prediction and reconciliation
+  components/general/   Reusable UI and site navigation
+  components/ui/        shadcn/Radix primitives
+  features/gameplay/    Game screen, React adapters, dialogs and lock visualization
+  features/lock-debug/   Development inspection tools
+  game/                 Pure puzzle engine, progression and reward functions
+  i18n/                 Dictionaries, locale types and React provider
+  server/               Validation, authoritative service and Drizzle persistence
+  proxy.ts              Locale routing
+
+tests/                  Mirrored source tests; integration/ for multi-module suites
+docs/architecture/      Current state, target design and API contract
+docs/agent/             Contribution workflow and agent documentation
+```
+
+Project-owned filenames and directories use **lowercase kebab-case**; TypeScript symbols retain `LockPin`, `RunState`, `useLockGame` and `MAX_LOCKPICKS`. Tests mirror `src/` under `tests/`. See [conventions and exceptions](docs/agent/file-naming.md); `pnpm check:names` runs through lint and regression tests.
+
+### Puzzle generation
+
+Locks start from a solved configuration. The generator creates symmetric move rules, then mixes the plate positions using legal slides. Reversing those moves provides a solution by construction. Difficulty grows through plate count, dependency density and solution-length targets. Existing code identifiers such as `Pin`, `pins`, `pinId` and `plateCount` remain unchanged; see [terminology and compatibility](docs/architecture/gameplay.md#lock-component-terminology-60).
+
+The solver uses a bounded search. Exhausting its budget does not prove a lock unsolvable or establish an optimal solution. Difficulty calibration and scoring against verified solutions remain active work.
+
+### Server architecture and remaining work
+
+One Next.js application on Vercel owns run transitions through Route Handlers and native WebSockets, backed by Neon PostgreSQL and Drizzle. Anonymous cookies authorize actions; the client sends intent with action IDs and expected versions. Transactions persist state and replay responses together. Public movement rules support rendering prediction; resources and final outcomes remain server-confirmed.
+
+Ore follows the approved deterministic formula: base 10, +5 per later chest, minus 10 percentage points per invalid move, with a 40% floor. New runs start with one lockpick and roll 0/1/2 picks with chances 79%/17%/4%; saved runs retain their original balance. See [gameplay](docs/architecture/gameplay.md) and the [decision ledger](docs/architecture/decisions.md).
+
+The [v1.0.0 roadmap](docs/architecture/roadmap.md) tracks remaining ranking storage/APIs/UI, distributed rate limits, deployment checks, difficulty calibration and solver evidence. Only qualifying verified finished runs will be allowed to claim a nickname for the planned arcade TOP 100. Audio playback and independent music/SFX controls remain planned; asset licensing requires an audit.
+
+## Contributing
+
+Start with [AGENTS.md](AGENTS.md), the [architecture overview](docs/architecture/README.md) and the [working agreement](docs/agent/working-agreement.md). Keep changes focused and document whether they affect the current game or the target architecture.
+
+- Keep domain logic independent of React, network and database code.
+- Reuse existing UI components and theme tokens.
+- Put user-facing text in all four dictionaries; use English as fallback.
+- Read the version-matched Next.js guides in `node_modules/next/dist/docs/` before changing framework-specific behavior.
+- Preserve working local flows until their server replacements are ready.
+- Add regression coverage for changed behavior and report verification results honestly.
+
+## Credits and asset usage
+
+Created by [Dariusz Begiedza](https://begiedz.dev). Inspired by the Gothic series, Gothic Remake’s lockpicking mechanics, and Fingers Challenge.
+
+This is a noncommercial fan project with no official affiliation with THQ Nordic or Piranha Bytes. Third-party names and assets remain subject to their owners’ rights. Noncommercial status and attribution do not grant redistribution permission; see the [asset provenance and licensing notes](docs/architecture/audio-assets.md) before adding or redistributing media.
+
+
+The Vercel dashboard owns Build Command. Set it to `pnpm db:migrate && pnpm build` to apply committed migrations before building the app. Production promotion requires the GitHub `Quality Checks` result; local/CI `pnpm build` stays migration-free. See [autodeploy, database locking and rollback](docs/architecture/server-setup.md#autodeploy-and-required-production-checks).
