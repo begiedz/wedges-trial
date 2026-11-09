@@ -18,7 +18,7 @@ import {
 } from "@/game/ruleset";
 import type { Direction } from "@/game/types";
 import { GameError } from "./errors";
-import { emptyMetrics, type StoredRun } from "./types";
+import { emptyMetrics, type StoredResult, type StoredRun } from "./types";
 
 export { RULESET_VERSION } from "@/game/ruleset";
 export function newRun(
@@ -27,6 +27,8 @@ export function newRun(
   now = new Date(),
 ): StoredRun {
   const state = createRun();
+  // Search evidence is useful during generation, not in saved gameplay state.
+  delete state.currentLock.optimalMoves;
   return {
     id,
     ownerId,
@@ -35,6 +37,8 @@ export function newRun(
     rulesetVersion: RULESET_VERSION,
     createdAt: now,
     updatedAt: now,
+    expiresAt: new Date(now.getTime() + 7 * 86400000),
+    result: null,
     game: {
       state,
       initialLock: cloneLockState(state.currentLock),
@@ -44,6 +48,22 @@ export function newRun(
       totalMetrics: emptyMetrics(),
       finishedAt: null,
     },
+  };
+}
+export function compactResult(run: StoredRun): StoredResult {
+  const { state, openedChests, finishedAt, totalMetrics } = run.game;
+  return {
+    chestIndex: state.chestIndex,
+    lockpicks: state.lockpicks,
+    oreNuggets: state.oreNuggets,
+    openedChests,
+    totalMetrics: { ...totalMetrics },
+    finishedAt,
+    difficulty:
+      run.result?.difficulty ??
+      (usesLearningProgression(run.rulesetVersion)
+        ? analyzeConnections(run.game.initialLock.rules).tier
+        : getDifficultyBand(state.chestIndex - 1)),
   };
 }
 export function publicRun(run: StoredRun): RunDto {
@@ -56,9 +76,7 @@ export function publicRun(run: StoredRun): RunDto {
     openedChests,
     oreNuggets: state.oreNuggets,
     lockpicks: state.lockpicks,
-    difficulty: usesLearningProgression(run.rulesetVersion)
-      ? analyzeConnections(run.game.initialLock.rules).tier
-      : getDifficultyBand(state.chestIndex - 1),
+    difficulty: compactResult(run).difficulty,
     currentLock: {
       pins: state.currentLock.pins.map((pin) => ({ ...pin })),
       invalidMovesOnCurrentPick: state.currentLock.invalidMovesOnCurrentPick,
@@ -104,6 +122,7 @@ function continueRun(run: StoredRun) {
   const claimedReward = game.reward;
   const nextIndex = game.state.chestIndex + 1;
   const lock = createChestLock(nextIndex - 1, Math.random, run.rulesetVersion);
+  delete lock.optimalMoves;
   lock.invalidMovesOnCurrentPick =
     game.state.currentLock.invalidMovesOnCurrentPick;
   game.state = {
@@ -191,6 +210,9 @@ export function transition(
   }
   run.version++;
   run.updatedAt = now;
+  const terminal = ["finished", "abandoned"].includes(run.status);
+  run.expiresAt = new Date(now.getTime() + (terminal ? 1 : 7) * 86400000);
+  if (terminal) run.result = compactResult(run);
   const outcome = actionOutcome(action, run, previous);
   return {
     run,

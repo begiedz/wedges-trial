@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Pool } from "pg";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { newRun } from "@/server/game/engine";
 
 const { runMigrations, MIGRATION_LOCK } = createRequire(import.meta.url)(
   "../../scripts/migrate.cjs",
@@ -99,14 +100,115 @@ describe.skipIf(!url)("serialized migration runner on PostgreSQL", () => {
       expect.arrayContaining([
         "sessions",
         "runs",
-        "run_actions",
         "leaderboard_entries",
-        "leaderboard_snapshots",
-        "leaderboard_request_budgets",
+        "global_game_stats",
       ]),
     );
     await runMigrations(pool, options());
     expect(await historyCount()).toBe(journal.entries.length);
+    await assertLockReleased();
+  });
+  it("requires an explicit cutover for an existing legacy database and ends with four application tables", async () => {
+    const fullJournal = structuredClone(journal);
+    const cutover = fullJournal.entries.findIndex(
+      (entry) => entry.tag === "0005_minimal-storage",
+    );
+    expect(cutover).toBeGreaterThan(0);
+    journal.entries = fullJournal.entries.slice(0, cutover);
+    await writeFile(
+      join(directory, "meta/_journal.json"),
+      JSON.stringify(journal),
+    );
+    await runMigrations(pool, options());
+    const owner = randomUUID();
+    const created = randomUUID();
+    const claimed = randomUUID();
+    const run = newRun(randomUUID(), owner);
+    run.status = "finished";
+    run.game.state.lockpicks = 0;
+    run.game.state.currentLock.isFailed = true;
+    run.game.finishedAt = new Date().toISOString();
+    await pool.query(
+      "INSERT INTO sessions(id,token_hash,expires_at) VALUES($1,$2,now()+interval '30 days')",
+      [owner, owner],
+    );
+    await pool.query(
+      "INSERT INTO runs(id,owner_id,version,status,ruleset_version,game) VALUES($1,$2,1,'finished',$3,$4::jsonb)",
+      [run.id, owner, run.rulesetVersion, JSON.stringify(run.game)],
+    );
+    await pool.query(
+      "INSERT INTO leaderboard_entries(run_id,nickname) VALUES($1,'Preserved')",
+      [run.id],
+    );
+    await pool.query(
+      "INSERT INTO run_actions(owner_id,action_id,run_id,fingerprint,response,status_code) VALUES($1,$2,$3,'legacy-create',$4::jsonb,201),($1,$5,$3,'legacy-claim',$6::jsonb,200)",
+      [
+        owner,
+        created,
+        run.id,
+        JSON.stringify({ outcome: "run_started" }),
+        claimed,
+        JSON.stringify({ outcome: "leaderboard_claimed", entry: { rank: 1 } }),
+      ],
+    );
+    await pool.query(
+      "INSERT INTO leaderboard_request_budgets(key,requests,expires_at) VALUES($1,2,now()+interval '1 minute')",
+      [`claim:${owner}`],
+    );
+    await writeFile(
+      join(directory, "meta/_journal.json"),
+      JSON.stringify(fullJournal),
+    );
+    await expect(runMigrations(pool, options())).rejects.toThrow(
+      "STORAGE_CUTOVER_REQUIRED",
+    );
+    expect(await historyCount()).toBe(cutover);
+    await runMigrations(pool, { ...options(), allowStorageCutover: true });
+    expect(await historyCount()).toBe(fullJournal.entries.length);
+    const compact = (
+      await pool.query("SELECT game,result FROM runs WHERE id=$1", [run.id])
+    ).rows[0];
+    expect(compact.game).toBeNull();
+    expect(compact.result).toMatchObject({ oreNuggets: 0, openedChests: 0 });
+    const preservedOwner = (
+      await pool.query(
+        "SELECT creation_requests,claim_requests FROM sessions WHERE id=$1",
+        [owner],
+      )
+    ).rows[0];
+    expect(preservedOwner.creation_requests).toEqual({ [created]: run.id });
+    expect(preservedOwner.claim_requests).toBe(2);
+    expect(
+      (
+        await pool.query(
+          "SELECT claim_action_id,claimed_rank,nickname FROM leaderboard_entries WHERE run_id=$1",
+          [run.id],
+        )
+      ).rows[0],
+    ).toEqual({
+      claim_action_id: claimed,
+      claimed_rank: 1,
+      nickname: "Preserved",
+    });
+    expect(
+      (await pool.query("SELECT completed_games FROM global_game_stats"))
+        .rows[0].completed_games,
+    ).toBe("1");
+    await runMigrations(pool, options());
+    expect(
+      (await pool.query("SELECT completed_games FROM global_game_stats"))
+        .rows[0].completed_games,
+    ).toBe("1");
+    const { rows } = await pool.query(
+      "SELECT table_name FROM information_schema.tables WHERE table_schema=$1 ORDER BY table_name",
+      [schemaName],
+    );
+    expect(rows.map((row) => row.table_name)).toEqual([
+      "global_game_stats",
+      "leaderboard_entries",
+      "runs",
+      "sessions",
+    ]);
     await assertLockReleased();
   });
   it("rolls back failed SQL, releases the session lock and supports retry", async () => {

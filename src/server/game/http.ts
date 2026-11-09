@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { type NextRequest, NextResponse } from "next/server";
 import {
   LeaderboardRateLimitError,
@@ -7,18 +6,14 @@ import {
 import { claimEntry, readEligibility } from "@/server/leaderboard/service";
 import { failureReason } from "./diagnostics";
 import type { Action } from "./engine";
-import { GameError } from "./errors";
+import { GameError, publicError } from "./errors";
+import { execute, readRun } from "./service";
 import {
   bootstrap,
-  execute,
+  COOKIE_NAME,
   findSession,
-  readRun,
   SESSION_SECONDS,
-} from "./service";
-
-export const COOKIE_NAME = "wedges_session";
-export { checkOrigin, isUuid, validateCommand } from "./validation";
-
+} from "./session";
 import { checkOrigin, isUuid, validateCommand } from "./validation";
 
 async function boundedJson(request: Request) {
@@ -107,10 +102,9 @@ export async function handle(
   } catch (error) {
     if (error instanceof LeaderboardRateLimitError)
       headers["Retry-After"] = String(error.retryAfter);
-    const known = error instanceof GameError;
-    const code = known ? error.code : "SERVICE_UNAVAILABLE";
-    const requestId = randomUUID();
-    if (!known)
+    const failure = publicError(error);
+    const { requestId } = failure.body.error;
+    if (!failure.known)
       console.error(
         JSON.stringify({
           event: "game_api_failure",
@@ -122,21 +116,9 @@ export async function handle(
           ),
         }),
       );
-    return NextResponse.json(
-      {
-        error: {
-          code,
-          requestId,
-          ...(known && error.run
-            ? {
-                runId: error.run.id,
-                currentVersion: error.run.version,
-                currentStatus: error.run.status,
-              }
-            : {}),
-        },
-      },
-      { status: known ? error.status : 503, headers },
-    );
+    return NextResponse.json(failure.body, {
+      status: failure.status,
+      headers,
+    });
   }
 }

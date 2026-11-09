@@ -73,6 +73,33 @@ describe("session application lifecycle without React", () => {
       error: false,
     });
   });
+  it("finishes restart after a lost abandon reply resynchronizes to the abandoned run", async () => {
+    const old = runDto();
+    const abandoned = { ...old, version: 2, status: "abandoned" };
+    const next = { ...old, id: "22345678-1234-4234-8234-123456789012" };
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(json({ ready: true }))
+      .mockResolvedValueOnce(json({ run: old }));
+    const session = setup(fetcher);
+    await vi.waitFor(() => expect(session.getSnapshot().loading).toBe(false));
+    fetcher.mockRejectedValueOnce(new TypeError("lost abandon reply"));
+    await session.startNewRun();
+    const original = fetcher.mock.calls[2];
+    fetcher
+      .mockResolvedValueOnce(json({ error: { code: "VERSION_CONFLICT" } }, 409))
+      .mockResolvedValueOnce(json({ run: abandoned }))
+      .mockResolvedValueOnce(json({ run: next }));
+    await session.retry();
+    expect(fetcher.mock.calls[3][1]?.body).toBe(original[1]?.body);
+    expect(fetcher.mock.calls[4][0]).toBe(`/api/runs/${old.id}`);
+    expect(fetcher.mock.calls[5][0]).toBe("/api/runs");
+    expect(session.getSnapshot()).toMatchObject({
+      run: next,
+      error: false,
+      loading: false,
+    });
+  });
   it("deduplicates chest collection and retries an unknown commit with the original action", async () => {
     const initial = runDto();
     const opened = {
@@ -116,6 +143,31 @@ describe("session application lifecycle without React", () => {
     expect(fetcher.mock.calls[3][1]?.body).toBe(original[1]?.body);
     expect(session.getSnapshot()).toMatchObject({
       run: continued,
+      error: false,
+      loading: false,
+    });
+  });
+  it("resynchronizes a lost reset reply without reapplying it against a newer version", async () => {
+    const initial = runDto();
+    const restored = { ...initial, version: initial.version + 1 };
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(json({ ready: true }))
+      .mockResolvedValueOnce(json({ run: initial }));
+    const session = setup(fetcher);
+    await vi.waitFor(() => expect(session.getSnapshot().loading).toBe(false));
+    fetcher.mockRejectedValueOnce(new TypeError("lost reset reply"));
+    await session.resetLock();
+    expect(session.getSnapshot().error).toBe(true);
+    const original = fetcher.mock.calls[2];
+    fetcher
+      .mockResolvedValueOnce(json({ error: { code: "VERSION_CONFLICT" } }, 409))
+      .mockResolvedValueOnce(json({ run: restored }));
+    await session.retry();
+    expect(fetcher.mock.calls[3][1]?.body).toBe(original[1]?.body);
+    expect(fetcher.mock.calls[4][0]).toBe(`/api/runs/${initial.id}`);
+    expect(session.getSnapshot()).toMatchObject({
+      run: restored,
       error: false,
       loading: false,
     });

@@ -86,7 +86,7 @@ The shared `LEADERBOARD_SIZE` constant in `src/api/contracts.ts` drives policy, 
 
 Retain the current deterministic-ore-v1 generator selection, 12 attempts and 20,000-state search cap. Explicit outcomes distinguish proof of unsolvability from budget exhaustion, and all returned solution witnesses are replayed. Offline diagnostics measure target shortfalls without promising a minimum. A 12,000-lock seeded survey shows late targets are frequently missed (92.7% at chest 1,000; 99.1% at chest 10,000). The existing bounded fallback is retained for compatibility, rather than silently changing this cohort's difficulty. This is measured technical behavior, not approval of a new difficulty curve or a claim of human calibration. Any stricter rejection/target change remains an explicit #48 decision and requires ranking-cohort review.
 
-Construction-only witness lengths are upper bounds, never verified optima. No extra-valid-move penalty is introduced, including when optimal metadata is available. See [validation, distributions and Preview thresholds](lock-validation.md) for evidence and rollback. No migration, production deployment or GitHub issue mutation is part of this work.
+Construction-only witness lengths are upper bounds, never verified optima. No extra-valid-move penalty is introduced, including when optimal metadata is available. See [validation, distributions and Preview thresholds](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/lock-validation.md) for evidence and rollback. No migration, production deployment or GitHub issue mutation is part of this work.
 
 ## Approved progression and durability — 2026-11-06 (#61)
 
@@ -104,11 +104,11 @@ This decision changes the original 3–6-plate progression to 4–7 plates and i
 | Invalid moves before breaking | 3 | 4 |
 | Starting lockpicks | 3 | 3 (unchanged) |
 
-The [2026-11-05 performance report](archive/2026-11-05-lock-benchmarks.md) and [difficulty survey](archive/2026-11-05-lock-validation.md) preserve measurements of the previous rules. The current [performance report](lock-benchmarks.md) and [difficulty/resource survey](lock-validation.md) measure the approved rules and compare them with those baselines. Raw results retain their measurement dates and source hashes.
+The [2026-11-05 performance report](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/archive/2026-11-05-lock-benchmarks.md) and [difficulty survey](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/archive/2026-11-05-lock-validation.md) preserve measurements of the previous rules. The current [performance report](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/lock-benchmarks.md) and [difficulty/resource survey](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/lock-validation.md) measure the approved rules and compare them with those baselines. Raw results retain their measurement dates and source hashes.
 
 The task author requested implementation of #61: 4 plates on chests 1–5, 5 on 6–12, 6 on 13–24 and 7 on 25+, with four invalid moves per pick. Existing dependency density, scramble/solution curves, seven positions, target 3, inverse moves, 12 attempts and 20,000-state solver cap remain unchanged. Reset and continuation carry partial damage and cumulative penalties. Ore calculation, random pick replenishment and ranking tie order remain unchanged.
 
-The main ranking uses `deterministic-ore-v1`. This pre-release update requires no SQL schema migration or data rewrite. See [current performance](lock-benchmarks.md) and [difficulty/resource evidence](lock-validation.md).
+The main ranking uses `deterministic-ore-v1`. This pre-release update requires no SQL schema migration or data rewrite. See [current performance](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/lock-benchmarks.md) and [difficulty/resource evidence](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/lock-validation.md).
 
 Rollback before release is an application-code revert. Future changes after ranked results exist require a score-comparability review.
 
@@ -119,7 +119,7 @@ The task author requested one starting lockpick and halved drop chances. New run
 
 Because resource supply affects survival/ranked ore, new creation and main ranking use `scarce-picks-v1`. Existing `deterministic-ore-v1` runs retain their current inventory, old drop table and already-pending rewards; old results/claims/replays remain durable and separate. No schema migration, data rewrite or deployment is part of this change. A rollback must retain both reward handlers while active runs exist; restore the old starting stock/default cohort in application code rather than rewriting saved games.
 
-Resource-only simulation: seed 47, 10,000 runs/profile, cap 1,000 credited chests, starts with one pick, carries partial damage, and ends before loot on the last pick's fourth invalid move. At fixed 0/1/2/3/6 mistakes per chest, median credited chests are 1,000 (all censored) / 7 / 1 / 1 / 0. The one-mistake profile has p95 551 chests and 3.77% censored survivors. These are resource scenarios, not human difficulty measurements or a finite-run guarantee. Reproduce with `node scripts/simulate-rewards.cjs`; historical #61 figures describe the older balance and are not overwritten.
+Resource-only simulation: seed 47, 10,000 runs/profile, cap 1,000 credited chests, starts with one pick, carries partial damage, and ends before loot on the last pick's fourth invalid move. At fixed 0/1/2/3/6 mistakes per chest, median credited chests are 1,000 (all censored) / 7 / 1 / 1 / 0. The one-mistake profile has p95 551 chests and 3.77% censored survivors. These are resource scenarios, not human difficulty measurements or a finite-run guarantee. The retired simulation is preserved in Git history at `32b909d`; historical #61 figures describe the older balance and are not overwritten.
 
 
 ## Approved learning ramp — 2026-11-08 (#48)
@@ -132,7 +132,7 @@ Generation affects survival and ranked score comparability, so the new cohort is
 
 Measured calibration also samples exact path targets uniformly within the scheduled window before the connected core reaches seven plates. This removes the constructor’s bias toward the longest attainable path; the original 12-attempt/20,000-state limits and honest target shortfalls remain. Mature cores retain bounded windows to avoid forcing expensive exact late paths.
 
-The [implementation report](learning-progression-report.md) records local tests and paired measurements. Human calibration, browser/device checks and deployed Preview acceptance remain pending; implementation and local benchmarks do not establish production readiness. No GitHub issue mutation or deployment is implied.
+The [implementation report](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/learning-progression-report.md) records local tests and paired measurements. Human calibration, browser/device checks and deployed Preview acceptance remain pending; implementation and local benchmarks do not establish production readiness. No GitHub issue mutation or deployment is implied.
 
 
 ## Approved Vercel autodeploy and production checks — 2026-11-08
@@ -164,3 +164,19 @@ This affects difficulty and score comparability. New runs and the main ranking u
 
 
 The task author clarified that independent positions must include the center with equal probability, rather than always requiring alignment. The final draw now covers all seven positions uniformly. If every plate ends aligned, one legal core move ensures an unsolved chest without changing the independent draws. Construction witnesses stop at the first solved state to respect runtime solved guards.
+
+
+## Approved compact persistence and aggregate totals — 2026-11-09
+
+The owner requested compact qualified leaderboard results and global game statistics to reduce retained database data. Keep temporary authoritative current-run/session storage for Vercel recovery. Full puzzles and lifecycle/claim receipts remain during the fixed 30-day owning session, then may be reclaimed after a 24-hour recent-write grace; expired unfinished games also become eligible. No new earlier claim deadline or frontend change is introduced.
+
+Claimed results become immutable self-contained rows derived by a database trigger, independent of source runs/sessions. Retain displaced claims as compact one-claim identities. One bigint totals row counts finished and explicitly abandoned games, plus their counters and credited ore, in the finalization transaction. Expired unfinished games are excluded. Existing retained terminal runs initialize the baseline; already-deleted historical games cannot be inferred.
+
+Migration 0004 adds/backfills results and counters without deleting payloads. Authenticated daily Vercel maintenance reclaims expired payloads, old move/reset histories and expired operational rows. Source configuration requires CRON_SECRET to become active. No remote migration, cleanup or deployment is part of implementation. After reclamation, rollback must retain the compact reader or restore source payloads from backup. See [data model and rollout](data-model.md).
+
+
+## Approved final four-table correction — 2026-11-09
+
+The owner explicitly rejected the intermediate seven-table design and required the actual minimum. Final tables: sessions, runs, compact leaderboard entries and singleton global totals. Retire action-response, snapshot and separate budget tables; retain effective shared limits as fixed fields on existing rows. Creation identity maps and accepted claim identity/rank replace full response histories. Other actions recover by version conflict.
+
+Terminal puzzles are discarded immediately; keep only a 24-hour private summary for nickname claim/recovery. Active runs expire after seven days without accepted action. The 30-day session retains small accepted-create identities to block delayed recreation after payload expiry. This supersedes the preceding retention decisions; no scoring/generator/frontend component change is intended. Controlled 0005 migration requires an explicit cutover flag; no live deployment/deletion was performed during implementation.

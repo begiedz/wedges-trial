@@ -21,13 +21,13 @@ The domain engine remains **pure TypeScript** and is executed by the server for 
 | Document | Purpose |
 | --- | --- |
 | [server-setup.md](server-setup.md) | Environment variables, migrations, local WebSockets and troubleshooting |
-| [lock-benchmarks.md](lock-benchmarks.md) | Reproducible Node/Preview engine timings, Neon recovery and Hobby resource assessment (#28) |
-| [lock-validation.md](lock-validation.md) | Explicit solver outcomes, legal witnesses, seeded difficulty/fallback distributions and Preview gates (#50) |
+| [lock-benchmarks.md](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/lock-benchmarks.md) | Historical engine/Neon measurements (#28; tooling retired) |
+| [lock-validation.md](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/lock-validation.md) | Historical solver and difficulty evidence (#50; tooling retired) |
 | [status.md](status.md) | Present implementation, target, migration boundaries |
 | [decisions.md](decisions.md) | Approved decisions and open design questions |
 | [gameplay.md](gameplay.md) | Domain invariants, progression and reward design |
 | [new-player-progression-plan.md](new-player-progression-plan.md) | Original #48 learning-ramp plan; lockpick balance preserved |
-| [learning-progression-report.md](learning-progression-report.md) | Implemented learning-ramp-v1, paired benchmark evidence and pending human/Preview acceptance |
+| [learning-progression-report.md](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/learning-progression-report.md) | Implemented learning-ramp-v1, paired benchmark evidence and pending human/Preview acceptance |
 | [competitive-ranking.md](competitive-ranking.md) | Approved endless ore ordering, qualification, sustainability and version boundaries (#51) |
 | [backend.md](backend.md) | API, run lifecycle, transactions, error semantics |
 | [api-contract.md](api-contract.md) | Canonical v1 requests, DTOs, lifecycle, examples and retry rules (#29) |
@@ -50,8 +50,10 @@ The domain engine remains **pure TypeScript** and is executed by the server for 
 
 Product-specific React code belongs in `src/features/<name>/`. Gameplay owns its screen, hooks, dialogs and lock rendering; development inspection belongs to `features/lock-debug`. Routes consume their minimal public APIs. Shared primitives/site components stay in `components`, dictionaries in `i18n`, and the domain/client/server layers retain their existing roles. See [ownership, dependency rules and how to add a feature](module-boundaries.md). Run `pnpm check:architecture` for actionable dependency and cycle checks; lint, tests and CI enforce them.
 
-## Current and historical engine measurements
+## Historical engine measurements
 
-- [Post-#61 baseline performance](lock-benchmarks.md) and [difficulty/resource sustain](lock-validation.md).
-- [2026-11-05 performance](archive/2026-11-05-lock-benchmarks.md) and [2026-11-05 validation](archive/2026-11-05-lock-validation.md).
-- [Archive checksums and source snapshot](../../benchmarks/results/archive/manifest.json). Historical raw files are byte-for-byte copies; only relative report links were repaired.
+- [Post-#61 baseline performance](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/lock-benchmarks.md) and [difficulty/resource sustain](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/lock-validation.md).
+- [2026-11-05 performance](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/archive/2026-11-05-lock-benchmarks.md) and [2026-11-05 validation](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/archive/2026-11-05-lock-validation.md).
+- [Archive checksums and source snapshot](https://github.com/begiedz/wedges-trial/blob/32b909d/benchmarks/results/archive/manifest.json). Historical raw files are byte-for-byte copies; only relative report links were repaired.
+
+Measurement tooling and raw reports were retired on 2026-11-09. Links above point to their historical source; routine maintenance uses focused correctness tests instead.

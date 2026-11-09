@@ -2,11 +2,11 @@
 
 Repository: https://github.com/begiedz/wedges-trial
 
-## Progress after server transition — 2026-11-01
+## Current focus — 2026-11-09
 
-Implemented: anonymous sessions, gameplay schema/transactions, authoritative run lifecycle, deterministic ore, persisted metrics, browser persistence removal, WebSocket transport and visual prediction. This does not complete the entire leaderboard milestone or every issue touching those layers. See [status](status.md).
+Gameplay, anonymous ownership, qualifying nickname claims and the public TOP 1000 screen are implemented. See [current status](status.md) for verification limits. Simplification retires benchmark infrastructure, frozen ranking traversal and per-move response history. Frontend components remain unchanged.
 
-Next: ranking storage/query, finished-run qualification and atomic nickname claims, ranking UI, distributed security controls and production verification. Balance/solver calibration and asset rights remain separate work. The issue list below describes workstreams, not an assertion that every item is still unimplemented.
+Remaining: deployed gameplay/recovery and production checks, proportionate abuse controls, human balance calibration and asset rights. Expiry deadlines, compact terminal storage and cohort retirement remain separate decisions. The issue list below is historical workstream navigation, not live issue status or an instruction to recreate retired measurement features.
 
 ## Milestone: v1.0.0 - Leaderboard
 

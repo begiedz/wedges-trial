@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { analyzeConnections } from "@/game/analyze-connections";
 import { checkSolved } from "@/game/check-solved";
-import { createChestLock, createLockWithDiagnostics } from "@/game/create-lock";
+import { createChestLock, createLockWithSolution } from "@/game/create-lock";
 import { generateRules } from "@/game/generate-rules";
 import { getLearningProgression } from "@/game/learning-progression";
 import {
@@ -58,7 +58,7 @@ describe("all plates generation", () => {
           ...getLearningProgression(index, rng),
           mixAllPlates: true,
         };
-        const { lock, solution } = createLockWithDiagnostics(config, rng);
+        const { lock, solution } = createLockWithSolution(config, rng);
         const coupled = coupledIds(lock.rules);
         for (const pin of lock.pins)
           if (!coupled.has(pin.id))
@@ -86,7 +86,7 @@ describe("all plates generation", () => {
         plateCount: 7,
         mixAllPlates: true,
       };
-      const { lock, solution } = createLockWithDiagnostics(config, rng);
+      const { lock, solution } = createLockWithSolution(config, rng);
       expect(lock.optimalMoves).toBeNull();
       for (const pin of lock.pins)
         if (!coupledIds(lock.rules).has(pin.id))
@@ -115,7 +115,7 @@ describe("all plates generation", () => {
             plateCount: 7,
             mixAllPlates: true,
           };
-          const { lock, solution } = createLockWithDiagnostics(config, rng);
+          const { lock, solution } = createLockWithSolution(config, rng);
           const coupled = coupledIds(lock.rules);
           for (const pin of lock.pins)
             if (!coupled.has(pin.id)) counts[pin.position]++;
@@ -150,7 +150,7 @@ describe("all plates generation", () => {
         minSolutionLength: 1,
         maxSolutionLength: 1,
       };
-      const { lock, solution } = createLockWithDiagnostics(config, rng);
+      const { lock, solution } = createLockWithSolution(config, rng);
       for (const pin of lock.pins)
         if (!coupledIds(lock.rules).has(pin.id))
           expect(pin.position).toBe(pin.target);
@@ -168,7 +168,7 @@ describe("all plates generation", () => {
     expect(
       createChestLock(17, random(42), DIFFICULTY_ORE_RULESET_VERSION),
     ).toEqual(
-      createLockWithDiagnostics(getLearningProgression(17, rng), rng).lock,
+      createLockWithSolution(getLearningProgression(17, rng), rng).lock,
     );
   });
 });

@@ -1,0 +1,584 @@
+{
+  "id": "8b8b22b6-7507-4fb4-b09e-cd00c013deb1",
+  "prevId": "64e21fab-ea24-4dda-8364-3ceebf437c8d",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.global_game_stats": {
+      "name": "global_game_stats",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "page_requests": {
+          "name": "page_requests",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "page_window": {
+          "name": "page_window",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "completed_games": {
+          "name": "completed_games",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "0"
+        },
+        "abandoned_games": {
+          "name": "abandoned_games",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "0"
+        },
+        "opened_chests": {
+          "name": "opened_chests",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "0"
+        },
+        "moves": {
+          "name": "moves",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "0"
+        },
+        "invalid_moves": {
+          "name": "invalid_moves",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "0"
+        },
+        "broken_picks": {
+          "name": "broken_picks",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "0"
+        },
+        "ore_nuggets": {
+          "name": "ore_nuggets",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "0"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "global_game_stats_singleton": {
+          "name": "global_game_stats_singleton",
+          "value": "\"global_game_stats\".\"id\" = 1"
+        },
+        "global_game_stats_nonnegative": {
+          "name": "global_game_stats_nonnegative",
+          "value": "\"global_game_stats\".\"completed_games\" >= 0 and \"global_game_stats\".\"abandoned_games\" >= 0 and \"global_game_stats\".\"opened_chests\" >= 0 and \"global_game_stats\".\"moves\" >= 0 and \"global_game_stats\".\"invalid_moves\" >= 0 and \"global_game_stats\".\"broken_picks\" >= 0 and \"global_game_stats\".\"ore_nuggets\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.leaderboard_entries": {
+      "name": "leaderboard_entries",
+      "schema": "",
+      "columns": {
+        "run_id": {
+          "name": "run_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "NULL"
+        },
+        "ruleset_version": {
+          "name": "ruleset_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "NULL"
+        },
+        "ore_nuggets": {
+          "name": "ore_nuggets",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "NULL"
+        },
+        "opened_chests": {
+          "name": "opened_chests",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "NULL"
+        },
+        "finished_at": {
+          "name": "finished_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "NULL"
+        },
+        "total_metrics": {
+          "name": "total_metrics",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "NULL"
+        },
+        "nickname": {
+          "name": "nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "claim_action_id": {
+          "name": "claim_action_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "claimed_rank": {
+          "name": "claimed_rank",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "claimed_at": {
+          "name": "claimed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "leaderboard_entries_owner_claim_action": {
+          "name": "leaderboard_entries_owner_claim_action",
+          "columns": [
+            {
+              "expression": "owner_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "claim_action_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "leaderboard_entries_ranking": {
+          "name": "leaderboard_entries_ranking",
+          "columns": [
+            {
+              "expression": "ruleset_version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ore_nuggets",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            },
+            {
+              "expression": "opened_chests",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            },
+            {
+              "expression": "finished_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "run_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "leaderboard_claim_rank_valid": {
+          "name": "leaderboard_claim_rank_valid",
+          "value": "\"leaderboard_entries\".\"claimed_rank\" is null or \"leaderboard_entries\".\"claimed_rank\" between 1 and 1000"
+        },
+        "leaderboard_result_valid": {
+          "name": "leaderboard_result_valid",
+          "value": "(\n      \"leaderboard_entries\".\"ore_nuggets\" >= 0 and \"leaderboard_entries\".\"opened_chests\" >= 0\n      and (\"leaderboard_entries\".\"total_metrics\"->>'moves')::bigint >= 0\n      and (\"leaderboard_entries\".\"total_metrics\"->>'invalidMoves')::bigint >= 0\n      and (\"leaderboard_entries\".\"total_metrics\"->>'brokenPicks')::bigint >= 0\n    ) is true"
+        },
+        "leaderboard_nickname_valid": {
+          "name": "leaderboard_nickname_valid",
+          "value": "char_length(\"leaderboard_entries\".\"nickname\") between 1 and 24 and \"leaderboard_entries\".\"nickname\" = btrim(\"leaderboard_entries\".\"nickname\") and \"leaderboard_entries\".\"nickname\" !~ '[[:cntrl:]]'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.runs": {
+      "name": "runs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ruleset_version": {
+          "name": "ruleset_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ore_nuggets": {
+          "name": "ore_nuggets",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "opened_chests": {
+          "name": "opened_chests",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "finished_at": {
+          "name": "finished_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "game": {
+          "name": "game",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "result": {
+          "name": "result",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "create_action_id": {
+          "name": "create_action_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now() + interval '7 days'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "runs_id_owner": {
+          "name": "runs_id_owner",
+          "columns": [
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "owner_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "runs_owner": {
+          "name": "runs_owner",
+          "columns": [
+            {
+              "expression": "owner_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "runs_expiry": {
+          "name": "runs_expiry",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "runs_owner_create_action": {
+          "name": "runs_owner_create_action",
+          "columns": [
+            {
+              "expression": "owner_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "create_action_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "runs_one_active_owner": {
+          "name": "runs_one_active_owner",
+          "columns": [
+            {
+              "expression": "owner_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"runs\".\"status\" in ('playing', 'chest_opened')",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "runs_owner_id_sessions_id_fk": {
+          "name": "runs_owner_id_sessions_id_fk",
+          "tableFrom": "runs",
+          "tableTo": "sessions",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "runs_document_valid": {
+          "name": "runs_document_valid",
+          "value": "(\n      (\"runs\".\"status\" in ('playing', 'chest_opened')\n        and \"runs\".\"result\" is null\n        and jsonb_typeof(\"runs\".\"game\"->'initialLock') = 'object'\n        and jsonb_typeof(\"runs\".\"game\"->'state'->'currentLock') = 'object'\n        and (\"runs\".\"game\"->>'openedChests')::integer >= 0\n        and (\"runs\".\"game\"->'chestMetrics'->>'moves')::bigint >= 0\n        and (\"runs\".\"game\"->'chestMetrics'->>'invalidMoves')::bigint >= 0\n        and (\"runs\".\"game\"->'chestMetrics'->>'brokenPicks')::bigint >= 0\n        and (\"runs\".\"game\"->'totalMetrics'->>'moves')::bigint >= 0\n        and (\"runs\".\"game\"->'totalMetrics'->>'invalidMoves')::bigint >= 0\n        and (\"runs\".\"game\"->'totalMetrics'->>'brokenPicks')::bigint >= 0)\n      or (\"runs\".\"status\" in ('finished', 'abandoned')\n        and \"runs\".\"game\" is null\n        and jsonb_typeof(\"runs\".\"result\") = 'object'\n        and (\"runs\".\"result\"->>'difficulty')::integer between 1 and 4\n        and (\"runs\".\"result\"->'totalMetrics'->>'moves')::bigint >= 0\n        and (\"runs\".\"result\"->'totalMetrics'->>'invalidMoves')::bigint >= 0\n        and (\"runs\".\"result\"->'totalMetrics'->>'brokenPicks')::bigint >= 0)\n    ) is true"
+        },
+        "runs_finished_valid": {
+          "name": "runs_finished_valid",
+          "value": "(\"runs\".\"status\" <> 'finished' or (\n      \"runs\".\"finished_at\" is not null\n      and (\"runs\".\"result\"->>'lockpicks')::integer = 0\n      and (\"runs\".\"result\"->>'finishedAt')::timestamptz = \"runs\".\"finished_at\"\n    )) is true"
+        },
+        "runs_version_positive": {
+          "name": "runs_version_positive",
+          "value": "\"runs\".\"version\" > 0"
+        },
+        "runs_status_valid": {
+          "name": "runs_status_valid",
+          "value": "\"runs\".\"status\" in ('playing', 'chest_opened', 'finished', 'abandoned')"
+        },
+        "runs_resources_valid": {
+          "name": "runs_resources_valid",
+          "value": "(\n      \"runs\".\"ore_nuggets\" >= 0 and \"runs\".\"opened_chests\" >= 0\n      and case when \"runs\".\"game\" is not null then\n        (\"runs\".\"game\"->'state'->>'oreNuggets')::bigint = \"runs\".\"ore_nuggets\"\n        and (\"runs\".\"game\"->>'openedChests')::integer = \"runs\".\"opened_chests\"\n        and (\"runs\".\"game\"->'state'->>'lockpicks')::integer >= 0\n        and (\"runs\".\"game\"->'state'->>'chestIndex')::integer > 0\n      else\n        (\"runs\".\"result\"->>'oreNuggets')::bigint = \"runs\".\"ore_nuggets\"\n        and (\"runs\".\"result\"->>'openedChests')::integer = \"runs\".\"opened_chests\"\n        and (\"runs\".\"result\"->>'lockpicks')::integer >= 0\n        and (\"runs\".\"result\"->>'chestIndex')::integer > 0\n      end\n    ) is true"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.sessions": {
+      "name": "sessions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "creation_requests": {
+          "name": "creation_requests",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "eligibility_requests": {
+          "name": "eligibility_requests",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "eligibility_window": {
+          "name": "eligibility_window",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "claim_requests": {
+          "name": "claim_requests",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "claim_window": {
+          "name": "claim_window",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "sessions_token_hash_unique": {
+          "name": "sessions_token_hash_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token_hash"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

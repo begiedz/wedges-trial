@@ -73,16 +73,25 @@ References: [Vercel Build Command](https://vercel.com/docs/builds/configure-a-bu
 
 ## Migrations and rollback
 
-For #46, apply `0003_charming_the_fury.sql` before using the leaderboard endpoints; otherwise admission fails closed with 503. Optional `LEADERBOARD_*_PER_MINUTE` settings and their defaults are listed in `.env.example` and the [API contract](api-contract.md#leaderboard-admission-and-caching-46). Use the same settings across function instances. Public quotas are global and may need adjustment for real traffic; release calibration remains #43. A 429 includes `Retry-After`; retry the original claim action after that interval. A 503 with valid DB connectivity can indicate a missing migration or invalid budget override. Rollback retains the additive budget table and all ranking/gameplay data.
+Apply all migrations through 0005 before using the final application; admission uses fields introduced by 0005. Optional `LEADERBOARD_*_PER_MINUTE` settings and their defaults are listed in `.env.example` and the [API contract](api-contract.md#leaderboard-admission-and-caching-46). Use the same settings across function instances. Public quotas are global and may need adjustment for real traffic; release calibration remains #43. A 429 includes `Retry-After`; retry the original claim action after that interval. A 503 with valid DB connectivity can indicate a missing migration or invalid budget override. The old budget table is retired after its active windows are moved into existing rows; see controlled cutover below.
 
 Keep drizzle/ SQL, meta/_journal.json and snapshots in Git. SQL is reviewable schema history, the journal orders migrations, and snapshots support incremental generation. Run pnpm db:generate when the schema changes, review and commit the result, then apply them through the intended environment’s Vercel build or an explicit `pnpm db:migrate`. Do not regenerate/edit already-applied migrations. The migration runner uses Drizzle ORM with a direct connection, target validation, timeout and sanitized failures.
 
-On an application rollback, retain tables/data for recovery. Do not drop tables or import editable old browser saves. No automatic retention cleanup is scheduled. A manual, transaction-safe helper now exists; review the conservative [retention policy](data-model.md) before any maintenance. Clearing/expiring the anonymous cookie loses access; a nickname cannot recover ownership.
+On an application rollback, retain compact results and counters. After expiry cleanup, old join-based ranking code requires retaining the compact reader or restoring source data from backup. Do not import editable old browser saves. Daily maintenance is declared in vercel.json but requires configured CRON_SECRET and a deployed compact reader; see [retention policy](data-model.md). Clearing/expiring the anonymous cookie loses private access; a nickname cannot recover ownership.
 
 ## Verification
 
 Run pnpm test, pnpm lint and pnpm build for relevant code changes. Explicitly set TEST_DATABASE_URL to a nonproduction test connection to enable PostgreSQL integration tests; it is not automatically taken from development credentials. Tests create a random schema, apply committed SQL there and drop only that schema afterward. Without the variable, the database suite is skipped. The GitHub `Quality Checks` job now provides an ephemeral PostgreSQL 17 service and an explicit test URL, so its database suites run without production credentials.
 
-The last implementation verification passed 113 tests with real PostgreSQL enabled, including WebSocket burst/replay, ownership, expiry, concurrent actions and rollback. The build passed. Full lint has pre-existing formatting/import errors; changed code passed focused Biome checks. Local burst timing is not a production latency guarantee.
+Current automated verification and environment boundaries are in [status](status.md). Local socket/database evidence is not a deployed latency guarantee.
 
-Remaining release work includes ranking, distributed abuse limits, monitoring, cold-start/late-game budgets, pick balance and difficulty calibration. See [roadmap](roadmap.md).
+Remaining release work includes deployed checks, calibrated abuse limits, monitoring and human balance calibration. See [roadmap](roadmap.md).
+
+
+## Minimal storage cutover and cleanup
+
+Migration 0005 produces exactly four application tables and immediately removes terminal puzzle/response histories. It is incompatible with old code. A normal existing-database migration refuses with STORAGE_CUTOVER_REQUIRED. Prepare a backup and the new release, stop old writers/cleanup, then run `STORAGE_CUTOVER=1 pnpm db:migrate` against the selected database as part of the controlled switch. Do not set that flag permanently in automatic builds. Fresh databases and future migrations after cutover need no override.
+
+Active runs expire after seven days without an accepted action; terminal summaries expire after 24 hours. The 30-day session keeps only creation identities after payload expiry. Configure server-only CRON_SECRET after cutover for daily physical reclamation. vercel.json contains only the 03:00 UTC cron; dashboard Build Command remains authoritative. Missing maintenance configuration fails closed, while private reads already enforce expiry.
+
+After 0005 a source-only rollback to history/full-terminal readers cannot work. Restore the matching database backup or retain the new compact/version-recovery code. No live migration, cleanup, secret change or deployment was performed here. See [full data model](data-model.md).

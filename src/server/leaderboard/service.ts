@@ -5,13 +5,12 @@ import type {
 } from "@/api/contracts";
 import { RULESET_VERSION } from "@/game/ruleset";
 import { getDatabase } from "@/server/db";
-import { leaderboardEntries, runActions } from "@/server/db/schema";
+import { leaderboardEntries } from "@/server/db/schema";
 import { publicRun } from "@/server/game/engine";
 import { GameError } from "@/server/game/errors";
 import {
   lockOwner,
   ownedRun,
-  replayResponse,
   type Transaction,
 } from "@/server/game/persistence";
 import type { StoredRun } from "@/server/game/types";
@@ -83,21 +82,35 @@ export async function claimEntry(
   return getDatabase().transaction(async (tx) => {
     await lockOwner(tx, ownerId);
     const run = await ownedRun(tx, ownerId, runId);
-    const fingerprint = JSON.stringify([
-      "leaderboard-entry",
-      runId,
-      input.nickname,
-    ]);
-    const [replay] = await tx
+    const [claimed] = await tx
       .select()
-      .from(runActions)
+      .from(leaderboardEntries)
       .where(
         and(
-          eq(runActions.ownerId, ownerId),
-          eq(runActions.actionId, input.actionId),
+          eq(leaderboardEntries.ownerId, ownerId),
+          eq(leaderboardEntries.claimActionId, input.actionId),
         ),
       );
-    if (replay) return replayResponse(replay, fingerprint);
+    if (claimed) {
+      if (claimed.runId !== runId || claimed.nickname !== input.nickname)
+        throw new GameError("ACTION_ID_REUSED", 409);
+      if (!claimed.claimedRank) throw new Error("Missing accepted claim rank");
+      return {
+        status: 200,
+        body: {
+          run: publicRun(run),
+          outcome: "leaderboard_claimed" as const,
+          entry: {
+            runId,
+            displayName: claimed.nickname,
+            rank: claimed.claimedRank,
+            oreNuggets: claimed.oreNuggets,
+            openedChests: claimed.openedChests,
+            finishedAt: claimed.finishedAt.toISOString(),
+          },
+        },
+      };
+    }
     // Serialize every claim in this cohort across owners/functions. READ COMMITTED
     // queries after this lock observe the preceding claimant's committed cutoff.
     await tx.execute(
@@ -113,9 +126,12 @@ export async function claimEntry(
       };
     } else {
       if (!run.game.finishedAt) throw new Error("Missing finished timestamp");
-      await tx
-        .insert(leaderboardEntries)
-        .values({ runId, nickname: input.nickname });
+      await tx.insert(leaderboardEntries).values({
+        runId,
+        nickname: input.nickname,
+        claimActionId: input.actionId,
+        claimedRank: eligible.rank,
+      });
       body = {
         run: publicRun(run),
         outcome: "leaderboard_claimed",
@@ -129,14 +145,6 @@ export async function claimEntry(
         },
       };
     }
-    await tx.insert(runActions).values({
-      ownerId,
-      runId,
-      actionId: input.actionId,
-      fingerprint,
-      response: body,
-      statusCode: 200,
-    });
     return { body, status: 200 };
   });
 }

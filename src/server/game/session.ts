@@ -3,6 +3,7 @@ import { and, eq, gt, isNull } from "drizzle-orm";
 import { getDatabase } from "@/server/db";
 import { sessions } from "@/server/db/schema";
 
+export const COOKIE_NAME = "wedges_session";
 export const SESSION_SECONDS = 60 * 60 * 24 * 30;
 export const tokenHash = (token: string) =>
   createHash("sha256").update(token).digest("hex");

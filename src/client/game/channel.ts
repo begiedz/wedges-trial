@@ -57,7 +57,7 @@ export class GameChannel {
       case "ready":
         this.mode = "socket";
         this.paused = false;
-        // Keep original commands for exact replay, but do not predict committed moves twice.
+        // Retry original versions; a committed input conflicts and reloads current state.
         this.acceptSnapshot(message.run);
         this.failed(false);
         this.flushSocket();

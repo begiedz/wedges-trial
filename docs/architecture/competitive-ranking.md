@@ -1,3 +1,5 @@
+> Current browsing contract (2026-11-09): public pages are live bounded offsets. New claims may shift rows between requests. Frozen pagination snapshots and signing have been retired; ranking order, qualification and capacity are unchanged.
+
 # Competitive ranking contract (#51)
 
 Approved by the task author on 2026-11-03: endless remains primary and ranks ore accumulation. On 2026-11-05 the task author expanded capacity from 100 to 1000 claimed runs and requested paginated browsing. This defines scoring and qualification, not a deployed leaderboard. `src/server/leaderboard/policy.ts` implements the pure policy; SQL ordering/storage (#31) and authenticated atomic eligibility/claims (#33) are implemented; post-Game Over nickname entry is implemented under #34; public reads and ranking UI remain under #24/#46.
@@ -36,7 +38,7 @@ The main ranking uses `all-plates-v1`; old results/claims/replays are preserved 
 | --- | --- |
 | #24 | Replace provisional ordering with the approved order above; use ruleset-scoped TOP 1000, retained claims, unique run ID and atomic recheck. Test real concurrent claims, 0/99/100/999/1000/1001 entries, pagination and replay. |
 | #34 | Keep anonymous first visit, nickname only after qualifying Game Over; localize lost-qualification, expired-session and network states. Names are nonunique labels. |
-| #46 | Public reads return claimed runs from one cohort with stable snapshot pagination; private eligibility reserves nothing; claim accepts nickname/action ID only and enforces ownership, origin and transaction guarantees. |
+| #46 | Public reads return claimed runs from one cohort with bounded live pagination; private eligibility reserves nothing; claim accepts nickname/action ID only and enforces ownership, origin and transaction guarantees. |
 | #47 | deterministic-ore-v1 remains approved; no excess-valid-move penalty. Random pick replacement remains open and would require cohort review. |
 
 This table aligns local implementation guidance with the linked backlog without editing those GitHub issues. `tests/server/leaderboard/policy.test.ts` covers ordering, chronological timestamp comparison, cutoff sizes, ties, duplicate claims, multiple runs per owner, invalid states, ruleset isolation and a changed-cutoff recheck. Existing engine tests cover deterministic ore, preserved damage/penalties and reward-once transitions. Real PostgreSQL/API tests under #33 now cover ownership, expiry/revocation, snapshot cutoff loss, concurrent claims, exact replay and rollback. Public pagination/UI tests remain #24/#34/#46; local tests do not establish deployment.

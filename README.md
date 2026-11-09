@@ -8,7 +8,7 @@ Open a chest, collect its ore, and face a harder lock. Connected plates make eac
 
 Gameplay now runs on an authoritative server with Neon PostgreSQL persistence. Anonymous sessions resume committed moves, damage and resources. Vercel-native WebSockets provide ordered input with immediate visual prediction; the server confirms rewards and results. Browser gameplay saves have been removed.
 
-The global leaderboard, TOP 100 qualification and nickname claims remain planned. Development database/HTTPS flows and local native WebSockets have been verified; this does not establish production readiness. See [implementation status](docs/architecture/status.md) and [server setup](docs/architecture/server-setup.md).
+The global TOP 1000 leaderboard, qualifying nickname claims and live pagination are implemented. Development database/HTTPS flows and local native WebSockets have been verified; this does not establish production readiness. See [implementation status](docs/architecture/status.md) and [server setup](docs/architecture/server-setup.md).
 
 ## How to play
 
@@ -97,7 +97,7 @@ The app uses `next/font/google` for Noto Serif and a local heading font. A fresh
 
 Tests cover plate dependencies, valid and invalid moves, pick damage and breakage, generated lock solvability, difficulty progression, solver behavior, server persistence, authorization, idempotency, concurrency, rollback and reset behavior. WebSocket tests cover burst input, prediction and reconnect/replay. Set TEST_DATABASE_URL explicitly to enable the isolated-schema PostgreSQL suite; otherwise it is skipped. React tests cover reward claims, duplicate inputs, dialog interactions, keyboard handling and restart flows.
 
-Run tests, type checking, lint and a production build before submitting relevant code changes. GitHub Actions runs coverage tests, type checking, lint (including naming and architecture guards) and a production build on Ubuntu for pushes and pull requests targeting `development` and `master`.
+Run tests, type checking, lint and a production build before submitting relevant code changes. GitHub Actions runs tests, type checking, lint (including naming and architecture guards) and a production build on Ubuntu for pushes and pull requests targeting `development` and `master`.
 
 Use `pnpm test:coverage` for source-mapped V8 coverage. Generated reports live in ignored `coverage/`.
 
@@ -131,17 +131,17 @@ Project-owned filenames and directories use **lowercase kebab-case**; TypeScript
 
 ### Puzzle generation
 
-Locks start from a solved configuration. The generator creates symmetric move rules, then mixes the plate positions using legal slides. Reversing those moves provides a solution by construction. Difficulty grows through plate count, dependency density and solution-length targets. Existing code identifiers such as `Pin`, `pins`, `pinId` and `plateCount` remain unchanged; see [terminology and compatibility](docs/architecture/gameplay.md#lock-component-terminology-60).
+Locks start from a solved configuration. The generator creates symmetric move rules, then mixes the plate positions using legal slides. Reversing those moves provides a solution by construction. New runs gradually grow connection-based difficulty, sample the connected core across all visible plates and mix independent plates uniformly across all seven positions. Existing code identifiers such as `Pin`, `pins`, `pinId` and `plateCount` remain unchanged; see [terminology and compatibility](docs/architecture/gameplay.md#lock-component-terminology-60).
 
-The solver uses a bounded search. Exhausting its budget does not prove a lock unsolvable or establish an optimal solution. Difficulty calibration and scoring against verified solutions remain active work.
+The solver uses a bounded search. Exhausting its budget does not prove a lock unsolvable or establish an optimal solution. Difficulty calibration remains open; rewards do not depend on a shortest-solution optimum.
 
 ### Server architecture and remaining work
 
-One Next.js application on Vercel owns run transitions through Route Handlers and native WebSockets, backed by Neon PostgreSQL and Drizzle. Anonymous cookies authorize actions; the client sends intent with action IDs and expected versions. Transactions persist state and replay responses together. Public movement rules support rendering prediction; resources and final outcomes remain server-confirmed.
+One Next.js application on Vercel owns run transitions through Route Handlers and native WebSockets, backed by Neon PostgreSQL and Drizzle. Anonymous cookies authorize actions; the client sends intent with action IDs and expected versions. Transactions persist current state atomically. Move/reset retries recover by version conflict and resynchronization; creation and accepted nickname claims retain compact identity markers; other actions recover by version. Public movement rules support rendering prediction; resources and final outcomes remain server-confirmed.
 
-Ore follows the approved deterministic formula: base 10, +5 per later chest, minus 10 percentage points per invalid move, with a 40% floor. New runs start with one lockpick and roll 0/1/2 picks with chances 79%/17%/4%; saved runs retain their original balance. See [gameplay](docs/architecture/gameplay.md) and the [decision ledger](docs/architecture/decisions.md).
+New runs award deterministic ore from structural tier bases 2/5/10/20, minus 10 percentage points per invalid move, with a 40% floor and final integer flooring. New runs start with one lockpick and roll 0/1/2 picks with chances 79%/17%/4%; saved runs retain their original balance. See [gameplay](docs/architecture/gameplay.md) and the [decision ledger](docs/architecture/decisions.md).
 
-The [v1.0.0 roadmap](docs/architecture/roadmap.md) tracks remaining ranking storage/APIs/UI, distributed rate limits, deployment checks, difficulty calibration and solver evidence. Only qualifying verified finished runs will be allowed to claim a nickname for the planned arcade TOP 100. Audio playback and independent music/SFX controls remain planned; asset licensing requires an audit.
+The [current status](docs/architecture/status.md) separates implemented gameplay/ranking from release verification. Qualifying server-verified finishes may claim a nickname for TOP 1000. Benchmark infrastructure has been retired. Audio playback remains planned; asset licensing requires an audit.
 
 ## Contributing
 
@@ -162,3 +162,12 @@ This is a noncommercial fan project with no official affiliation with THQ Nordic
 
 
 The Vercel dashboard owns Build Command. Set it to `pnpm db:migrate && pnpm build` to apply committed migrations before building the app. Production promotion requires the GitHub `Quality Checks` result; local/CI `pnpm build` stays migration-free. See [autodeploy, database locking and rollback](docs/architecture/server-setup.md#autodeploy-and-required-production-checks).
+
+
+### Minimal storage and daily cleanup
+
+After migration `0005_minimal-storage`, the application has four tables: sessions, temporary runs, compact leaderboard entries and one global statistics row. Active games expire after seven days without an accepted action; a finished/abandoned game immediately loses its puzzle and keeps only a 24-hour summary. There is no saved response-history table. Shared request limits remain on session/global rows.
+
+A fresh development database can use `pnpm db:migrate`. An existing legacy database requires the explicit controlled cutover `STORAGE_CUTOVER=1 pnpm db:migrate`, with the old app stopped and the new release ready. Normal build-time migration refuses that incompatible switch; do not leave the flag enabled permanently. No live migration is performed by local `pnpm build`.
+
+For deployed physical cleanup, set a strong server-only `CRON_SECRET` after cutover. The cron-only `vercel.json` schedules `/api/maintenance/cleanup` daily without overriding dashboard Build Command. Reads enforce expiry even if cleanup is not configured. See [storage and rollout](docs/architecture/data-model.md).

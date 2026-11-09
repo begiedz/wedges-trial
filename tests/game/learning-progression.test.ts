@@ -5,7 +5,7 @@ import { checkSolved } from "@/game/check-solved";
 import {
   createChestLock,
   createLock,
-  createLockWithDiagnostics,
+  createLockWithSolution,
 } from "@/game/create-lock";
 import { generateRules } from "@/game/generate-rules";
 import { getLearningProgression } from "@/game/learning-progression";
@@ -97,7 +97,7 @@ describe("learning progression", () => {
       for (const seed of [1, 7, 42]) {
         const rng = random(seed);
         const config = getLearningProgression(index, rng);
-        const result = createLockWithDiagnostics(config, rng);
+        const result = createLockWithSolution(config, rng);
         const search = solveLockDetailed(result.lock);
         if (search.kind === "found" && result.lock.optimalMoves != null)
           expect(result.lock.optimalMoves).toBe(search.solution.length);
@@ -150,13 +150,12 @@ describe("learning progression", () => {
       .mockReturnValue({ kind: "budget-exhausted", visitedStates: 20000 });
     try {
       const rng = random(42);
-      const result = createLockWithDiagnostics(
+      const result = createLockWithSolution(
         getLearningProgression(9999, rng),
         rng,
       );
-      expect(result.diagnostics.outcome).toBe("unverified");
       expect(result.lock.optimalMoves).toBeNull();
-      expect(result.diagnostics.attempts).toBe(12);
+      expect(spy).toHaveBeenCalledTimes(12);
       let lock = result.lock;
       for (const move of result.solution)
         lock = applyMoveToLock(lock, move.pinId, move.direction).lock;

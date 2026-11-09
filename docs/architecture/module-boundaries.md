@@ -58,7 +58,7 @@ The DB driver imports `server-only`; client code imports contracts/domain code, 
 
 ## State ownership
 
-`CommandQueue.confirmed` owns the latest accepted server snapshot while the session has a channel. Older or foreign snapshots cannot replace it. Pending commands retain their original action IDs and expected versions until ordered acknowledgement or conflict recovery. A reconnect snapshot may include unacknowledged commits: those intents remain eligible for exact replay, but are excluded from prediction. Even an older replay reply drains its matching command without regressing confirmed state or leaving lifecycle waiters unresolved.
+`CommandQueue.confirmed` owns the latest accepted server snapshot while the session has a channel. Older or foreign snapshots cannot replace it. Pending commands retain their original action IDs and expected versions until ordered acknowledgement or conflict recovery. A reconnect snapshot may include unacknowledged commits: those intents retain original versions for retry/conflict recovery, but are excluded from prediction. Even an older replay reply drains its matching command without regressing confirmed state or leaving lifecycle waiters unresolved.
 
 `predictRun()` derives plate alignment (the existing `pins` model) and current-pick damage using the same pure `applyMove()` rules as the server. It uses temporary pick counts only to stop prediction at exhaustion. Displayed resources, ore, rewards, result, status and version always come from confirmed state. A predicted solve/exhaustion blocks further moves but cannot open a terminal dialog.
 
@@ -67,7 +67,7 @@ The DB driver imports `server-only`; client code imports contracts/domain code, 
 ## Main flows
 
 1. Bootstrap the anonymous session over HTTP, read the current run, or restore the owned URL run when no active run exists; otherwise create a run. Injecting the restored-ID accessor keeps browser navigation outside session orchestration.
-2. Attach the channel and attempt the socket upgrade. Queue moves immediately and render prediction. If the initial upgrade is unavailable, send the same commands sequentially over HTTP. Reconnect sends original commands for replay.
+2. Attach the channel and attempt the socket upgrade. Queue moves immediately and render prediction. If the initial upgrade is unavailable, send the same commands sequentially over HTTP. Reconnect retries original command versions and resynchronizes on a stale-version conflict.
 3. Acknowledge only the head command, accept nonregressing snapshots and recompute prediction. On a version/validation conflict, clear speculative inputs and read authoritative state. Unknown failures retain exact commands for retry.
 4. Reset/continue/restart wait for queued moves. Unknown HTTP commits retain their exact body/action ID; restart resumes abandonment/creation after replay. The navbar only requests confirmation through the small `events.ts` adapter; it never calls persistence or starts a run itself.
 
@@ -75,11 +75,11 @@ The DB driver imports `server-only`; client code imports contracts/domain code, 
 
 `evaluateRule()` evaluates final bounds atomically and returns unchanged plate alignment (`pins`) on missing effects or invalid moves. Generation uses it without runtime solved/failed guards because mixing starts from solved plate positions. Runtime `evaluateMove()` adds those guards and applies damage once. The server consumes the classified result without evaluating movement again. The solver retains its specialized indexed search representation and budget semantics.
 
-`transition()` remains the single authoritative action entry point, dispatching focused move/continue/abandon functions and reset, then incrementing version and constructing the response. Single actions and move batches still own their original transaction boundaries. Both lock the owner before ownership/replay/version checks and use the same fingerprint and write helpers. Batches retain individual replay responses/versions and write the final run once; no reply is sent before commit.
+`transition()` remains the single authoritative action entry point, dispatching focused move/continue/abandon functions and reset, then incrementing version and constructing the response. Single actions and move batches still own their original transaction boundaries. Both lock the owner before ownership/replay/version checks and use the same fingerprint and write helpers. Batches retain individual transient responses/versions and write the final run once; no reply is sent before commit.
 
 ## Replay storage and leaderboard extension
 
-Each accepted action stores a complete original public response. Storage grows with accepted action count multiplied by snapshot size (pins/rules), even when socket moves are batched. This cost is intentional for exact replay; this issue adds no cleanup or retention policy. Any later expiry/compaction must preserve unknown-commit retries, active sessions, claims and the agreed replay window. Do not silently replace historical responses with a current snapshot.
+Moves and resets update current state without stored response history. Original versions make stale retries conflict; the channel discards speculative input and loads current authoritative state. No full responses are persisted. Accepted create/claim identities live on their existing session/entry rows; other actions recover through version checks. Terminal puzzles are immediately replaced by compact summaries.
 
 A leaderboard can use separate services, storage, endpoints and UI against immutable finished runs (`status`, ruleset, metrics and `finishedAt`). Ownership/session helpers and the finished-run record are its narrow integration points. The game engine, prediction and socket protocol need no ranking logic. Ranking order, qualification transactions, nickname validation and retention remain separate work under the decision ledger.
 
@@ -114,4 +114,4 @@ No deployment, database migration, live browser end-to-end check or GitHub issue
 
 ## Public ranking feature (#25)
 
-`src/features/leaderboard/index.ts` exposes only `Leaderboard` to the localized ranking route. Its component owns in-memory cursor-page navigation and localized presentation. `src/client/leaderboard.ts` reads and validates the public API; it has no React, session bootstrap or score mutation. The gameplay claim modal links to the ranking route without importing ranking feature internals. Server policy, ordering, snapshots and atomic claims remain in `src/server/leaderboard`.
+`src/features/leaderboard/index.ts` exposes only `Leaderboard` to the localized ranking route. Its component owns in-memory cursor-page navigation and localized presentation. `src/client/leaderboard.ts` reads and validates the public API; it has no React, session bootstrap or score mutation. The gameplay claim modal links to the ranking route without importing ranking feature internals. Server policy, ordering, live pages and atomic claims remain in `src/server/leaderboard`.

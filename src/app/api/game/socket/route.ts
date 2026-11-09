@@ -1,11 +1,10 @@
-import { randomUUID } from "node:crypto";
 import { upgradeWebSocket } from "@vercel/functions";
 import { type NextRequest, NextResponse } from "next/server";
-import { GameError } from "@/server/game/errors";
-import { COOKIE_NAME } from "@/server/game/http";
-import { findSession, readRun } from "@/server/game/service";
-import { bindGameSocket, isUuid } from "@/server/game/socket";
-import { checkOrigin } from "@/server/game/validation";
+import { GameError, publicError } from "@/server/game/errors";
+import { readRun } from "@/server/game/service";
+import { COOKIE_NAME, findSession } from "@/server/game/session";
+import { bindGameSocket } from "@/server/game/socket";
+import { checkOrigin, isUuid } from "@/server/game/validation";
 export const runtime = "nodejs";
 export const maxDuration = 300;
 export async function GET(request: NextRequest) {
@@ -27,17 +26,10 @@ export async function GET(request: NextRequest) {
       { maxPayload: 2048 },
     );
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: {
-          code: error instanceof GameError ? error.code : "SERVICE_UNAVAILABLE",
-          requestId: randomUUID(),
-        },
-      },
-      {
-        status: error instanceof GameError ? error.status : 503,
-        headers: { "Cache-Control": "no-store" },
-      },
-    );
+    const failure = publicError(error);
+    return NextResponse.json(failure.body, {
+      status: failure.status,
+      headers: { "Cache-Control": "no-store" },
+    });
   }
 }

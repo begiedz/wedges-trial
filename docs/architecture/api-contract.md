@@ -53,14 +53,14 @@ Every run response includes the entire confirmed public snapshot, not a patch:
 | `openedChests` | Number of solved locks; increments on solving, not on claim/retry |
 | `oreNuggets`, `lockpicks` | Credited resources only; pending rewards are excluded |
 | `difficulty` | Server-derived tier: 1, 2, 3 or 4; learning-ramp-v1 classifies immutable initial connections, older cohorts retain their chest-based bands |
-| `currentLock` | Visible plate alignment in `pins` (`id`, `position`, `target`, `min`, `max`), current pick damage and literal `maxInvalidMovesPerPick: 3` |
+| `currentLock` | Visible plate alignment in `pins` (`id`, `position`, `target`, `min`, `max`), current pick damage and literal `maxInvalidMovesPerPick: 4` |
 | `reward` | Non-null only in `chest_opened`: fixed pending `{ oreNuggets, lockpicks }` |
 | `result` | Non-null only in `finished`: immutable final ore, solved-chest count, cumulative `totalMetrics: { moves, invalidMoves, brokenPicks }`, finish time and `reason: "lockpicks_exhausted"` |
 | `createdAt`, `updatedAt` | Server timestamps; `updatedAt` changes with committed mutations |
 
 Final statistics include every processed valid/invalid move and all broken picks across chests and resets. They are read-only server projections, not accepted mutation fields. Historical stored action replies can omit `result.totalMetrics`; replay them unchanged and show unavailable statistics until a fresh owned read supplies totals. Current-pick damage is durability, not cumulative mistake history.
 
-Use `status` instead of redundant `isSolved`/`isFailed` flags. Optional currentLock.moveRules exposes public movement mechanics to the owner for visual prediction. Generation seed, initial lock, solver path/optimum and session/player credentials are never serialized. Changed plate highlights can be derived by comparing public snapshots. Terminal snapshots retain the last visible lock for display. Scores from old local saves are never imported into this API.
+Use `status` instead of redundant `isSolved`/`isFailed` flags. Optional currentLock.moveRules exposes public movement mechanics to the owner for visual prediction. Generation seed, initial lock, solver path/optimum and session/player credentials are never serialized. Changed plate highlights can be derived by comparing public snapshots. Immediate terminal responses may retain the last visible lock in RAM. Reloaded terminal summaries use an empty lock; no final layout is saved. Scores from old local saves are never imported into this API.
 
 `playing` requires at least one pick and an unsolved lock. `chest_opened` requires all plates aligned with their targets and at least one pick. `finished` requires zero picks and matching run/result totals. `openedChests === chestIndex - 1` while playing/finished; it equals `chestIndex` in `chest_opened`. An abandoned run preserves its last chest/solved count, including a solved-but-unclaimed chest. All plate alignment positions and targets remain within their declared bounds.
 
@@ -93,14 +93,13 @@ All other action/status combinations return `409 INVALID_RUN_STATUS` without mut
 
 ## Versions, duplicate actions and recovery
 
-1. Every mutation has a caller-generated `actionId`; the client retains the exact request until the outcome is known. Scope action IDs uniquely **per player across all mutation endpoints**, including create. Reusing an ID for a different route/run/body returns `409 ACTION_ID_REUSED`.
-2. Authenticate, validate schema/origin and authorize access before serving a replay. Within the transaction, check the action record **before** checking the current version or lifecycle. An exact duplicate of a committed request returns its original status code and JSON, including the original snapshot/version, even after the run has advanced or finished. It never creates another lock, credits again, or increments version. Creation retries return the same `201` and ID.
-3. A new action on an existing run requires `expectedVersion === current version`. Mismatch returns `409 VERSION_CONFLICT` with authorized `runId`, `currentVersion`, `currentStatus`. No plate positions, damage, resources, metrics, reward or action success record changes.
-4. For matching versions, verify legal status and action, then atomically commit state, counters, version `+1`, and replay record. Successful invalid moves and resets also consume a version. Errors consume no version and do not reserve action IDs. Concurrent identical requests wait/re-read the one committed result; concurrent different requests from one version allow at most one commit.
-5. Action deduplication and state changes require a database transaction/constraints, not an in-memory map. Keep successful replay records for as long as the run is available; retention/tombstones must prevent old IDs from executing again. The implemented composite primary key (owner_id, action_id) covers creation and cross-run reuse. A committed creation action references the newly generated run ID; the caller need not know that ID to retry creation.
-6. After timeout, network loss, `429` or `5xx`, retry the **same** action ID/body (respecting `Retry-After`). Do not generate a fresh ID while commit status is unknown. A crash after commit but before response must still replay the committed result.
-7. After a conflict, stop queued gameplay input and fetch `/api/runs/:id`; `/current` may be null if another tab ended the run. Replace stale state with the authoritative snapshot. Do not automatically reapply a move/reset/continue with a new version; a new deliberate action gets a fresh ID.
-8. A replay may carry an older snapshot than the UI already has. Never replace a higher version of the same run with a lower version. After a delayed response, refetch if needed. Responses for a previously active run must not replace a newer selected run. No optimistic score/pick awards or local authoritative fallback.
+Existing-run actions (move/reset/continue/abandon) retain original action ID, body and expected version on retry. No full historical response is recorded. At most one request at a version commits; stale retries return 409 and reload current state. Never substitute a new version into an old intent. Successful invalid moves and resets consume a version; rejected actions do not.
+
+Creation stores only the accepted action/run UUID pair on its owning session. Repeating the create returns current retained state of that run; an expired/deleted original returns 404 rather than creating another game. No historical creation snapshot is replayed. Concurrent distinct creates still allow only one active run.
+
+An accepted nickname claim stores action ID and original accepted rank on its immutable compact entry. Identical action/name retries return that entry while the source summary is available; changed use of a recorded claim action ID conflicts. Rejected qualification attempts may be evaluated again, not historically replayed. One run can claim once permanently.
+
+Authentication, expiry and ownership precede access. Conflict recovery clears speculative inputs and reads the owned run. Terminal summaries expire 24 hours after termination; active games expire seven days after the last accepted action. Expired private reads/claims return 404. Session expiry/revocation remains 401. Never regress a newer confirmed state when older network replies arrive.
 
 ## WebSocket protocol (implemented)
 
@@ -114,9 +113,9 @@ Client action frame:
 
 The same strict action validators apply. The protocol also supports reset/continue/abandon with their standard bodies; the current UI uses HTTP lifecycle controls after queued moves drain. Server frames are ready {run}, result {actionId,response}, error {actionId?,status,error}, and ping. The client answers {"type":"pong"}. Error/result fields follow the HTTP contract.
 
-Results are sent only after commit, in action order. Adjacent moves batch up to 32 per transaction, retaining each accepted action's version and replay result. Frames are limited to 2 KiB; binary/oversized frames close with 1009. More than 120 messages/second or 128 queued commands closes with 1008; excessive outgoing buffering closes with 1013. Heartbeats run every 20 seconds; stale pong over 60 seconds or session expiry closes with 4001. These per-connection limits do not implement distributed rate limiting.
+Results are sent only after commit, in action order. Adjacent moves batch up to 32 per transaction, returning each accepted action's version and result without storing move history. Frames are limited to 2 KiB; binary/oversized frames close with 1009. More than 120 messages/second or 128 queued commands closes with 1008; excessive outgoing buffering closes with 1013. Heartbeats run every 20 seconds; stale pong over 60 seconds or session expiry closes with 4001. These per-connection limits do not implement distributed rate limiting.
 
-The client buffers up to 64 inputs, predicts visuals immediately, and reconciles against committed snapshots. It pauses after a predicted solved/failed lock until confirmation. Resources and terminal dialogs remain confirmed. Reconnect preserves unknown action IDs/versions; conflicts discard queued predictions and refetch. HTTP fallback uses the same authority and replay rules. Function duration is bounded (300-second setting), so reconnect is expected.
+The client buffers up to 64 inputs, predicts visuals immediately, and reconciles against committed snapshots. It pauses after a predicted solved/failed lock until confirmation. Resources and terminal dialogs remain confirmed. Reconnect preserves unknown action IDs/versions; conflicts discard queued predictions and refetch. HTTP fallback uses the same authority and version-recovery rules. Function duration is bounded (300-second setting), so reconnect is expected.
 
 ## Errors and localization
 
@@ -153,32 +152,11 @@ The API is locale-neutral: do not require a `locale` mutation field or change pa
 
 ## Public leaderboard read contract (#24)
 
-`GET /api/leaderboard?limit=25&cursor=...` accepts a decimal integer `limit` from 1 to 100 (default 25) and an optional opaque server-issued cursor. Unknown query fields, duplicate parameters and invalid limits return `400 INVALID_REQUEST`; malformed/tampered/expired cursors return `400 INVALID_CURSOR`. A rejected cursor is restarted with a cursorless read.
+`GET /api/leaderboard?limit=25&cursor=...` accepts a decimal limit 1–100 (default 25) and optional server-issued cursor. The existing UI requests 10 rows. Unknown/duplicate fields and invalid limits return `400 INVALID_REQUEST`; invalid cursors return `400 INVALID_CURSOR`. Old signed snapshot cursors are rejected; restart with a cursorless read.
 
-Use #24's arcade ranking contract: one entry per **claimed finished run**, not one per player, ordered under the approved #51 decision by `oreNuggets DESC`, then `openedChests DESC`, `finishedAt ASC`, stable `runId ASC`. Rank all claimed eligible run entries globally, capped at 1000; multiple runs from one anonymous session may appear. Only the server's current eligible `rulesetVersion` appears in a response. The main ranking uses `learning-ramp-v1`; historical results retain their original ruleset. Future score-affecting changes require a ruleset review and separate cohorts for incomparable results. See [competitive ranking](competitive-ranking.md); private claim services/endpoints and these public reads are implemented.
+Each request reads a bounded page of current claimed finished runs in `all-plates-v1`: ore DESC, opened chests DESC, finish time ASC, run UUID ASC. Capacity remains TOP 1000, one entry per claimed run. Multiple runs per owner are allowed. A numeric offset cursor carries no credential or signature; bounds prevent traversal beyond the cap. `nextCursor` is null at the end, including empty results.
 
-The planned leaderboard screen displays 25 entries per page by default (up to 40 pages for a full TOP 1000), with previous/next navigation within one snapshot. Page length is independent of qualification capacity: ranks 1–1000 may qualify, not just entries on the first page. New traversal/refresh captures the current ranking; moving between pages retains its frozen ranks. The public endpoint is implemented; the ranking screen remains #25 work.
-
-Each cursor binds the initial read's **frozen ordered TOP 1000 result set**, current ruleset and last emitted row/rank. Later finishes cannot reorder that traversal, replace a claimed run or change its displayed nickname between pages. Rank is the 1-based position within that snapshot. #24 persists the bounded selected rows in PostgreSQL rather than a process-local map; a timestamp cutoff alone is insufficient when transactions can commit later with earlier timestamps. The snapshot storage/retention mechanism is an implementation detail; an expired snapshot returns `INVALID_CURSOR`. Return `nextCursor: null` at the end, including empty results and the TOP 1000 boundary; the last page may be shorter than `limit`. Cursors are opaque to the browser; do not expose session or player credentials. A cursor for a retired ruleset is invalid rather than mixing score systems.
-
-Snapshots expire 15 minutes after creation according to the database clock. Signed cursors bind snapshot ID, ruleset and row offset; the per-snapshot signing key never leaves the server. Page size may change within the traversal. Reusing a cursor returns the same rows/ranks for that page size while the snapshot is live. Cursorless reads reclaim at most 100 expired snapshots transactionally and persist a new snapshot only if another page exists. No session is required or created, and all responses (including errors) use `Cache-Control: no-store`. The endpoint projects only `LeaderboardEntryDto` fields; it does not expose ownership, internal game state or cursor keys. Shared request budgets are implemented under #46 below; traffic calibration and edge abuse protection remain #43 release work.
-
-```json
-{
-  "rulesetVersion": "example-v1",
-  "entries": [
-    {
-      "rank": 1,
-      "runId": "20d4e876-23ba-4c29-a970-4ad4ff562e70",
-      "displayName": "Wedge",
-      "oreNuggets": 120,
-      "openedChests": 8,
-      "finishedAt": "2026-10-31T12:10:00.000Z"
-    }
-  ],
-  "nextCursor": null
-}
-```
+New claims can shift rows between requests, so pages are not a frozen historical traversal. No snapshot row or signing key is created. The DTO remains `{ rulesetVersion, entries, nextCursor }`, exposing only ranking fields. Public responses require no session and use `Cache-Control: no-store`; shared read admission remains in force.
 
 ## Sample requests and confirmed responses
 
@@ -208,7 +186,7 @@ Start request, `POST /api/runs`:
     "currentLock": {
       "pins": [{ "id": 0, "position": 2, "target": 3, "min": 0, "max": 6 }],
       "invalidMovesOnCurrentPick": 0,
-      "maxInvalidMovesPerPick": 3
+      "maxInvalidMovesPerPick": 4
     },
     "reward": null,
     "result": null,
@@ -247,7 +225,7 @@ Solving move request, `POST /api/runs/20d4e876-23ba-4c29-a970-4ad4ff562e70/move`
     "currentLock": {
       "pins": [{ "id": 0, "position": 3, "target": 3, "min": 0, "max": 6 }],
       "invalidMovesOnCurrentPick": 0,
-      "maxInvalidMovesPerPick": 3
+      "maxInvalidMovesPerPick": 4
     },
     "reward": { "oreNuggets": 10, "lockpicks": 0 },
     "result": null,
@@ -282,7 +260,7 @@ Continue request (reset/abandon use this same two-field shape), `POST /api/runs/
     "currentLock": {
       "pins": [{ "id": 0, "position": 1, "target": 3, "min": 0, "max": 6 }],
       "invalidMovesOnCurrentPick": 0,
-      "maxInvalidMovesPerPick": 3
+      "maxInvalidMovesPerPick": 4
     },
     "reward": null,
     "result": null,
@@ -306,11 +284,11 @@ A last-pick-breaking move returns `200` with `outcome: "run_finished"`, the same
 
 ## Implementation handoff and checks
 
-- #31–#33: session ownership, one-active-run constraint, player-scoped action identity including create, atomic replay/version storage and retention.
+- #31–#33: session ownership, one-active-run constraint, player-scoped action identity including create, version/creation-identity protection and expiry.
 - #35–#39: generate/restore, versioned moves, safe reset, stored pending reward and atomic claim, final result and abandonment.
 - #40–#42: full-snapshot rendering, retry identity, stale-response protection, four-language feedback, integration/concurrency tests; remove legacy saves only when server flow works.
-- #24: snapshot-stable, ruleset-aware ranking query and cursor validation are implemented; deployed verification remains separate.
-- Test exact replay before stale-version/status checks, key reuse with changed payload, two different actions at one version, simultaneous start/claim/finalization, cross-player IDs, missing/bad origins, fourth invalid move, reset preserving penalties, failure rollback, abandoned reward exclusion and terminal reads. Contract/types alone do not establish any of these server guarantees.
+- #24: live, ruleset-aware ranking pages and cursor validation are implemented; deployed verification remains separate.
+- Test creation/claim identity and lifecycle version resynchronization, key reuse with changed payload, two different actions at one version, simultaneous start/claim/finalization, cross-player IDs, missing/bad origins, fourth invalid move, reset preserving penalties, failure rollback, abandoned reward exclusion and terminal reads. Contract/types alone do not establish any of these server guarantees.
 
 ## Post-run arcade claims (implemented under #33)
 
@@ -320,25 +298,33 @@ No nickname is required for bootstrap or starting gameplay. Both private endpoin
 
 `POST /api/runs/:id/leaderboard-entry` accepts exactly `{ actionId, nickname }`; no version or score. Nicknames are trimmed, 1–24 Unicode code points, with control characters and unpaired surrogates rejected. Names may repeat and must be rendered as plain text. Malformed requests return `400 INVALID_REQUEST`. The existing same-origin and 2 KiB body requirements apply.
 
-Success is `200 { outcome: "leaderboard_claimed", run, entry }`, where `entry` is a `LeaderboardEntryDto` derived exclusively from the finished run and normalized name. Its rank is the rank at commit, not a reserved future place. A cutoff loss or otherwise ineligible run returns `200 { outcome: "leaderboard_not_qualified", run, qualification: { eligible: false, reason } }`. Both outcomes are recorded for exact retry under the owner/action ID, across gameplay and claim endpoints. Retrying a rejected snapshot with a fresh action ID is a new attempt; replaying the old ID returns the original outcome. Reusing an action ID for a different run/name/operation returns `409 ACTION_ID_REUSED`. Authentication and ownership precede replay.
+Success is `200 { outcome: "leaderboard_claimed", run, entry }`, where `entry` is a `LeaderboardEntryDto` derived exclusively from the finished run and normalized name. Its rank is the rank at commit, not a reserved future place. A cutoff loss or otherwise ineligible run returns `200 { outcome: "leaderboard_not_qualified", run, qualification: { eligible: false, reason } }`. Accepted claims retain their action identity and accepted rank on the compact entry. Rejected qualification attempts may be checked again on retry. Reusing an action ID for a different run/name on a recorded accepted claim returns `409 ACTION_ID_REUSED`. Authentication and ownership precede claim identity lookup.
 
-The transaction locks the owner, then a transaction-scoped PostgreSQL advisory lock shared by all claims in the active cohort. Under READ COMMITTED, cutoff queries after this lock see the preceding claimant's commit. Bounded TOP 1000 reads plus a separate durable claim lookup prevent displaced runs from reclaiming. Claim insertion and replay storage commit together; failure rolls both back. Accepted claims do not change the immutable run/version. All application claim writers must use this service and lock; raw SQL insertion bypasses cutoff orchestration.
+The transaction locks the owner, then a transaction-scoped PostgreSQL advisory lock shared by all claims in the active cohort. Under READ COMMITTED, cutoff queries after this lock see the preceding claimant's commit. Bounded TOP 1000 reads plus a separate durable claim lookup prevent displaced runs from reclaiming. Claim insertion and its compact identity/rank commit together; failure rolls them back. Accepted claims do not change the immutable run/version. All application claim writers must use this service and lock; raw SQL insertion bypasses cutoff orchestration.
 
-The public read/cursor is implemented under #24. Game Over nickname entry is implemented under #34. Existing retention preserves claims permanently and all replay/eligible submission access for the full live session; see [data model](data-model.md#conservative-retention-policy-31).
+The public read/cursor is implemented under #24. Game Over nickname entry is implemented under #34. Retention preserves claims permanently; private terminal summary/claim access lasts 24 hours, bounded by session validity; see [data model](data-model.md#physical-cleanup).
 
 ## Leaderboard admission and caching (#46)
 
-All three leaderboard HTTP endpoints enforce PostgreSQL-backed request budgets across function instances. Each key has a fixed 60-second window beginning with its first admitted request, measured by the database clock. Atomic upserts admit at most the configured count; denial does not extend the window. Defaults are operational safeguards, not measured release capacity or gameplay fairness rules:
+All three leaderboard HTTP endpoints enforce PostgreSQL-backed request budgets across function instances. Each operation has a fixed 60-second window beginning with its first admitted request, measured by the database clock. Atomic row updates admit at most the configured count; denial does not extend the window. Defaults are operational safeguards, not measured release capacity or gameplay fairness rules:
 
 | Requests | Scope | Default/window | Environment override |
 | --- | --- | --- | --- |
-| Public GET without `cursor` | Global | 60 | `LEADERBOARD_SNAPSHOTS_PER_MINUTE` |
-| Public GET with `cursor` | Global, separate from new traversals | 600 | `LEADERBOARD_PAGES_PER_MINUTE` |
+| All public GET pages | Global | 600 | `LEADERBOARD_PAGES_PER_MINUTE` |
 | Private eligibility GET | Authenticated session across all runs | 30 | `LEADERBOARD_ELIGIBILITY_PER_MINUTE` |
 | Private claim POST, including exact retries | Authenticated session across all runs | 10 | `LEADERBOARD_CLAIMS_PER_MINUTE` |
 
-Overrides accept decimal integers 1–999999. Invalid configuration or unavailable admission storage fails closed with the existing generic `503 SERVICE_UNAVAILABLE`. Public admission precedes query validation; private admission follows Origin/session/path checks and precedes body validation/ownership service work. Invalid requests and failed downstream work consume their admitted request. Callers cannot choose a budget key with cookies, nicknames, run IDs, query ownership fields or forwarded IP headers. Private keys derive from the authenticated session; public budgets deliberately protect total snapshot allocation without relying on proxy header trust. There is no profile or optional “my rank” API; a successful claim returns that run's rank at commit.
+Overrides accept decimal integers 1–999999. Invalid configuration or unavailable admission storage fails closed with the existing generic `503 SERVICE_UNAVAILABLE`. Public admission precedes query validation; private admission follows Origin/session/path checks and precedes body validation/ownership service work. Invalid requests and failed downstream work consume their admitted request. Callers cannot choose a budget key with cookies, nicknames, run IDs, query ownership fields or forwarded IP headers. Private keys derive from the authenticated session; public budgets deliberately bound total public query work without relying on proxy header trust. There is no profile or optional “my rank” API; a successful claim returns that run's rank at commit.
 
-Exhaustion returns `429 { error: { code: "RATE_LIMITED", requestId } }` with integer `Retry-After` seconds (1–60) and `Cache-Control: no-store`. No service work, action record or snapshot is created by a denied request. Admission commits separately from claim/snapshot transactions, so work rollback cannot refund requests. After waiting, retry the exact action ID/name to recover a possibly committed claim. The underlying replay and atomic cutoff rules remain unchanged.
+Exhaustion returns `429 { error: { code: "RATE_LIMITED", requestId } }` with integer `Retry-After` seconds (1–60) and `Cache-Control: no-store`. No downstream service work is performed for a denied request. Admission commits separately from claim transactions, so work rollback cannot refund requests. After waiting, retry the exact action ID/name to recover a possibly committed claim. Accepted claim identity and atomic cutoff rules still apply.
 
-Successes and failures remain `no-store` for public and private endpoints; there is no shared HTTP/CDN cache. A snapshot is durable pagination state, not an HTTP cache. Counters saturate at limit + 1, expired keys are reused, and each admission opportunistically removes at most 100 expired keys with `SKIP LOCKED`. No credentials or IP addresses are stored in this table or returned. Public global budgets can throttle legitimate concurrent visitors; review thresholds with measured traffic before release. These budgets do not prevent session farming, connection floods or direct platform/database exhaustion. Edge limits, session-bootstrap abuse controls, monitoring and release calibration remain #43; no anti-bot guarantee is implied.
+Successes and failures remain `no-store` for public and private endpoints; there is no shared HTTP/CDN cache. Counters saturate at limit + 1 and reset when their fixed window expires. They occupy fixed fields on sessions/global totals, with no key table or cleanup. No IP address is stored. Public global budgets can throttle legitimate concurrent visitors; review thresholds with measured traffic before release. These budgets do not prevent session farming, connection floods or direct platform/database exhaustion. Edge limits, session-bootstrap abuse controls, monitoring and release calibration remain #43; no anti-bot guarantee is implied.
+
+
+## Temporary private data and durable results — final model
+
+Full puzzle state is saved only while active. Terminal writes discard it immediately and keep a compact 24-hour result. Refreshing a terminal run supplies summary totals with empty pins/move rules, through the existing DTO. The immediate terminal response can still contain the final board in RAM.
+
+Active runs expire seven days after the last accepted action. Sessions keep creation identity markers for their fixed 30-day lifetime. Compact public claimed results remain rankable independently of private summary/session expiry. Daily authenticated cleanup physically reclaims expired payloads; no full action-response history remains.
+
+Global totals are internal; no public stats API is added. Shared read/claim/eligibility limits use fixed windows on existing global/session rows. The maintenance route authenticates with server-only CRON_SECRET, not player cookies. No frontend component or localization change is required.

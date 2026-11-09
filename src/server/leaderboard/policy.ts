@@ -55,7 +55,7 @@ export function compareRankedRuns(a: RankedRun, b: RankedRun): number {
 export type Qualification = LeaderboardQualification;
 
 /**
- * Snapshot only: caller must authorize ownership and repeat this check inside
+ * Caller must authorize ownership and repeat this check inside
  * the claim transaction. claimedRuns contains unique, persisted claims,
  * including displaced claims so a run can never claim twice.
  */

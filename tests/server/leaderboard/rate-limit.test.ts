@@ -9,8 +9,8 @@ describe("leaderboard request budget configuration", () => {
     "fails closed for invalid operational threshold %s",
     async (value) => {
       vi.mocked(getDatabase).mockClear();
-      vi.stubEnv("LEADERBOARD_SNAPSHOTS_PER_MINUTE", value);
-      await expect(limitLeaderboard({ operation: "snapshot" })).rejects.toThrow(
+      vi.stubEnv("LEADERBOARD_PAGES_PER_MINUTE", value);
+      await expect(limitLeaderboard({ operation: "page" })).rejects.toThrow(
         "Invalid leaderboard request budget configuration",
       );
       expect(getDatabase).not.toHaveBeenCalled();

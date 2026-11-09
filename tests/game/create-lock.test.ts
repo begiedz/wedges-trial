@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { applyMoveToLock } from "@/game/apply-move";
 import { checkSolved } from "@/game/check-solved";
-import { createLock, createLockWithDiagnostics } from "@/game/create-lock";
+import { createLock, createLockWithSolution } from "@/game/create-lock";
 import { getDifficultyForChest } from "@/game/progress-difficulty";
-import { solveLock } from "@/game/solver";
+import { solveLock, verifySolution } from "@/game/solver";
 import type { DifficultyConfig, RandomSource } from "@/game/types";
 
 function createSequenceRandom(values: number[]): RandomSource {
@@ -165,24 +165,22 @@ describe("createLock", () => {
   });
 });
 
-describe("generation evidence", () => {
+describe("construction solutions", () => {
   it("retains a legally replayable construction witness after every capped search", async () => {
     const solver = await import("@/game/solver");
     const search = vi
       .spyOn(solver, "solveLockDetailed")
       .mockReturnValue({ kind: "budget-exhausted", visitedStates: 20_000 });
     try {
-      const { lock, diagnostics, solution } = createLockWithDiagnostics(
+      const { lock, solution } = createLockWithSolution(
         getDifficultyForChest(9999),
         createSeededRandom(50),
       );
-      expect(diagnostics).toMatchObject({
-        attempts: 12,
-        outcome: "unverified",
-        searches: { found: 0, budgetExhausted: 12 },
-      });
+      expect(search).toHaveBeenCalledTimes(12);
       expect(lock.optimalMoves).toBeNull();
-      expect(solution.length).toBeLessThanOrEqual(diagnostics.target.max);
+      expect(solution.length).toBeLessThanOrEqual(
+        getDifficultyForChest(9999).maxSolutionLength ?? 0,
+      );
       let current = lock;
       for (const move of solution) {
         const result = applyMoveToLock(current, move.pinId, move.direction);
@@ -198,8 +196,8 @@ describe("generation evidence", () => {
     }
   });
 
-  it("reports below-target difficulty without inventing an optimum or retrying forever", () => {
-    const { lock, diagnostics, solution } = createLockWithDiagnostics(
+  it("returns a legal shorter solution when the target is unreachable", () => {
+    const { lock, solution } = createLockWithSolution(
       {
         ...getDifficultyForChest(0),
         plateCount: 1,
@@ -208,12 +206,10 @@ describe("generation evidence", () => {
       },
       createSeededRandom(50),
     );
-    expect(diagnostics).toMatchObject({
-      attempts: 12,
-      outcome: "below-target",
-    });
+
     expect(lock.optimalMoves).toBe(solution.length);
     expect(solution.length).toBeLessThan(50);
+    expect(verifySolution(lock, solution)).toBe(true);
   });
 
   it("fails closed on an impossible construction/solver disagreement", async () => {

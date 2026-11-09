@@ -17,7 +17,7 @@ import { GET as getEligibility } from "@/app/api/runs/[id]/leaderboard-eligibili
 import { POST as postClaim } from "@/app/api/runs/[id]/leaderboard-entry/route";
 import * as schema from "@/server/db/schema";
 import { newRun } from "@/server/game/engine";
-import { bootstrap, findSession } from "@/server/game/service";
+import { bootstrap, findSession } from "@/server/game/session";
 import { readLeaderboard } from "@/server/leaderboard/pagination";
 import { limitLeaderboard } from "@/server/leaderboard/rate-limit";
 import { claimEntry, readEligibility } from "@/server/leaderboard/service";
@@ -27,6 +27,7 @@ vi.mock("@/server/db", () => ({ getDatabase: () => db }));
 const url = process.env.TEST_DATABASE_URL;
 const schemaName = `ranking_test_${randomUUID().replaceAll("-", "")}`;
 let admin: Pool;
+let schemaCreated = false;
 let pool: Pool;
 const ownerId = randomUUID();
 const otherId = randomUUID();
@@ -59,6 +60,7 @@ describe.skipIf(!url)("durable public leaderboard PostgreSQL", () => {
   beforeAll(async () => {
     admin = new Pool({ connectionString: url });
     await admin.query(`CREATE SCHEMA "${schemaName}"`);
+    schemaCreated = true;
     pool = new Pool({
       connectionString: url,
       options: `-c search_path=${schemaName}`,
@@ -78,8 +80,9 @@ describe.skipIf(!url)("durable public leaderboard PostgreSQL", () => {
   });
   beforeEach(async () => {
     await pool.query(
-      "TRUNCATE sessions, runs, run_actions, leaderboard_entries, leaderboard_snapshots, leaderboard_request_budgets CASCADE",
+      "TRUNCATE sessions, runs, leaderboard_entries, global_game_stats CASCADE",
     );
+    await pool.query("INSERT INTO global_game_stats(id) VALUES (1)");
     await db.insert(schema.sessions).values(
       [ownerId, otherId].map((id) => ({
         id,
@@ -115,27 +118,57 @@ describe.skipIf(!url)("durable public leaderboard PostgreSQL", () => {
       await limitLeaderboard({ operation: "claim", ownerId: otherId });
       await limitLeaderboard({ operation: "eligibility", ownerId });
       const { rows } = await pool.query(
-        "SELECT requests FROM leaderboard_request_budgets WHERE key=$1",
-        [`claim:${ownerId}`],
+        "SELECT claim_requests AS requests FROM sessions WHERE id=$1",
+        [ownerId],
       );
       expect(rows[0].requests).toBe(3);
       await pool.query(
-        "UPDATE leaderboard_request_budgets SET expires_at=now()-interval '1 second'",
+        "UPDATE sessions SET claim_window=now()-interval '1 second'",
       );
       await limitLeaderboard({ operation: "claim", ownerId });
       const remaining = await pool.query(
-        "SELECT key, requests FROM leaderboard_request_budgets",
+        "SELECT claim_requests, eligibility_requests FROM sessions WHERE id=$1",
+        [ownerId],
       );
       expect(remaining.rows).toEqual([
-        { key: `claim:${ownerId}`, requests: 1 },
+        { claim_requests: 1, eligibility_requests: 1 },
       ]);
     } finally {
       vi.unstubAllEnvs();
     }
   });
-  it("bounds anonymous snapshot creation independently of spoofed headers and cursor pages", async () => {
-    vi.stubEnv("LEADERBOARD_SNAPSHOTS_PER_MINUTE", "1");
-    vi.stubEnv("LEADERBOARD_PAGES_PER_MINUTE", "1");
+  it("rejects private admission for missing, expired or revoked owners", async () => {
+    await expect(
+      limitLeaderboard({ operation: "claim", ownerId: randomUUID() }),
+    ).rejects.toMatchObject({
+      code: "SESSION_REQUIRED",
+      status: 401,
+    });
+    await pool.query(
+      "UPDATE sessions SET expires_at=now()-interval '1 second' WHERE id=$1",
+      [ownerId],
+    );
+    await pool.query("UPDATE sessions SET revoked_at=now() WHERE id=$1", [
+      otherId,
+    ]);
+    for (const id of [ownerId, otherId]) {
+      await expect(
+        limitLeaderboard({ operation: "eligibility", ownerId: id }),
+      ).rejects.toMatchObject({
+        code: "SESSION_REQUIRED",
+        status: 401,
+      });
+    }
+    expect(
+      (
+        await pool.query(
+          "SELECT sum(eligibility_requests)::integer AS requests FROM sessions",
+        )
+      ).rows[0].requests,
+    ).toBe(0);
+  });
+  it("bounds all public reads together without trusting forwarded headers", async () => {
+    vi.stubEnv("LEADERBOARD_PAGES_PER_MINUTE", "2");
     try {
       await seedClaims(30);
       const first = await GET(
@@ -143,6 +176,15 @@ describe.skipIf(!url)("durable public leaderboard PostgreSQL", () => {
       );
       expect(first.status).toBe(200);
       const { nextCursor } = await first.json();
+      expect(
+        (
+          await GET(
+            new Request(
+              `https://trial.test/api/leaderboard?cursor=${nextCursor}`,
+            ),
+          )
+        ).status,
+      ).toBe(200);
       const blocked = await GET(
         new Request("https://trial.test/api/leaderboard", {
           headers: {
@@ -159,29 +201,14 @@ describe.skipIf(!url)("durable public leaderboard PostgreSQL", () => {
         60,
       );
       expect(
-        (await pool.query("SELECT count(*) FROM leaderboard_snapshots")).rows[0]
-          .count,
-      ).toBe("1");
-      expect(
         (
-          await GET(
-            new Request(
-              `https://trial.test/api/leaderboard?cursor=${nextCursor}`,
-            ),
+          await pool.query(
+            "SELECT page_requests FROM global_game_stats WHERE id=1",
           )
-        ).status,
-      ).toBe(200);
-      expect(
-        (
-          await GET(
-            new Request(
-              `https://trial.test/api/leaderboard?cursor=${nextCursor}`,
-            ),
-          )
-        ).status,
-      ).toBe(429);
+        ).rows[0].page_requests,
+      ).toBe(3);
       await pool.query(
-        "UPDATE leaderboard_request_budgets SET expires_at=now()-interval '1 second'",
+        "UPDATE global_game_stats SET page_window=now()-interval '1 second'",
       );
       expect(
         (await GET(new Request("https://trial.test/api/leaderboard"))).status,
@@ -226,7 +253,7 @@ describe.skipIf(!url)("durable public leaderboard PostgreSQL", () => {
       expect(blocked.headers.get("cache-control")).toBe("no-store");
       const expire = () =>
         pool.query(
-          "UPDATE leaderboard_request_budgets SET expires_at=now()-interval '1 second'",
+          "UPDATE sessions SET claim_window=now()-interval '1 second'",
         );
       await expire();
       db = drizzle(pool, { schema });
@@ -267,8 +294,12 @@ describe.skipIf(!url)("durable public leaderboard PostgreSQL", () => {
   afterAll(async () => {
     await pool?.end();
     if (admin) {
-      await admin.query(`DROP SCHEMA "${schemaName}" CASCADE`);
-      await admin.end();
+      try {
+        if (schemaCreated)
+          await admin.query(`DROP SCHEMA "${schemaName}" CASCADE`);
+      } finally {
+        await admin.end();
+      }
     }
   });
   it.each([0, 99, 100, 101, 999, 1000, 1001])(
@@ -324,6 +355,51 @@ describe.skipIf(!url)("durable public leaderboard PostgreSQL", () => {
       );
     },
   );
+  it("retains only a compact immutable claim after its expired source game is removed", async () => {
+    const run = finished(123);
+    run.game.totalMetrics = { moves: 40, invalidMoves: 4, brokenPicks: 1 };
+    await db.insert(schema.runs).values(run);
+    // The database must overwrite forged projection fields even for internal writers.
+    await db.insert(schema.leaderboardEntries).values({
+      runId: run.id,
+      nickname: "Wedge",
+      ownerId: otherId,
+      rulesetVersion: "forged",
+      oreNuggets: 999999,
+      openedChests: 999,
+      finishedAt: new Date("2000-01-01"),
+      totalMetrics: { moves: 999, invalidMoves: 999, brokenPicks: 999 },
+    });
+    const [entry] = await db.select().from(schema.leaderboardEntries);
+    expect(entry).toMatchObject({
+      runId: run.id,
+      ownerId,
+      oreNuggets: 123,
+      openedChests: 5,
+      rulesetVersion: run.rulesetVersion,
+      totalMetrics: run.game.totalMetrics,
+    });
+    const before = await readLeaderboard(query());
+    await pool.query("DELETE FROM runs WHERE id=$1", [run.id]);
+    expect(await readLeaderboard(query())).toEqual(before);
+    expect(JSON.stringify(entry)).not.toMatch(
+      /currentLock|initialLock|moveRules|tokenHash/,
+    );
+    await expect(
+      pool.query(
+        "UPDATE leaderboard_entries SET ore_nuggets=999 WHERE run_id=$1",
+        [run.id],
+      ),
+    ).rejects.toMatchObject({ code: "23514" });
+    await expect(
+      pool.query("DELETE FROM leaderboard_entries WHERE run_id=$1", [run.id]),
+    ).rejects.toMatchObject({ code: "23514" });
+    await expect(
+      db
+        .insert(schema.leaderboardEntries)
+        .values({ runId: randomUUID(), nickname: "Missing" }),
+    ).rejects.toThrow();
+  });
   it("orders all tie breakers using server projections", async () => {
     const fixtures = [
       finished(200),
@@ -345,49 +421,46 @@ describe.skipIf(!url)("durable public leaderboard PostgreSQL", () => {
       [0, 1, 3, 4, 2].map((i) => fixtures[i].id),
     );
   });
-  it("freezes ranks across claims committed later with earlier timestamps, supports replay and changed page sizes", async () => {
+  it("reads live ranks after a new claim and allows changed page sizes", async () => {
     await seedClaims(101);
     const first = await readLeaderboard(query(25));
-    const client = await pool.connect();
+    const secondBeforeClaim = await readLeaderboard(
+      query(40, first.nextCursor),
+    );
     const late = finished(9999);
-    try {
-      await client.query("BEGIN");
-      await client.query(
-        "INSERT INTO runs (id,owner_id,version,status,ruleset_version,game) VALUES ($1,$2,1,'finished',$3,$4)",
-        [late.id, ownerId, late.rulesetVersion, JSON.stringify(late.game)],
-      );
-      await client.query(
-        "INSERT INTO leaderboard_entries(run_id,nickname,claimed_at) VALUES ($1,'Late','2020-01-01')",
-        [late.id],
-      );
-      // Another function/process uses only durable rows, never an in-memory map.
-      db = drizzle(pool, { schema });
-      const second = await readLeaderboard(query(40, first.nextCursor));
-      await client.query("COMMIT");
-      expect(await readLeaderboard(query(40, first.nextCursor))).toEqual(
-        second,
-      );
-      expect(second.entries.map((e) => e.rank)).toEqual(
-        Array.from({ length: 40 }, (_, i) => i + 26),
-      );
-      expect(second.entries.some((e) => e.runId === late.id)).toBe(false);
-      expect((await readLeaderboard(query())).entries[0].runId).toBe(late.id);
-    } finally {
-      await client.query("ROLLBACK");
-      client.release();
-    }
+    await db.insert(schema.runs).values(late);
+    await db
+      .insert(schema.leaderboardEntries)
+      .values({ runId: late.id, nickname: "Late" });
+    // A new function instance reads the same live state, with no traversal records.
+    db = drizzle(pool, { schema });
+    const secondAfterClaim = await readLeaderboard(query(40, first.nextCursor));
+    expect(secondAfterClaim.entries.map((entry) => entry.rank)).toEqual(
+      Array.from({ length: 40 }, (_, index) => index + 26),
+    );
+    expect(secondAfterClaim.entries[0].runId).toBe(first.entries[24].runId);
+    expect(
+      secondAfterClaim.entries.slice(1).map((entry) => entry.runId),
+    ).toEqual(
+      secondBeforeClaim.entries.slice(0, 39).map((entry) => entry.runId),
+    );
+    expect((await readLeaderboard(query())).entries[0].runId).toBe(late.id);
+    expect(
+      (
+        await pool.query(
+          "SELECT page_requests FROM global_game_stats WHERE id=1",
+        )
+      ).rows[0].page_requests,
+    ).toBe(0);
   });
-  it("rejects tampered, missing, expired and retired cursors over HTTP, then restarts", async () => {
+  it("rejects malformed and legacy signed cursors and permits a fresh read", async () => {
     await seedClaims(30);
-    const first = await readLeaderboard(query());
-    if (!first.nextCursor) throw new Error("Missing cursor");
-    const [id, offset, mac] = first.nextCursor.split(".");
     for (const cursor of [
-      `${id}.26.${mac}`,
-      `${id}.${offset}.${"0".repeat(64)}`,
-      `${randomUUID()}.${offset}.${mac}`,
-      `${"-".repeat(36)}.${offset}.${mac}`,
       "bad",
+      "0",
+      "1000",
+      "-1",
+      `${randomUUID()}.25.${"a".repeat(64)}`,
     ]) {
       const response = await GET(
         new Request(`https://trial.test/api/leaderboard?cursor=${cursor}`),
@@ -395,56 +468,10 @@ describe.skipIf(!url)("durable public leaderboard PostgreSQL", () => {
       expect(response.status).toBe(400);
       expect((await response.json()).error.code).toBe("INVALID_CURSOR");
     }
-    await pool.query(
-      "UPDATE leaderboard_snapshots SET ruleset_version='retired' WHERE id=$1",
-      [id],
-    );
-    await expect(readLeaderboard(query(25, first.nextCursor))).rejects.toThrow(
-      "INVALID_CURSOR",
-    );
-    await pool.query(
-      "UPDATE leaderboard_snapshots SET ruleset_version=$2,expires_at=now()-interval '1 second' WHERE id=$1",
-      [id, template.rulesetVersion],
-    );
-    await expect(readLeaderboard(query(25, first.nextCursor))).rejects.toThrow(
-      "INVALID_CURSOR",
-    );
-    const fresh = await GET(new Request("https://trial.test/api/leaderboard"));
-    expect(fresh.status).toBe(200);
-    expect((await fresh.json()).entries).toEqual(first.entries);
     expect(
-      (
-        await pool.query("SELECT id FROM leaderboard_snapshots WHERE id=$1", [
-          id,
-        ])
-      ).rowCount,
-    ).toBe(0);
-  });
-  it("rolls snapshot cleanup back when persistence fails", async () => {
-    await seedClaims(30);
-    await readLeaderboard(query());
-    await pool.query(
-      "UPDATE leaderboard_snapshots SET expires_at=now()-interval '1 second'",
-    );
-    await pool.query(
-      `CREATE FUNCTION reject_snapshot() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected failure'; END $$; CREATE TRIGGER reject_snapshot BEFORE INSERT ON leaderboard_snapshots FOR EACH ROW EXECUTE FUNCTION reject_snapshot()`,
-    );
-    try {
-      const log = vi.spyOn(console, "error").mockImplementation(() => {});
-      const response = await GET(
-        new Request("https://trial.test/api/leaderboard"),
-      );
-      expect(response.status).toBe(503);
-      log.mockRestore();
-      expect(
-        (await pool.query("SELECT count(*) FROM leaderboard_snapshots")).rows[0]
-          .count,
-      ).toBe("1");
-    } finally {
-      await pool.query(
-        "DROP TRIGGER reject_snapshot ON leaderboard_snapshots; DROP FUNCTION reject_snapshot()",
-      );
-    }
+      (await GET(new Request("https://trial.test/api/leaderboard"))).status,
+    ).toBe(200);
+    expect((await readLeaderboard(query(25, "999"))).entries).toEqual([]);
   });
   it("atomically rechecks tied cutoff races, replays and keeps multiple runs per owner", async () => {
     await seedClaims(999);

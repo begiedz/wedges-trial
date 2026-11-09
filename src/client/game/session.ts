@@ -106,6 +106,9 @@ export class GameSession {
         const id = this.confirmed?.id;
         if (id) this.publish((await this.api.read(id)).run);
         else await this.restore();
+        // A lost abandon acknowledgement may now conflict rather than replay.
+        // Once the authoritative abandoned state is loaded, finish the restart.
+        if (this.restarting) await this.restart();
         return;
       }
     }

@@ -32,9 +32,9 @@ describe("public leaderboard HTTP", () => {
     expect((await response.json()).error.code).toBe("RATE_LIMITED");
     expect(readLeaderboard).not.toHaveBeenCalled();
   });
-  it("uses separate global budgets for new traversals and cursor pages", async () => {
+  it("uses one global budget for every public page", async () => {
     for (const [query, operation] of [
-      ["", "snapshot"],
+      ["", "page"],
       ["?cursor=bad", "page"],
     ]) {
       vi.mocked(readLeaderboard).mockResolvedValueOnce({

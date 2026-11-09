@@ -1,5 +1,11 @@
 import type { RunMetricsDto, RunStatus } from "@/api/contracts";
-import type { ChestReward, Direction, LockState, RunState } from "@/game/types";
+import type {
+  ChestReward,
+  Direction,
+  LockDifficulty,
+  LockState,
+  RunState,
+} from "@/game/types";
 
 export type Metrics = RunMetricsDto;
 export type StoredGame = {
@@ -11,6 +17,16 @@ export type StoredGame = {
   totalMetrics: Metrics;
   finishedAt: string | null;
 };
+/** Terminal summaries contain no puzzle, rules, rewards or per-action history. */
+export type StoredResult = {
+  chestIndex: number;
+  lockpicks: number;
+  difficulty: LockDifficulty;
+  oreNuggets: number;
+  openedChests: number;
+  totalMetrics: Metrics;
+  finishedAt: string | null;
+};
 export type StoredRun = {
   id: string;
   ownerId: string;
@@ -18,6 +34,9 @@ export type StoredRun = {
   status: RunStatus;
   rulesetVersion: string;
   game: StoredGame;
+  result?: StoredResult | null;
+  createActionId?: string | null;
+  expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;
 };

@@ -111,20 +111,12 @@ function createMixedLock(
 
 export const MAX_GENERATION_ATTEMPTS = 12;
 
-export type GenerationDiagnostics = {
-  attempts: number;
-  searches: { found: number; budgetExhausted: number };
-  outcome: "target-met" | "below-target" | "unverified";
-  target: { min: number; max: number };
-};
-
-/** Private, ephemeral evidence for tests/benchmarks; never stored or sent in DTOs. */
-export function createLockWithDiagnostics(
+/** Return the generated lock and a legally replayable construction witness. */
+export function createLockWithSolution(
   config: DifficultyConfig,
   random: RandomSource = Math.random,
 ): {
   lock: LockState;
-  diagnostics: GenerationDiagnostics;
   solution: LockMove[];
 } {
   const minLength = Math.max(1, config.minSolutionLength ?? 1);
@@ -144,12 +136,6 @@ export function createLockWithDiagnostics(
   let bestLock = firstCandidate.boundedLock;
   let bestLength = -1;
   let bestSolution = firstCandidate.boundedSolution;
-  const diagnostics: GenerationDiagnostics = {
-    attempts: 0,
-    searches: { found: 0, budgetExhausted: 0 },
-    outcome: "unverified",
-    target: { min: minLength, max: maxLength },
-  };
   const finish = (lock: LockState, solution: LockMove[]) => {
     if (config.mixAllPlates) {
       // Independent moves commute with the core. Replace their part of the
@@ -231,13 +217,7 @@ export function createLockWithDiagnostics(
     }
     if (!verifySolution(lock, solution))
       throw new Error("Generator produced an illegal solution");
-    diagnostics.outcome =
-      lock.optimalMoves == null
-        ? "unverified"
-        : lock.optimalMoves >= minLength
-          ? "target-met"
-          : "below-target";
-    return { lock, diagnostics, solution };
+    return { lock, solution };
   };
 
   for (let attempt = 0; attempt < MAX_GENERATION_ATTEMPTS; attempt += 1) {
@@ -245,13 +225,9 @@ export function createLockWithDiagnostics(
       attempt === 0
         ? firstCandidate
         : createMixedLock(config, mixingMoves, maxLength, random);
-    diagnostics.attempts += 1;
     const search = solveLockDetailed(lock);
     if (search.kind === "unsolvable")
       throw new Error("Constructed lock is unsolvable");
-    diagnostics.searches[
-      search.kind === "found" ? "found" : "budgetExhausted"
-    ] += 1;
     const solution = search.kind === "found" ? search.solution : null;
     if (solution && solution.length >= minLength && minLength <= maxLength) {
       // Following a shortest path preserves shortest distance for its suffix.
@@ -299,7 +275,7 @@ export function createLock(
   config: DifficultyConfig,
   random: RandomSource = Math.random,
 ): LockState {
-  return createLockWithDiagnostics(config, random).lock;
+  return createLockWithSolution(config, random).lock;
 }
 
 /** Dispatch by cohort; saved runs retain their generation path and RNG consumption. */

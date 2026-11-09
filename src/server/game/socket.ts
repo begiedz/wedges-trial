@@ -1,11 +1,10 @@
-import { randomUUID } from "node:crypto";
-import type { ApiErrorResponse, MoveRequest } from "@/api/contracts";
+import type { MoveRequest } from "@/api/contracts";
 import type { SocketCommand, SocketReply } from "@/api/realtime";
 import { failureReason } from "./diagnostics";
-import { GameError } from "./errors";
+import { GameError, publicError } from "./errors";
 import { executeMoveBatch } from "./move-batch";
 import { execute, readRun } from "./service";
-import { isUuid, validateCommand } from "./validation";
+import { validateCommand } from "./validation";
 
 /** Minimal socket interface shared by Vercel and protocol tests. */
 export interface GameSocket {
@@ -20,31 +19,20 @@ export interface GameSocket {
   on(event: "close" | "error", callback: () => void): unknown;
 }
 function errorReply(error: unknown, actionId?: string): SocketReply {
-  const requestId = randomUUID();
-  const known = error instanceof GameError;
-  if (!known)
+  const failure = publicError(error);
+  if (!failure.known)
     console.error(
       JSON.stringify({
         event: "game_socket_failure",
-        requestId,
+        requestId: failure.body.error.requestId,
         reason: failureReason(error),
       }),
     );
-  const body: ApiErrorResponse["error"] = {
-    code: known ? error.code : "SERVICE_UNAVAILABLE",
-    requestId,
-  };
-  if (known && error.run)
-    Object.assign(body, {
-      runId: error.run.id,
-      currentVersion: error.run.version,
-      currentStatus: error.run.status,
-    });
   return {
     type: "error",
     actionId,
-    status: known ? error.status : 503,
-    error: body,
+    status: failure.status,
+    error: failure.body.error,
   };
 }
 export function parseSocketCommand(
@@ -194,4 +182,3 @@ export async function bindGameSocket(
     socket.close(1008, "Run unavailable");
   }
 }
-export { isUuid };

@@ -30,6 +30,11 @@ function fixture() {
   return run;
 }
 describe("authoritative domain lifecycle", () => {
+  it("does not persist generator search metadata in a new run", () => {
+    const run = newRun("run", "owner");
+    expect(run.game.state.currentLock.optimalMoves).toBeUndefined();
+    expect(run.game.initialLock.optimalMoves).toBeUndefined();
+  });
   it.each([1, 2, 3])(
     "preserves %i damage and cumulative penalties through repeated resets",
     (mistakes) => {
@@ -116,6 +121,8 @@ describe("authoritative domain lifecycle", () => {
     });
     expect(run.game.totalMetrics).toEqual({ ...metrics, moves: 9 });
     expect(run.game.state.currentLock.invalidMovesOnCurrentPick).toBe(1);
+    expect(run.game.state.currentLock.optimalMoves).toBeUndefined();
+    expect(run.game.initialLock.optimalMoves).toBeUndefined();
   });
   it("does not count unknown pins, missing rules, solved or failed moves", () => {
     const run = fixture();
@@ -328,4 +335,21 @@ it("retains tier-based ore for saved difficulty-ore runs", () => {
   expect(transition(run, "continue", {}).run.rulesetVersion).toBe(
     DIFFICULTY_ORE_RULESET_VERSION,
   );
+});
+
+it("keeps terminal summaries compact and gives active and terminal state bounded recovery windows", () => {
+  const now = new Date("2026-11-09T12:00:00.000Z");
+  const run = newRun("run", "owner", now);
+  expect(run.expiresAt.toISOString()).toBe("2026-11-16T12:00:00.000Z");
+  const abandoned = transition(run, "abandon", {}, now).run;
+  expect(abandoned.expiresAt.toISOString()).toBe("2026-11-10T12:00:00.000Z");
+  expect(abandoned.result).toEqual({
+    chestIndex: 1,
+    lockpicks: 1,
+    difficulty: publicRun(run).difficulty,
+    oreNuggets: 0,
+    openedChests: 0,
+    totalMetrics: { moves: 0, invalidMoves: 0, brokenPicks: 0 },
+    finishedAt: null,
+  });
 });
