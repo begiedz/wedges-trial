@@ -90,6 +90,7 @@ export type ContinueRunResponse = RunResponse & {
 export type AbandonRunResponse = RunResponse & { outcome: "run_abandoned" };
 
 export type ApiErrorCode =
+  | "NICKNAME_BLOCKED"
   | "INVALID_REQUEST"
   | "INVALID_PIN"
   | "INVALID_CURSOR"

@@ -228,6 +228,7 @@
       "nickname": "Pseudonim",
       "help": "1–24 znaki, bez znaków sterujących. To publiczna etykieta, nie konto.",
       "invalid": "Wpisz pseudonim o długości 1–24 znaków, bez znaków sterujących.",
+      "blocked": "Ten pseudonim zawiera niedozwolone słowo. Wybierz inny pseudonim.",
       "submit": "Zgłoś wynik",
       "submitting": "Wysyłanie…",
       "retry": "Ponów",

@@ -15,6 +15,7 @@ import {
 } from "@/server/game/persistence";
 import type { StoredRun } from "@/server/game/types";
 import { isUuid } from "@/server/game/validation";
+import { isBlockedNickname } from "./nickname-policy";
 import { qualifyRun } from "./policy";
 import { readTopRuns } from "./read";
 
@@ -111,6 +112,9 @@ export async function claimEntry(
         },
       };
     }
+    // Accepted identities replay before applying the current vocabulary.
+    if (isBlockedNickname(input.nickname))
+      throw new GameError("NICKNAME_BLOCKED", 400);
     // Serialize every claim in this cohort across owners/functions. READ COMMITTED
     // queries after this lock observe the preceding claimant's committed cutoff.
     await tx.execute(

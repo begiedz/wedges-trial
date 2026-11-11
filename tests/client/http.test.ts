@@ -2,6 +2,24 @@ import { describe, expect, it, vi } from "vitest";
 import { requestJson } from "@/client/http";
 
 describe("shared JSON requests", () => {
+  it("retains the moderation error code", async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        Response.json({ error: { code: "NICKNAME_BLOCKED" } }, { status: 400 }),
+      );
+    await expect(
+      requestJson("/api/runs/id/leaderboard-entry", { fetcher }),
+    ).rejects.toMatchObject({ status: 400, code: "NICKNAME_BLOCKED" });
+  });
+  it("retains HTTP status when an error body is not JSON", async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response("Unavailable", { status: 503 }));
+    await expect(
+      requestJson("/api/runs/current", { fetcher }),
+    ).rejects.toMatchObject({ status: 503, code: undefined });
+  });
   it("cancels an in-flight request without retrying it", async () => {
     const controller = new AbortController();
     const fetcher = vi.fn<typeof fetch>((_path, options) => {

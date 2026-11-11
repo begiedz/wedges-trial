@@ -25,3 +25,7 @@ Frontend components, dictionaries and localized pages remain unchanged. Existing
 ## Verification
 
 The final four-table model passed all 473 tests (including PostgreSQL and real socket cases), lint, typecheck and production build. The migration suite also verifies explicit cutover preserves existing data/identities without recount. Details are in the simplification plan. No selected Neon database size or production behavior was inspected. No live migration, cleanup or deployment was performed.
+
+## Nickname moderation — 2026-11-11
+
+Source now includes glin-profanity for four-language substring matching and localized, editable nickname rejection. This is the simplified policy requested by the owner; see [policy and limitations](nickname-moderation.md). No migration, historical name rewrite or deployment is implied.

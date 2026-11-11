@@ -91,6 +91,80 @@ describe.skipIf(!url)("durable public leaderboard PostgreSQL", () => {
       })),
     );
   });
+  it("rejects direct blocked claims without writes and permits correction after refresh", async () => {
+    const { token } = await bootstrap(undefined);
+    const owner = await findSession(token ?? undefined);
+    if (!owner) throw new Error("Missing session");
+    const run = finished(123, owner.id);
+    await db.insert(schema.runs).values(run);
+    const before = (
+      await pool.query("SELECT * FROM runs WHERE id=$1", [run.id])
+    ).rows;
+    const context = { params: Promise.resolve({ id: run.id }) };
+    const request = (nickname: string) =>
+      new NextRequest(
+        `https://trial.test/api/runs/${run.id}/leaderboard-entry`,
+        {
+          method: "POST",
+          headers: {
+            origin: "https://trial.test",
+            "content-type": "application/json",
+            cookie: `wedges_session=${token}`,
+          },
+          body: JSON.stringify({ actionId: randomUUID(), nickname }),
+        },
+      );
+    for (const name of ["xxFUCKxx", "kurwa", "Arschloch", "мудак"]) {
+      const rejected = await postClaim(request(name), context);
+      expect(rejected.status).toBe(400);
+      expect((await rejected.json()).error.code).toBe("NICKNAME_BLOCKED");
+    }
+    expect(
+      (await pool.query("SELECT * FROM runs WHERE id=$1", [run.id])).rows,
+    ).toEqual(before);
+    expect(await db.select().from(schema.leaderboardEntries)).toHaveLength(0);
+    db = drizzle(pool, { schema });
+    expect(await readEligibility(owner.id, run.id)).toMatchObject({
+      eligible: true,
+    });
+    const outcomes = await Promise.allSettled([
+      claimEntry(owner.id, run.id, {
+        actionId: randomUUID(),
+        nickname: "fuck",
+      }),
+      claimEntry(owner.id, run.id, {
+        actionId: randomUUID(),
+        nickname: "Клин",
+      }),
+      claimEntry(owner.id, run.id, {
+        actionId: randomUUID(),
+        nickname: "Wedge",
+      }),
+    ]);
+    expect(
+      outcomes.filter((result) => result.status === "rejected"),
+    ).toHaveLength(1);
+    expect(await db.select().from(schema.leaderboardEntries)).toHaveLength(1);
+  });
+  it("replays an accepted nickname now blocked by the policy and rejects conflicting reuse", async () => {
+    const run = finished();
+    const actionId = randomUUID();
+    await db.insert(schema.runs).values(run);
+    // An immutable historical entry accepted before this vocabulary existed.
+    await db.insert(schema.leaderboardEntries).values({
+      runId: run.id,
+      nickname: "fuck",
+      claimActionId: actionId,
+      claimedRank: 1,
+    });
+    const input = { actionId, nickname: "fuck" };
+    const original = await claimEntry(ownerId, run.id, input);
+    expect(original.body.outcome).toBe("leaderboard_claimed");
+    expect(await claimEntry(ownerId, run.id, input)).toEqual(original);
+    await expect(
+      claimEntry(ownerId, run.id, { actionId, nickname: "shit" }),
+    ).rejects.toThrow("ACTION_ID_REUSED");
+  });
   it("shares atomic budgets across adapters, bounds counts, isolates owners and resets expired windows", async () => {
     vi.stubEnv("LEADERBOARD_CLAIMS_PER_MINUTE", "2");
     try {

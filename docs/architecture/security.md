@@ -38,3 +38,5 @@ The maintenance route uses a server-only bearer credential (`CRON_SECRET`), not 
 ## Final four-table cutover
 
 Migration 0005 removes action/snapshot/quota tables. Shared admission remains in fixed session/global fields. Creation markers prevent delayed retries from recreating expired games; claims retain immutable one-claim identity. Full terminal puzzles are discarded immediately; expired summaries return 404 independently of scheduled cleanup. Existing-database migration requires explicit STORAGE_CUTOVER=1 during a controlled app switch, not an unattended build. See [rollout](data-model.md#migration-and-controlled-cutover).
+
+New nickname claims also use the [simple four-language substring blacklist](nickname-moderation.md). Accepted identities replay before the current vocabulary; rejected names remain correctable and consume no claim.

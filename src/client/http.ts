@@ -1,5 +1,8 @@
 export class TransportError extends Error {
-  constructor(public status: number) {
+  constructor(
+    public status: number,
+    public code?: "NICKNAME_BLOCKED",
+  ) {
     super("REQUEST_FAILED");
   }
 }
@@ -28,6 +31,26 @@ export async function requestJson(
           body: JSON.stringify(body),
         }),
   });
-  if (!response.ok) throw new TransportError(response.status);
+  if (!response.ok) {
+    // Only expose the code this UI handles; malformed/proxy error bodies retain
+    // the HTTP status so callers can still recover from ordinary failures.
+    let code: "NICKNAME_BLOCKED" | undefined;
+    try {
+      const body: unknown = await response.json();
+      if (
+        body &&
+        typeof body === "object" &&
+        "error" in body &&
+        body.error &&
+        typeof body.error === "object" &&
+        "code" in body.error &&
+        body.error.code === "NICKNAME_BLOCKED"
+      )
+        code = "NICKNAME_BLOCKED";
+    } catch {
+      /* An error response need not contain JSON. */
+    }
+    throw new TransportError(response.status, code);
+  }
   return response.json();
 }
