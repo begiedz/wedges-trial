@@ -1,8 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Button from "@/components/general/atoms/button";
 import { Navbar } from "@/components/general/molecules/navbar";
+import { Button } from "@/components/ui/button";
 import { useDictionary, useLocale } from "@/i18n/provider";
 import { requestNewRun } from "../../events";
 
@@ -18,7 +18,8 @@ export function GameplayNavigation() {
         pathname === `/${locale}/game`
           ? (onNavigate) => (
               <Button
-                className="justify-center w-full lg:w-auto text-center"
+                size="sm"
+                className="justify-center w-full lg:w-auto lg:shrink-0 text-center whitespace-nowrap"
                 onClick={() => {
                   requestNewRun();
                   onNavigate();

@@ -2,6 +2,7 @@ import { Anvil, InfinityIcon, Pickaxe, Puzzle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { getDictionary, hasLocale } from "@/i18n/dictionaries";
 
 const FEATURE_ICONS = [InfinityIcon, Puzzle, Pickaxe] as const;
@@ -37,26 +38,22 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
             </p>
 
             <div className="flex flex-wrap gap-4 mt-9">
-              <Link
-                href={`/${lang}/game`}
-                className="group inline-flex items-center gap-3 bg-[#d0a35e] hover:bg-transparent px-6 py-3 border border-[#d0a35e] font-bold text-background hover:text-[#e5bd7d] uppercase tracking-wider transition-colors"
-              >
-                {home.actions.play}
+              <Button asChild variant="primary" className="group">
+                <Link href={`/${lang}/game`}>
+                  {home.actions.play}
 
-                <span
-                  aria-hidden="true"
-                  className="transition-transform group-hover:translate-x-1"
-                >
-                  →
-                </span>
-              </Link>
+                  <span
+                    aria-hidden="true"
+                    className="transition-transform group-hover:translate-x-1"
+                  >
+                    →
+                  </span>
+                </Link>
+              </Button>
 
-              <Link
-                href={`/${lang}/about`}
-                className="inline-flex items-center hover:bg-foreground px-6 py-3 border border-foreground/35 hover:border-foreground font-bold text-foreground hover:text-background uppercase tracking-wider transition-colors"
-              >
-                {home.actions.discover}
-              </Link>
+              <Button asChild variant="default">
+                <Link href={`/${lang}/about`}>{home.actions.discover}</Link>
+              </Button>
             </div>
           </div>
 
@@ -187,12 +184,9 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
           {home.cta.body}
         </p>
 
-        <Link
-          href={`/${lang}/game`}
-          className="inline-flex hover:bg-[#d0a35e] mt-9 px-7 py-3 border border-[#d0a35e] font-bold text-[#e5bd7d] hover:text-background uppercase tracking-wider transition-colors"
-        >
-          {home.actions.accept}
-        </Link>
+        <Button asChild variant="accent-outline" className="mt-9">
+          <Link href={`/${lang}/game`}>{home.actions.accept}</Link>
+        </Button>
       </section>
     </main>
   );

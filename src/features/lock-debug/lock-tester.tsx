@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ActionButton } from "@/features/lock-debug/atoms/action-button";
+import { Button } from "@/components/ui/button";
 import { MetricCard } from "@/features/lock-debug/atoms/metric-card";
 import { SectionCard } from "@/features/lock-debug/atoms/section-card";
 import { PinControlCard } from "@/features/lock-debug/molecules/pin-control-card";
@@ -341,25 +341,25 @@ export function TextLockTester() {
           {t.subtitle}
         </p>
         <div className="flex flex-wrap gap-3">
-          <ActionButton onClick={startNewRun} variant="accent">
+          <Button onClick={startNewRun} variant="primary">
             {t.actions.newRun}
-          </ActionButton>
-          <ActionButton disabled={!savedRun} onClick={continueSavedRun}>
+          </Button>
+          <Button disabled={!savedRun} onClick={continueSavedRun}>
             {t.actions.continueRun}
-          </ActionButton>
-          <ActionButton
+          </Button>
+          <Button
             disabled={!run || !initialLock || run.currentLock.isFailed}
             onClick={resetLock}
           >
             {t.actions.reset}
-          </ActionButton>
-          <ActionButton
+          </Button>
+          <Button
             disabled={!run?.currentLock.isSolved}
             onClick={continueToNextChest}
             variant="success"
           >
             {t.actions.continueToNextChest}
-          </ActionButton>
+          </Button>
         </div>
         {savedRun ? (
           <p className="text-zinc-500 dark:text-zinc-400 text-sm">

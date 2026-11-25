@@ -1,4 +1,5 @@
 import { type CSSProperties, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
 
 import type { Pin as LockPin } from "@/game/types";
 
@@ -73,7 +74,9 @@ export default function Plate({
   } satisfies CSSProperties;
 
   return (
-    <button
+    <Button
+      variant="unstyled"
+      size="bare"
       ref={buttonRef}
       aria-pressed={isSelected}
       onClick={onSelect ? () => onSelect(pin.id) : undefined}
@@ -112,6 +115,6 @@ export default function Plate({
       <div className="z-10 absolute inset-0 flex justify-center items-center pointer-events-none">
         <Pin isOnTarget={isOnTarget} />
       </div>
-    </button>
+    </Button>
   );
 }

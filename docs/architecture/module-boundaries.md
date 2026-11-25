@@ -23,6 +23,8 @@ Migration sequence: inventory consumers and dependency directions; move presenta
 
 ## Adding a feature
 
+Use `components/ui/button.tsx` for shared buttons, with the home page's outlined, gold primary and gold outline styles. Use `asChild` around Next.js `Link` for button-styled navigation so it remains an anchor. Compact ghost variants serve navigation; unstyled buttons preserve image controls and puzzle geometry. Gameplay dialog actions delegate to this same primitive. Native buttons default to `type="button"`; forms opt into `type="submit"`.
+
 1. Put product-specific React UI, hooks, UI state and presentation helpers in `src/features/<name>/`; create only folders with content.
 2. Expose only components/interfaces needed by routes in one `index.ts`. Keep Next.js routing/layout/API files in `app` and preserve client directives on interactive entry components.
 3. Routes/layouts compose features and shared site UI. Features consume `client`, contracts and domain as needed, never `app` or `server`. No cross-feature imports, even via another feature's public API: compose at route level instead.

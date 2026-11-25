@@ -1,11 +1,13 @@
 import Image from "next/image";
+import Link from "next/link";
 import AIcon from "@/assets/images/icons/T_Icon_PC_A.png";
 import DIcon from "@/assets/images/icons/T_Icon_PC_D.png";
+import EscapeIcon from "@/assets/images/icons/T_Icon_PC_Escape.png";
 import RIcon from "@/assets/images/icons/T_Icon_PC_R.png";
 import WIcon from "@/assets/images/icons/T_Icon_PC_W.png";
 import SIcon from "@/assets/images/icons/T_Icon_PS_S.png";
-import { useGameDictionary } from "@/i18n/provider";
-import { ExitGameLink } from "./exit-game-link";
+import { Button } from "@/components/ui/button";
+import { useGameDictionary, useLocale } from "@/i18n/provider";
 
 type MovementProps = {
   disabled?: boolean;
@@ -32,12 +34,14 @@ function MovementButton({
   disabled,
 }: MovementButtonProps) {
   return (
-    <button
+    <Button
+      variant="unstyled"
+      size="bare"
       type="button"
       disabled={disabled}
       onClick={onClick}
       aria-label={alt}
-      className="bg-transparent p-0 border-0 appearance-none cursor-pointer disabled:opacity-40"
+      className="bg-transparent border-0 appearance-none"
     >
       <Image
         src={src}
@@ -46,7 +50,7 @@ function MovementButton({
         alt={alt}
         className="sm:size-8"
       />
-    </button>
+    </Button>
   );
 }
 
@@ -58,7 +62,9 @@ export default function Movement({
   onSelectNextPin,
   onSelectPreviousPin,
 }: MovementProps) {
-  const t = useGameDictionary().movement;
+  const dictionary = useGameDictionary();
+  const t = dictionary.movement;
+  const locale = useLocale();
   const iconSize = 64;
 
   return (
@@ -105,7 +111,22 @@ export default function Movement({
         </div>
 
         <div className="flex flex-wrap items-center gap-8">
-          <ExitGameLink control />
+          <Button asChild variant="unstyled" size="bare" className="gap-2">
+            <Link
+              href={`/${locale}`}
+              aria-label={dictionary.actions.exitGame}
+              aria-keyshortcuts="Escape"
+            >
+              <Image
+                src={EscapeIcon}
+                width={64}
+                height={64}
+                alt=""
+                className="size-16 shrink-0 object-contain sm:size-8"
+              />
+              <span>{dictionary.actions.exitGame}</span>
+            </Link>
+          </Button>
           <div className="flex items-center gap-2">
             <MovementButton
               disabled={disabled}
