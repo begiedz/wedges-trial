@@ -1,7 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import LockPickIcon from "@/assets/images/icons/items/T_ItemIcon_ItKe_Lockpick.png";
 import OreNuggetIcon from "@/assets/images/icons/items/T_ItemIcon_ItMi_Orenugget.png";
+import EscapeIcon from "@/assets/images/icons/T_Icon_PC_Escape.png";
+import SpaceIcon from "@/assets/images/icons/T_Icon_PC_Space.png";
 import {
   Dialog,
   DialogContent,
@@ -85,30 +88,23 @@ export function ChestRewardDialog({
           </p>
           <div className="flex flex-wrap gap-3">
             <DialogAction aria-keyshortcuts="Space" onClick={onContinue}>
-              <span
-                aria-hidden="true"
-                className="flex size-8 shrink-0 items-center justify-center border border-foreground/60 bg-background-secondary"
-              >
-                {/* Replace this placeholder with the supplied spacebar icon. */}
-                <svg
-                  aria-hidden="true"
-                  data-slot="spacebar-icon"
-                  viewBox="0 0 24 24"
-                  className="size-6"
-                  fill="currentColor"
-                >
-                  <path d="M3 9h3v6h12V9h3v9H3z" />
-                </svg>
-              </span>
+              <Image
+                src={SpaceIcon}
+                width={32}
+                height={32}
+                alt=""
+                className="size-8 shrink-0 object-contain"
+              />
               {t.dialogs.reward.takeAll}
             </DialogAction>
             <DialogAction onClick={() => onOpenChange(false)}>
-              <span
-                aria-hidden="true"
-                className="border border-foreground/60 px-2 py-1 text-xs"
-              >
-                {t.dialogs.closeKey}
-              </span>
+              <Image
+                src={EscapeIcon}
+                width={32}
+                height={32}
+                alt=""
+                className="size-8 shrink-0 object-contain"
+              />
               {t.dialogs.close}
             </DialogAction>
           </div>
