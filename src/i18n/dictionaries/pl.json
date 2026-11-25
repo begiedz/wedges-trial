@@ -23,7 +23,7 @@
   "home": {
     "actions": {
       "play": "Podejmij próbę",
-      "discover": "Poznaj jej historię",
+      "discover": "Poznaj historię",
       "accept": "Przyjmij wyzwanie"
     },
     "hero": {
