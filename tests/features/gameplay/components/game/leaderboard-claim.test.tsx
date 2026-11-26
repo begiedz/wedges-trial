@@ -62,6 +62,50 @@ afterEach(() => {
 
 describe("post-run nickname entry", () => {
   it.each([en, pl, de, ru])(
+    "lets a player correct a blocked nickname with localized accessible feedback",
+    async (dictionary) => {
+      vi.mocked(submitLeaderboardEntry).mockRejectedValueOnce(
+        new TransportError(400, "NICKNAME_BLOCKED"),
+      );
+      mount(dictionary);
+      const input = await screen.findByRole("textbox");
+      fireEvent.change(input, { target: { value: "fuck" } });
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: dictionary.game.leaderboardClaim.submit,
+        }),
+      );
+      const alert = await screen.findByRole("alert");
+      expect(alert.textContent).toBe(dictionary.game.leaderboardClaim.blocked);
+      expect(input.getAttribute("aria-describedby")).toContain(alert.id);
+      expect(input.getAttribute("aria-invalid")).toBe("true");
+      expect((input as HTMLInputElement).value).toBe("fuck");
+      expect(input.hasAttribute("readonly")).toBe(false);
+      vi.mocked(submitLeaderboardEntry).mockResolvedValueOnce({
+        run: finished(),
+        outcome: "leaderboard_claimed",
+        entry: {
+          runId,
+          displayName: "Diego",
+          rank: 1,
+          oreNuggets: 0,
+          openedChests: 0,
+          finishedAt: new Date(0).toISOString(),
+        },
+      });
+      fireEvent.change(input, { target: { value: "Diego" } });
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: dictionary.game.leaderboardClaim.submit,
+        }),
+      );
+      await screen.findByText(dictionary.game.leaderboardClaim.saved);
+      const calls = vi.mocked(submitLeaderboardEntry).mock.calls;
+      expect(calls[1][1].actionId).not.toBe(calls[0][1].actionId);
+      expect(calls[1][1].nickname).toBe("Diego");
+    },
+  );
+  it.each([en, pl, de, ru])(
     "localizes the qualified form and dictionary keys",
     async (dictionary) => {
       expect(Object.keys(dictionary.game.leaderboardClaim)).toEqual(

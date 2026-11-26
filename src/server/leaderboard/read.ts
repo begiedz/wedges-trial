@@ -1,35 +1,32 @@
-import { and, asc, desc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import { RULESET_VERSION } from "@/game/ruleset";
 import { getDatabase } from "@/server/db";
-import { leaderboardEntries, runs } from "@/server/db/schema";
+import { leaderboardEntries } from "@/server/db/schema";
 import type { Transaction } from "@/server/game/persistence";
 import { LEADERBOARD_SIZE } from "./policy";
 
-/** Shared bounded projection for claim qualification and public snapshot creation. */
+/** Shared bounded projection for claim qualification and public live pages. */
 export async function readTopRuns(
   db: Transaction | ReturnType<typeof getDatabase> = getDatabase(),
+  limit = LEADERBOARD_SIZE,
+  offset = 0,
 ) {
   return db
     .select({
-      runId: runs.id,
+      runId: leaderboardEntries.runId,
       nickname: leaderboardEntries.nickname,
-      oreNuggets: runs.oreNuggets,
-      openedChests: runs.openedChests,
-      finishedAt: runs.finishedAt,
+      oreNuggets: leaderboardEntries.oreNuggets,
+      openedChests: leaderboardEntries.openedChests,
+      finishedAt: leaderboardEntries.finishedAt,
     })
-    .from(runs)
-    .innerJoin(leaderboardEntries, eq(leaderboardEntries.runId, runs.id))
-    .where(
-      and(
-        eq(runs.status, "finished"),
-        eq(runs.rulesetVersion, RULESET_VERSION),
-      ),
-    )
+    .from(leaderboardEntries)
+    .where(eq(leaderboardEntries.rulesetVersion, RULESET_VERSION))
     .orderBy(
-      desc(runs.oreNuggets),
-      desc(runs.openedChests),
-      asc(runs.finishedAt),
-      asc(runs.id),
+      desc(leaderboardEntries.oreNuggets),
+      desc(leaderboardEntries.openedChests),
+      asc(leaderboardEntries.finishedAt),
+      asc(leaderboardEntries.runId),
     )
-    .limit(LEADERBOARD_SIZE);
+    .limit(Math.min(limit, LEADERBOARD_SIZE - offset))
+    .offset(offset);
 }

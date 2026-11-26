@@ -4,7 +4,7 @@ import {
   type LeaderboardClaimResponse,
   type LeaderboardQualification,
 } from "@/api/contracts";
-import { TransportError } from "./api";
+import { requestJson } from "../http";
 import { isRunDto } from "./response";
 
 function qualification(value: unknown): value is LeaderboardQualification {
@@ -33,23 +33,10 @@ async function request(
   runId: string,
   body?: LeaderboardClaimRequest,
 ): Promise<unknown> {
-  const response = await fetch(
+  return requestJson(
     `/api/runs/${encodeURIComponent(runId)}/${body ? "leaderboard-entry" : "leaderboard-eligibility"}`,
-    {
-      method: body ? "POST" : "GET",
-      credentials: "same-origin",
-      cache: "no-store",
-      signal: AbortSignal.timeout(15000),
-      ...(body
-        ? {
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-          }
-        : {}),
-    },
+    { body },
   );
-  if (!response.ok) throw new TransportError(response.status);
-  return response.json();
 }
 
 export async function getLeaderboardEligibility(

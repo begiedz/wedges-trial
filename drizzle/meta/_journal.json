@@ -29,6 +29,20 @@
       "when": 1794003457545,
       "tag": "0003_charming_the_fury",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794249846778,
+      "tag": "0004_compact-results",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794251269393,
+      "tag": "0005_minimal-storage",
+      "breakpoints": true
     }
   ]
 }

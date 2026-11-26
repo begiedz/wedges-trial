@@ -8,7 +8,7 @@ export class CommandQueue {
   pending: QueuedInput[] = [];
   constructor(public confirmed: RunDto) {}
   get view() {
-    // Older intents remain for exact replay, but must not be predicted twice.
+    // Retain original retry versions without predicting already committed inputs twice.
     return predictRun(
       this.confirmed,
       this.pending
@@ -31,7 +31,7 @@ export class CommandQueue {
     )
       return false;
     this.pending.shift();
-    // Old replay responses still drain the queue after a newer reconnect snapshot.
+    // Legacy replay responses may still arrive after a newer reconnect snapshot.
     this.accept(run);
     return true;
   }

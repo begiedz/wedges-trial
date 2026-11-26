@@ -103,12 +103,12 @@ function generateTopologyRules(
   )
     throw new RangeError("Invalid topology budget");
   const ids = Array.from({ length: config.plateCount }, (_, id) => id);
-  // Plates beyond the original four practice independently at target until
-  // their turn to join the required core; eligibility alone cannot couple them.
-  const core = shuffle(ids.slice(0, Math.max(4, coreSize)), random).slice(
-    0,
-    coreSize,
-  );
+  // Saved cohorts restrict core membership to a prefix. New runs sample all
+  // visible plates without favoring the beginning of the lock.
+  const core = shuffle(
+    config.mixAllPlates ? ids : ids.slice(0, Math.max(4, coreSize)),
+    random,
+  ).slice(0, coreSize);
   const targets = new Map(ids.map((id) => [id, new Set<number>()]));
   // A directed chain connects the core without exceeding one outgoing edge.
   for (let i = 1; i < core.length; i++) targets.get(core[i - 1])?.add(core[i]);

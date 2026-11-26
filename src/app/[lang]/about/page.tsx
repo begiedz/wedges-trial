@@ -1,6 +1,7 @@
 import { Anvil, InfinityIcon, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { getDictionary, hasLocale } from "@/i18n/dictionaries";
 
 export default async function AboutPage({
@@ -88,18 +89,12 @@ export default async function AboutPage({
         </section>
 
         <div className="mt-14 flex flex-wrap gap-4">
-          <Link
-            href={`/${lang}/game`}
-            className="border border-[#d0a35e] bg-[#d0a35e] px-6 py-3 font-bold text-background uppercase tracking-wider transition-colors hover:bg-transparent hover:text-[#e5bd7d]"
-          >
-            {dict.home.actions.play}
-          </Link>
-          <Link
-            href={`/${lang}/how-to-play`}
-            className="border border-foreground/35 px-6 py-3 font-bold uppercase tracking-wider transition-colors hover:bg-foreground hover:text-background"
-          >
-            {page.howToPlayLink}
-          </Link>
+          <Button asChild variant="primary">
+            <Link href={`/${lang}/game`}>{dict.home.actions.play}</Link>
+          </Button>
+          <Button asChild variant="default">
+            <Link href={`/${lang}/how-to-play`}>{page.howToPlayLink}</Link>
+          </Button>
         </div>
       </div>
     </main>

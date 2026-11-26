@@ -48,6 +48,8 @@ export type RunState = {
 export type DifficultyConfig = {
   /** Generation-only constraints; never trusted from requests or persisted. */
   /** Offline calibration range before an early-chest exact target is sampled. */
+  /** All visible plates eligible for coupling; independent positions sampled uniformly, including target. */
+  mixAllPlates?: boolean;
   solutionLengthRange?: readonly [number, number];
   topology?: {
     coreSize: number;

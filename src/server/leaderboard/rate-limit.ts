@@ -1,14 +1,26 @@
 import { sql } from "drizzle-orm";
 import { getDatabase } from "@/server/db";
-import { leaderboardRequestBudgets } from "@/server/db/schema";
 import { GameError } from "@/server/game/errors";
 
 const policies = {
-  // Global public budgets bound snapshot creation even without a trusted IP.
-  snapshot: { fallback: 60, env: "LEADERBOARD_SNAPSHOTS_PER_MINUTE" },
-  page: { fallback: 600, env: "LEADERBOARD_PAGES_PER_MINUTE" },
-  eligibility: { fallback: 30, env: "LEADERBOARD_ELIGIBILITY_PER_MINUTE" },
-  claim: { fallback: 10, env: "LEADERBOARD_CLAIMS_PER_MINUTE" },
+  page: {
+    fallback: 600,
+    env: "LEADERBOARD_PAGES_PER_MINUTE",
+    count: "page_requests",
+    window: "page_window",
+  },
+  eligibility: {
+    fallback: 30,
+    env: "LEADERBOARD_ELIGIBILITY_PER_MINUTE",
+    count: "eligibility_requests",
+    window: "eligibility_window",
+  },
+  claim: {
+    fallback: 10,
+    env: "LEADERBOARD_CLAIMS_PER_MINUTE",
+    count: "claim_requests",
+    window: "claim_window",
+  },
 } as const;
 
 export class LeaderboardRateLimitError extends GameError {
@@ -20,7 +32,7 @@ export class LeaderboardRateLimitError extends GameError {
 /** Admission commits separately: rejected requests and failed work consume budget. */
 export async function limitLeaderboard(
   budget:
-    | { operation: "snapshot" | "page" }
+    | { operation: "page" }
     | { operation: "eligibility" | "claim"; ownerId: string },
 ) {
   const policy = policies[budget.operation];
@@ -28,35 +40,34 @@ export async function limitLeaderboard(
   if (raw !== undefined && !/^[1-9][0-9]{0,5}$/.test(raw))
     throw new Error("Invalid leaderboard request budget configuration");
   const limit = raw === undefined ? policy.fallback : Number(raw);
-  const key = `${budget.operation}:${"ownerId" in budget ? budget.ownerId : "global"}`;
-  const table = leaderboardRequestBudgets;
-  const result = await getDatabase().transaction(async (tx) => {
-    const [row] = await tx
-      .insert(table)
-      .values({
-        key,
-        requests: 1,
-        expiresAt: sql`statement_timestamp() + interval '1 minute'`,
-      })
-      .onConflictDoUpdate({
-        target: table.key,
-        set: {
-          requests: sql`case when ${table.expiresAt} <= statement_timestamp()
-            then 1 else least(${table.requests} + 1, ${limit + 1}) end`,
-          expiresAt: sql`case when ${table.expiresAt} <= statement_timestamp()
-            then statement_timestamp() + interval '1 minute' else ${table.expiresAt} end`,
-        },
-      })
-      .returning({
-        requests: table.requests,
-        retryAfter: sql<number>`least(60, greatest(1, ceil(extract(epoch from (${table.expiresAt} - statement_timestamp())))))::integer`,
-      });
-    await tx.execute(sql`delete from leaderboard_request_budgets where key in (
-      select key from leaderboard_request_budgets where expires_at <= statement_timestamp()
-      order by expires_at limit 100 for update skip locked
-    )`);
-    return row;
-  });
-  if (result.requests > limit)
-    throw new LeaderboardRateLimitError(result.retryAfter);
+  // Identifiers come only from these fixed policies, never request data.
+  const count = sql.identifier(policy.count);
+  const window = sql.identifier(policy.window);
+  const table = sql.identifier(
+    budget.operation === "page" ? "global_game_stats" : "sessions",
+  );
+  const owner =
+    budget.operation === "page"
+      ? sql`id = 1`
+      : sql`id = ${budget.ownerId} and revoked_at is null and expires_at > statement_timestamp()`;
+  const result = await getDatabase().execute<{
+    requests: number;
+    retryAfter: number;
+  }>(sql`
+    update ${table} set
+      ${count} = case when ${window} <= statement_timestamp()
+        then 1 else least(${count} + 1, ${limit + 1}) end,
+      ${window} = case when ${window} <= statement_timestamp()
+        then statement_timestamp() + interval '1 minute' else ${window} end
+    where ${owner}
+    returning ${count} as requests,
+      least(60, greatest(1, ceil(extract(epoch from (${window} - statement_timestamp())))))::integer as "retryAfter"
+  `);
+  const row = result.rows[0];
+  if (!row) {
+    if (budget.operation !== "page")
+      throw new GameError("SESSION_REQUIRED", 401);
+    throw new Error("Missing global request budget");
+  }
+  if (row.requests > limit) throw new LeaderboardRateLimitError(row.retryAfter);
 }

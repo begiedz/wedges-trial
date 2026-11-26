@@ -5,12 +5,14 @@ import { checkSolved } from "@/game/check-solved";
 import {
   createChestLock,
   createLock,
-  createLockWithDiagnostics,
+  createLockWithSolution,
 } from "@/game/create-lock";
 import { generateRules } from "@/game/generate-rules";
 import { getLearningProgression } from "@/game/learning-progression";
 import { getDifficultyForChest } from "@/game/progress-difficulty";
 import {
+  DIFFICULTY_ORE_RULESET_VERSION,
+  LEARNING_RULESET_VERSION,
   LEGACY_RULESET_VERSION,
   SCARCE_PICKS_RULESET_VERSION,
 } from "@/game/ruleset";
@@ -95,7 +97,7 @@ describe("learning progression", () => {
       for (const seed of [1, 7, 42]) {
         const rng = random(seed);
         const config = getLearningProgression(index, rng);
-        const result = createLockWithDiagnostics(config, rng);
+        const result = createLockWithSolution(config, rng);
         const search = solveLockDetailed(result.lock);
         if (search.kind === "found" && result.lock.optimalMoves != null)
           expect(result.lock.optimalMoves).toBe(search.solution.length);
@@ -148,13 +150,12 @@ describe("learning progression", () => {
       .mockReturnValue({ kind: "budget-exhausted", visitedStates: 20000 });
     try {
       const rng = random(42);
-      const result = createLockWithDiagnostics(
+      const result = createLockWithSolution(
         getLearningProgression(9999, rng),
         rng,
       );
-      expect(result.diagnostics.outcome).toBe("unverified");
       expect(result.lock.optimalMoves).toBeNull();
-      expect(result.diagnostics.attempts).toBe(12);
+      expect(spy).toHaveBeenCalledTimes(12);
       let lock = result.lock;
       for (const move of result.solution)
         lock = applyMoveToLock(lock, move.pinId, move.direction).lock;
@@ -180,6 +181,7 @@ it("keeps the saved learning handler when the new-run default is rolled back", a
       dependencies: 6,
       tier: 3,
     });
+    expect(dispatch(17, random(42), "difficulty-ore-v1")).toEqual(learning);
     expect(dispatch(17, random(42))).toEqual(
       createLock(getDifficultyForChest(17), random(42)),
     );
@@ -204,4 +206,11 @@ it("samples early solution lengths instead of favoring the longest path in a win
   const mature = getLearningProgression(9999, () => 0);
   expect(mature.minSolutionLength).toBe(10);
   expect(mature.maxSolutionLength).toBe(16);
+});
+
+it("keeps saved difficulty-ore and learning cohorts on identical seeded generation", () => {
+  for (const index of [0, 4, 17, 29, 99, 9999])
+    expect(
+      createChestLock(index, random(42), DIFFICULTY_ORE_RULESET_VERSION),
+    ).toEqual(createChestLock(index, random(42), LEARNING_RULESET_VERSION));
 });

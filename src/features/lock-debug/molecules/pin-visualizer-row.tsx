@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import type { Pin } from "@/game/types";
 import { useDebugDictionary } from "@/i18n/provider";
 import { joinClasses } from "../utils";
@@ -21,7 +22,9 @@ export function PinVisualizerRow({
   const targetPercent = range > 0 ? ((pin.target - pin.min) / range) * 100 : 0;
 
   return (
-    <button
+    <Button
+      variant="unstyled"
+      size="bare"
       className={joinClasses(
         "grid w-full gap-3 rounded-xl border px-4 py-3 text-left transition sm:grid-cols-[72px_1fr_auto] sm:items-center",
         isSelected
@@ -66,6 +69,6 @@ export function PinVisualizerRow({
           {t.labels.target}: {pin.target}
         </p>
       </div>
-    </button>
+    </Button>
   );
 }

@@ -11,6 +11,13 @@ describe("public leaderboard query", () => {
         validateQuery(new URLSearchParams({ limit: String(limit) })),
       ).toEqual({ limit });
   });
+  it("accepts bounded live offsets", () => {
+    for (const cursor of ["1", "25", "999"])
+      expect(validateQuery(new URLSearchParams({ cursor }))).toEqual({
+        limit: 25,
+        cursor,
+      });
+  });
   it.each([
     "limit=0",
     "limit=101",
@@ -30,6 +37,11 @@ describe("public leaderboard query", () => {
   it.each([
     "",
     "x",
+    "0",
+    "01",
+    "1000",
+    "-1",
+    "1.5",
     "x".repeat(5000),
     `00000000-0000-0000-0000-000000000000.0.${"a".repeat(64)}`,
     `${"-".repeat(36)}.25.${"a".repeat(64)}`,

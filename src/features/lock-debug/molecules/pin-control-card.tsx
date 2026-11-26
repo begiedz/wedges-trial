@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import type { Pin } from "@/game/types";
 import { useDebugDictionary } from "@/i18n/provider";
 import { joinClasses } from "../utils";
@@ -41,35 +42,31 @@ export function PinControlCard({
             {t.labels.target}: {pin.target}
           </p>
         </div>
-        <button
-          className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-900 transition hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-100 dark:hover:border-zinc-500"
-          onClick={() => onSelect(pin.id)}
-          type="button"
-        >
+        <Button size="sm" onClick={() => onSelect(pin.id)} type="button">
           {t.actions.selectPin}
-        </button>
+        </Button>
       </div>
       <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
         {t.labels.range}: {pin.min}..{pin.max}
         {isOnTarget ? ` · ${t.labels.onTarget}` : ""}
       </p>
       <div className="mt-3 grid grid-cols-2 gap-2">
-        <button
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-semibold text-zinc-900 transition hover:border-zinc-400 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-100 dark:hover:border-zinc-500"
+        <Button
+          size="sm"
           disabled={isDisabled}
           onClick={() => onMove(pin.id, -1)}
           type="button"
         >
           {t.actions.moveLeft}
-        </button>
-        <button
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-semibold text-zinc-900 transition hover:border-zinc-400 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-100 dark:hover:border-zinc-500"
+        </Button>
+        <Button
+          size="sm"
           disabled={isDisabled}
           onClick={() => onMove(pin.id, 1)}
           type="button"
         >
           {t.actions.moveRight}
-        </button>
+        </Button>
       </div>
     </div>
   );

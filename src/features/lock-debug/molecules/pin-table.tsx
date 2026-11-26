@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import type { LockState } from "@/game/types";
 import { useDebugDictionary } from "@/i18n/provider";
 
@@ -50,14 +51,14 @@ export function PinTable({ lock, onSelect, selectedPinId }: PinTableProps) {
                   {pin.min}..{pin.max}
                 </td>
                 <td className="px-4 py-3">
-                  <button
-                    className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-900 transition hover:border-zinc-400 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-100 dark:hover:border-zinc-500"
+                  <Button
+                    size="sm"
                     disabled={lock.isFailed}
                     onClick={() => onSelect(pin.id)}
                     type="button"
                   >
                     {t.actions.selectPin}
-                  </button>
+                  </Button>
                 </td>
               </tr>
             );

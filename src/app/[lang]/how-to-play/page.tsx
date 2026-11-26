@@ -1,6 +1,7 @@
 import { Gamepad2, Goal, KeyRound, RotateCw } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { getDictionary, hasLocale } from "@/i18n/dictionaries";
 
 export default async function HowToPlayPage({
@@ -127,12 +128,9 @@ export default async function HowToPlayPage({
           </section>
         </div>
 
-        <Link
-          href={`/${lang}/game`}
-          className="mt-14 inline-flex border border-[#d0a35e] bg-[#d0a35e] px-6 py-3 font-bold text-background uppercase tracking-wider transition-colors hover:bg-transparent hover:text-[#e5bd7d]"
-        >
-          {dict.home.actions.play}
-        </Link>
+        <Button asChild variant="primary" className="mt-14">
+          <Link href={`/${lang}/game`}>{dict.home.actions.play}</Link>
+        </Button>
       </div>
     </main>
   );

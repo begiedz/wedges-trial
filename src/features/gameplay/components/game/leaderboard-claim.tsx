@@ -20,6 +20,7 @@ type Status =
   | "submitting"
   | "network"
   | "expired"
+  | "blocked"
   | "invalid"
   | "claimed"
   | "unavailable";
@@ -94,7 +95,7 @@ export function LeaderboardClaim({ runId }: { runId: string }) {
       if (!alive.current) return;
       if (error instanceof TransportError && error.status === 400) {
         pending.current = null;
-        setStatus("invalid");
+        setStatus(error.code === "NICKNAME_BLOCKED" ? "blocked" : "invalid");
       } else if (
         error instanceof TransportError &&
         [401, 403, 404].includes(error.status)
@@ -109,6 +110,7 @@ export function LeaderboardClaim({ runId }: { runId: string }) {
   const formVisible =
     status === "ready" ||
     status === "invalid" ||
+    status === "blocked" ||
     status === "submitting" ||
     (status === "network" && !!pending.current);
   return (
@@ -154,14 +156,18 @@ export function LeaderboardClaim({ runId }: { runId: string }) {
             onChange={(event) => setNickname(event.target.value)}
             readOnly={!!pending.current}
             autoComplete="off"
-            aria-describedby={`${id}-help`}
-            aria-invalid={status === "invalid"}
+            aria-describedby={`${id}-help${status === "invalid" || status === "blocked" ? ` ${id}-error` : ""}`}
+            aria-invalid={status === "invalid" || status === "blocked"}
             className="w-full min-w-0 border border-border bg-background px-3 py-2"
           />
           <p id={`${id}-help`} className="text-sm text-muted-foreground">
             {t.help}
           </p>
-          {status === "invalid" && <p role="alert">{t.invalid}</p>}
+          {(status === "invalid" || status === "blocked") && (
+            <p id={`${id}-error`} role="alert">
+              {status === "blocked" ? t.blocked : t.invalid}
+            </p>
+          )}
           <DialogAction type="submit" disabled={status === "submitting"}>
             {status === "submitting"
               ? t.submitting

@@ -4,6 +4,7 @@ import { ChevronDown, Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,7 +77,7 @@ export function Navbar({
   const nav = dict.nav;
   return (
     <header className="top-0 z-50 sticky bg-background/80 backdrop-blur border-border border-b w-full">
-      <div className="relative items-center grid grid-cols-[1fr_auto_1fr] mx-auto px-4 sm:px-6 h-16">
+      <div className="relative items-center grid grid-cols-[1fr_auto_1fr] lg:flex lg:justify-between lg:gap-4 mx-auto px-4 sm:px-6 h-16">
         {/* Brand */}
         <Link
           href={`/${locale}`}
@@ -96,9 +97,11 @@ export function Navbar({
               "children" in item ? (
                 <DropdownMenu key={item.key} modal={false}>
                   <DropdownMenuTrigger asChild>
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       type="button"
-                      className="group inline-flex items-center gap-2 data-[state=open]:bg-accent hover:bg-accent px-3 py-2 rounded-md font-medium text-foreground/80 data-[state=open]:text-foreground hover:text-foreground text-sm transition-colors"
+                      className="group"
                     >
                       <span
                         aria-hidden="true"
@@ -113,7 +116,7 @@ export function Navbar({
                         className="w-4 h-4 group-data-[state=open]:rotate-180 transition-transform duration-200"
                         aria-hidden="true"
                       />
-                    </button>
+                    </Button>
                   </DropdownMenuTrigger>
 
                   <DropdownMenuContent
@@ -146,13 +149,17 @@ export function Navbar({
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Link
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="sm"
                   key={item.key}
-                  href={getLocalizedHref(locale, item.href)}
-                  className="inline-flex items-center hover:bg-accent px-3 py-2 rounded-md font-medium text-foreground/80 hover:text-foreground text-sm transition-colors"
+                  className="justify-start"
                 >
-                  {nav.items[item.key]}
-                </Link>
+                  <Link href={getLocalizedHref(locale, item.href)}>
+                    {nav.items[item.key]}
+                  </Link>
+                </Button>
               ),
             )}
           </nav>
@@ -169,13 +176,14 @@ export function Navbar({
         <div className="lg:hidden flex justify-end items-center col-start-3">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 type="button"
-                className="inline-flex justify-center items-center hover:bg-accent rounded-md w-10 h-10 text-foreground transition-colors"
                 aria-label={nav.mobile.openMenu}
               >
                 <Menu className="w-5 h-5" aria-hidden="true" />
-              </button>
+              </Button>
             </SheetTrigger>
 
             <SheetContent
@@ -204,14 +212,20 @@ export function Navbar({
                       onNavigate={() => setOpen(false)}
                     />
                   ) : (
-                    <Link
+                    <Button
+                      asChild
+                      variant="ghost"
+                      size="sm"
                       key={item.key}
-                      href={getLocalizedHref(locale, item.href)}
-                      onClick={() => setOpen(false)}
-                      className="hover:bg-accent px-3 py-2 rounded-md font-medium text-foreground/80 hover:text-foreground text-sm transition-colors"
+                      className="justify-start"
                     >
-                      {nav.items[item.key]}
-                    </Link>
+                      <Link
+                        href={getLocalizedHref(locale, item.href)}
+                        onClick={() => setOpen(false)}
+                      >
+                        {nav.items[item.key]}
+                      </Link>
+                    </Button>
                   ),
                 )}
               </nav>
@@ -244,11 +258,13 @@ function MobileGroup({
 
   return (
     <div>
-      <button
+      <Button
+        variant="ghost"
+        size="sm"
         type="button"
         onClick={() => setExpanded((value) => !value)}
         aria-expanded={expanded}
-        className="flex justify-between items-center hover:bg-accent px-3 py-2 rounded-md w-full font-medium text-foreground/80 hover:text-foreground text-sm transition-colors"
+        className="w-full justify-between"
       >
         <span className="flex items-center gap-2">
           <span aria-hidden="true" className="text-base leading-none">
@@ -265,7 +281,7 @@ function MobileGroup({
           )}
           aria-hidden="true"
         />
-      </button>
+      </Button>
 
       {expanded ? (
         <ul className="flex flex-col gap-1 mt-1 ml-3 pl-3 border-border border-l">

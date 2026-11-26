@@ -228,6 +228,7 @@
       "nickname": "Spitzname",
       "help": "1–24 Zeichen, ohne Steuerzeichen. Dies ist eine öffentliche Bezeichnung, kein Konto.",
       "invalid": "Gib einen Spitznamen mit 1–24 Zeichen ohne Steuerzeichen ein.",
+      "blocked": "Dieser Spitzname enthält ein gesperrtes Wort. Wähle einen anderen Namen.",
       "submit": "Ergebnis eintragen",
       "submitting": "Wird eingetragen…",
       "retry": "Erneut versuchen",

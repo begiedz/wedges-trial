@@ -1,6 +1,6 @@
 # New-player progression proposal — issue #48 (2026-11-07)
 
-Status: **implemented locally on 2026-11-08 at the task author’s request**. The original proposal below is retained as planning history. See [implementation, measured deviations and pending acceptance](learning-progression-report.md). Human calibration remains pending. Scope: reduce difficulty spikes while preserving the current lockpick balance. Related: [issue #48](https://github.com/begiedz/wedges-trial/issues/48), [difficulty evidence](lock-validation.md), [performance evidence](lock-benchmarks.md).
+Status: **implemented locally on 2026-11-08 at the task author’s request**. The original proposal below is retained as planning history. See [implementation, measured deviations and pending acceptance](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/learning-progression-report.md). Human calibration remains pending. Scope: reduce difficulty spikes while preserving the current lockpick balance. Related: [issue #48](https://github.com/begiedz/wedges-trial/issues/48), [difficulty evidence](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/lock-validation.md), [performance evidence](https://github.com/begiedz/wedges-trial/blob/32b909d/docs/architecture/lock-benchmarks.md).
 
 ## Evidence and version boundary
 

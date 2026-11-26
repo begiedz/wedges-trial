@@ -11,12 +11,6 @@ importers:
       '@formatjs/intl-localematcher':
         specifier: ^0.8.14
         version: 0.8.14
-      '@radix-ui/react-dialog':
-        specifier: ^1.1.23
-        version: 1.1.23(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@radix-ui/react-navigation-menu':
-        specifier: ^1.2.22
-        version: 1.2.22(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@vercel/functions':
         specifier: ^3.10.5
         version: 3.10.5(ws@8.22.1)
@@ -29,6 +23,9 @@ importers:
       drizzle-orm:
         specifier: ^0.45.4
         version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)
+      glin-profanity:
+        specifier: ^4.0.1
+        version: 4.0.1(react@19.2.4)(zod@3.25.76)
       lucide-react:
         specifier: ^1.49.0
         version: 1.49.0(@types/react@19.3.0)(react@19.2.4)
@@ -56,9 +53,6 @@ importers:
       shadcn:
         specifier: ^4.21.0
         version: 4.21.0(typescript@5.9.3)
-      simple-icons:
-        specifier: ^16.33.0
-        version: 16.33.0
       tailwind-merge:
         specifier: ^3.7.0
         version: 3.7.0
@@ -2793,6 +2787,38 @@ packages:
   get-tsconfig@4.14.3:
     resolution: {integrity: sha512-++QEw4DIY7WGoukz+/+A/8dGYPT9l9yIadnmSgZ8Rjr3YVSVDipQSO9CdnJo9ePqFqUUqh+wk9uIaoiAwsiPkA==}
 
+  glin-profanity@4.0.1:
+    resolution: {integrity: sha512-SvabzeO5z3Lcdgoq30kaUrmwILVdwDpwKPvuVlyuL7dvkTLtVoiPUR23Rr9W4ZzWkqdvIFnXhxhCQ4sb6A6muA==}
+    peerDependencies:
+      '@langchain/core': '>=0.1.0'
+      '@tensorflow-models/toxicity': '>=1.2.0'
+      '@tensorflow/tfjs': '>=4.0.0'
+      '@xenova/transformers': '>=2.0.0'
+      ai: '>=3.0.0'
+      openai: '>=4.0.0'
+      react: '>=16.8.0'
+      tesseract.js: '>=5.0.0'
+      zod: '>=3.0.0'
+    peerDependenciesMeta:
+      '@langchain/core':
+        optional: true
+      '@tensorflow-models/toxicity':
+        optional: true
+      '@tensorflow/tfjs':
+        optional: true
+      '@xenova/transformers':
+        optional: true
+      ai:
+        optional: true
+      openai:
+        optional: true
+      react:
+        optional: true
+      tesseract.js:
+        optional: true
+      zod:
+        optional: true
+
   glob-parent@5.1.2:
     resolution: {integrity: sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==}
     engines: {node: '>= 6'}
@@ -3664,10 +3690,6 @@ packages:
   signal-exit@4.1.0:
     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
     engines: {node: '>=14'}
-
-  simple-icons@16.33.0:
-    resolution: {integrity: sha512-z14u6A8ngAg9mgERRsNO8YkjIMefehIpBk7A8Dz3Gd91945qFP19MLPSHgV4z8P5u/MRYd5e07OTzaDoB4d6qA==}
-    engines: {node: '>=0.12.18'}
 
   sisteransi@1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
@@ -6501,6 +6523,11 @@ snapshots:
     dependencies:
       resolve-pkg-maps: 1.0.0
 
+  glin-profanity@4.0.1(react@19.2.4)(zod@3.25.76):
+    optionalDependencies:
+      react: 19.2.4
+      zod: 3.25.76
+
   glob-parent@5.1.2:
     dependencies:
       is-glob: 4.0.3
@@ -7425,8 +7452,6 @@ snapshots:
   signal-exit@3.0.7: {}
 
   signal-exit@4.1.0: {}
-
-  simple-icons@16.33.0: {}
 
   sisteransi@1.0.5: {}
 

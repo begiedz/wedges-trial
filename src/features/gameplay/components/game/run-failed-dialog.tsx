@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { RunResultDto } from "@/api/contracts";
-import { useGameDictionary } from "@/i18n/provider";
-import { ExitGameLink } from "./exit-game-link";
+import { Button } from "@/components/ui/button";
+import { useGameDictionary, useLocale } from "@/i18n/provider";
 import { DialogAction, GameDialog } from "./game-dialog";
 import { LeaderboardClaim } from "./leaderboard-claim";
 
@@ -19,6 +20,7 @@ export function RunFailedDialog({
   onNewRun: () => void;
 }) {
   const t = useGameDictionary();
+  const locale = useLocale();
   const [claimOpen, setClaimOpen] = useState(false);
   return (
     <>
@@ -34,7 +36,9 @@ export function RunFailedDialog({
               </DialogAction>
             )}
             <DialogAction onClick={onNewRun}>{t.actions.newRun}</DialogAction>
-            <ExitGameLink />
+            <Button asChild>
+              <Link href={`/${locale}`}>{t.actions.exitGame}</Link>
+            </Button>
           </>
         }
       >
@@ -78,7 +82,9 @@ export function RunFailedDialog({
           actions={
             <>
               <DialogAction onClick={onNewRun}>{t.actions.newRun}</DialogAction>
-              <ExitGameLink />
+              <Button asChild>
+                <Link href={`/${locale}`}>{t.actions.exitGame}</Link>
+              </Button>
             </>
           }
         >

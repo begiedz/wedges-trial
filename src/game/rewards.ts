@@ -1,5 +1,5 @@
 import { LEGACY_RULESET_VERSION, RULESET_VERSION } from "@/game/ruleset";
-import type { ChestReward, RandomSource } from "@/game/types";
+import type { ChestReward, LockDifficulty, RandomSource } from "@/game/types";
 
 /** Tuning for deterministic-ore-v1; changes require a ranking cohort review. */
 export const ORE_REWARD_TUNING = {
@@ -55,6 +55,32 @@ export function getDeterministicOre(
     tuning.firstChestBase + tuning.baseIncreasePerChest * (chestNumber - 1);
   return Math.floor(
     (baseOre *
+      Math.max(
+        tuning.minimumEfficiencyTenths,
+        tuning.efficiencyTenths - invalidMoves,
+      )) /
+      tuning.efficiencyTenths,
+  );
+}
+
+/** Approved difficulty-ore-v1 bases; chest number never increases the award. */
+export const DIFFICULTY_ORE_BASE = {
+  1: 2,
+  2: 5,
+  3: 10,
+  4: 20,
+} as const satisfies Record<LockDifficulty, number>;
+
+/** Same cumulative mistake penalty and final flooring as saved ore cohorts.
+ * At Tier 1, the 40% multiplier produces zero integer nuggets after flooring.
+ */
+export function getDifficultyOre(
+  difficulty: LockDifficulty,
+  invalidMoves: number,
+): number {
+  const tuning = ORE_REWARD_TUNING;
+  return Math.floor(
+    (DIFFICULTY_ORE_BASE[difficulty] *
       Math.max(
         tuning.minimumEfficiencyTenths,
         tuning.efficiencyTenths - invalidMoves,

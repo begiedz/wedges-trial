@@ -1,8 +1,9 @@
 import { NextRequest } from "next/server";
 import { describe, expect, it, vi } from "vitest";
 import { failureReason } from "@/server/game/diagnostics";
-import { checkOrigin, handle, validateCommand } from "@/server/game/http";
-import { bootstrap, findSession } from "@/server/game/service";
+import { handle } from "@/server/game/http";
+import { bootstrap, findSession } from "@/server/game/session";
+import { checkOrigin, validateCommand } from "@/server/game/validation";
 import {
   LeaderboardRateLimitError,
   limitLeaderboard,
@@ -21,10 +22,13 @@ vi.mock("@/server/leaderboard/service", () => ({
 }));
 
 vi.mock("@/server/game/service", () => ({
-  bootstrap: vi.fn(),
   execute: vi.fn(),
-  findSession: vi.fn().mockResolvedValue(null),
   readRun: vi.fn(),
+}));
+vi.mock("@/server/game/session", () => ({
+  bootstrap: vi.fn(),
+  findSession: vi.fn().mockResolvedValue(null),
+  COOKIE_NAME: "wedges_session",
   SESSION_SECONDS: 2592000,
 }));
 const actionId = "12345678-1234-4234-8234-123456789012";

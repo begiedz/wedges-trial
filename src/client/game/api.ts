@@ -1,30 +1,16 @@
 import type { RunDto } from "@/api/contracts";
+import { requestJson } from "../http";
 import { isRunDto } from "./response";
 
-export class TransportError extends Error {
-  constructor(public status: number) {
-    super("REQUEST_FAILED");
-  }
-}
+// Existing React consumers import this error through the gameplay API.
+export { TransportError } from "../http";
+
 async function gameRequest(
   path: string,
   body?: Record<string, unknown>,
   fetcher: typeof fetch = fetch,
 ): Promise<{ run: RunDto | null; outcome?: string }> {
-  const response = await fetcher(path, {
-    method: body ? "POST" : "GET",
-    credentials: "same-origin",
-    cache: "no-store",
-    signal: AbortSignal.timeout(15000),
-    ...(body
-      ? {
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        }
-      : {}),
-  });
-  if (!response.ok) throw new TransportError(response.status);
-  const value: unknown = await response.json();
+  const value = await requestJson(path, { body, fetcher });
   if (path === "/api/players/session") {
     if (
       !value ||

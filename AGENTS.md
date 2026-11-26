@@ -13,22 +13,22 @@
 
 ## Gameplay invariants (preserve unless explicitly changed)
 
-- Primary mode: **endless**. Each chest has a randomly constructed, solvable lock; new `learning-ramp-v1` runs start with four plates and one connected pair, then grow a connected core and explicit connection budget gradually. Four to seven total plates remain eligible; tier comes from actual connections, with a nondecreasing floor (Tier 3 at chest 18). Saved runs retain their original progression.
+- Primary mode: **endless**. Each chest has a randomly constructed, solvable lock; new `all-plates-v1` runs start with four plates and one connected pair, then grow a connected core and explicit connection budget gradually. Four to seven total plates remain eligible; tier comes from actual connections, with a nondecreasing floor (Tier 3 at chest 18). The connected core is sampled uniformly from all visible plates; independent plates, including the last ones, sample all seven legal positions uniformly, including the center. Saved runs retain their original progression.
 - Players select and slide **plates** left/right beneath stationary **pins**. Each plate has seven holes and seven bounded integer positions; the middle hole is the target. Sliding one plate may slide connected plates, sometimes in the opposite direction; both directions have inverse effects.
 - An **invalid move** would push at least one affected plate outside its legal position range; it changes no plate positions.
 - A lockpick **breaks after exactly four invalid moves on that pick**. Breaking it does **not** reset the lock. A separate manual reset button restores plate positions; **reset must not restore spent picks, clear accumulated per-chest scoring penalties, or grant free durability**. Preserve regression coverage for partial damage across reset and chest continuation.
 - Player resources: **lockpicks and ore nuggets only**. Ore is the score resource. Do not silently introduce XP, energy, lives or currencies.
 - Pure, deterministic *given inputs* domain functions belong in `src/game/`, independent of React, database, network and sound.
-- New runs use `learning-ramp-v1` with the unchanged scarce-pick balance: one starting lockpick and 0/1/2-pick drops of 79%/17%/4%. Existing `scarce-picks-v1` and `deterministic-ore-v1` runs retain their original generation, inventory and drop table; the ore formula is unchanged.
-- Randomness in **lock generation** remains. **Ore rewards are deterministic** under approved deterministic-ore-v1: floor((10 + 5 * (chestNumber - 1)) * max(4, 10 - invalidMovesOnChest) / 10). Endless ore ranking is approved (ore DESC, opened chests DESC, finished time ASC, run UUID ASC); further efficiency tuning and lockpick replenishment remain **open balancing decisions**; see `docs/architecture/decisions.md` and GitHub Issues #47, #51.
+- New runs use `all-plates-v1` with the unchanged scarce-pick balance: one starting lockpick and 0/1/2-pick drops of 79%/17%/4%. Existing `learning-ramp-v1`, `scarce-picks-v1` and `deterministic-ore-v1` runs retain their original generation, inventory, drop table and chest-based ore formula.
+- Randomness in **lock generation** remains. **Ore rewards are deterministic**: new `all-plates-v1` runs use bases 2/5/10/20 for structural tiers 1–4, with floor(base * max(4, 10 - invalidMovesOnChest) / 10). Saved `difficulty-ore-v1` runs retain tier-based ore and their original generator; older cohorts retain the chest-based base 10 + 5 * (chestNumber - 1). Endless ore ranking is approved (ore DESC, opened chests DESC, finished time ASC, run UUID ASC); further efficiency tuning and lockpick replenishment remain **open balancing decisions**; see `docs/architecture/decisions.md` and GitHub Issues #47, #51.
 - Do not claim a generated lock's shortest solution is proven if `solveLock()` returns `null` because its search budget was exhausted. Do not penalize players against an unverified optimum.
 
 ## Trust boundary and persistence (implemented gameplay; ranking target)
 
 - **Server is authoritative** for game state, lock generation, moves, lockpick damage, resets, rewards, run status and leaderboard scores. The browser sends **intent/actions only** (`pinId`, direction, action ID, expected version), not trusted state or points.
-- Persist active runs and transitions in Neon. No `localStorage` / `sessionStorage` persistence of gameplay state, scores or secrets. Keep front-end state for rendering only; do not trust it on requests.
+- Persist current active-run state in Neon; do not append full puzzle responses for moves or resets. Recover stale retries by version conflict and authoritative reload. Creation and accepted nickname claims retain compact identity markers. Existing-run actions recover through their original expected versions. No `localStorage` / `sessionStorage` persistence of gameplay state, scores or secrets. Keep front-end state for rendering only; do not trust it on requests.
 - Use anonymous session credentials in **Secure, HttpOnly, SameSite cookies** to own and resume runs. No nickname or permanent public player profile is required before playing. Only a verified finished run that currently qualifies for arcade TOP 1000 may submit a nickname, with server-side validation, atomic cutoff recheck and one claim per run. A nickname is **not authentication**. Check run ownership and CSRF/origin protection on mutations.
-- Every accepted state-changing action must be **atomic, versioned, retry-safe / idempotent**; simultaneous requests must not duplicate rewards or overwrite newer state. The client must recover from stale-version conflicts and network failures.
+- Every accepted state-changing action must be **atomic, versioned, retry-safe / idempotent**; simultaneous requests must not duplicate rewards or overwrite newer state. The client must recover from stale-version conflicts and network failures. Exact historical move/reset replies are not required; retries retain their original expected version and must never silently reapply stale intent.
 - Do not expose DB credentials, session hashes, internal solver solutions or other server-only metadata to clients. Public movement rules may be sent to the owner for visual prediction; predictions never establish score or committed state. Never accept client-submitted score.
 - Record relevant run/per-chest metrics server-side (moves, invalid moves, broken picks); preserve penalties through resets and refreshes. Confirm game over and leaderboard eligibility on the server. Public ranking is per claimed finished run, not best score per player; TOP 1000 cutoff is dynamic, rechecked atomically on nickname submission. Non-qualifying historical runs may be cleaned up only under a safe retention policy.
 
@@ -63,3 +63,17 @@
 - Audio / assets: `docs/architecture/audio-assets.md`
 - Skill selection and workflow: `docs/agent/README.md`, `.agents/skills/`
 - GitHub backlog: milestone `v1.0.0 - Leaderboard`, especially Issues #27–#51; audio / licensing Issues #52–#54.
+
+## Simplification boundaries — 2026-11-09
+
+Keep maintained scope to gameplay, recovery and ranking. Do not recreate retired benchmark/Preview/survey/report infrastructure, frozen leaderboard snapshots or routine CI coverage. Live ranking pages may shift when claims arrive. Keep generator correctness checks and a compact meaningful regression suite. Historical cohorts and old data remain supported until an explicit retirement policy; no live cleanup is implied by source changes.
+
+## Minimal persistence — four tables, 2026-11-09
+
+- Final schema after 0005: sessions, runs, leaderboard_entries, global_game_stats only. Do not recreate response-history, snapshot or separate rate-budget tables.
+- Save full game JSON only while playing/chest_opened. Terminal writes immediately set it null and retain a compact summary for 24 hours. Active games expire seven days after the last accepted action. Sessions remain fixed at 30 days.
+- Keep accepted creation action/run UUID markers in sessions until session expiry to prevent resurrection after payload deletion. Existing-run actions use original-version retry/resynchronization, not exact historical replies. Accepted claims keep their action identity/rank in immutable compact entries.
+- Preserve shared admission controls using fixed counters/windows on sessions and the singleton global row. Never replace shared protection with instance-local memory.
+- Global bigint counters update atomically once on finished/abandoned transitions. Expired unfinished runs do not count as completed/abandoned. No per-move analytics records.
+- Authenticated daily cleanup physically deletes expired temporary rows; expiry is already enforced on reads/writes. CRON_SECRET stays server-only. vercel.json owns crons only, dashboard owns Build Command.
+- Existing-database 0005 requires explicit STORAGE_CUTOVER=1 with old writers stopped and new code ready. It must not run as an unattended build-time destructive migration. Rollback requires matching data backup or retaining the new code; no source revert can reconstruct discarded histories/puzzles.

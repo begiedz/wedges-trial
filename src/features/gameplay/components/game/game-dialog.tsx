@@ -8,7 +8,6 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 
 type GameDialogProps = {
   open: boolean;
@@ -54,18 +53,6 @@ export function GameDialog({
   );
 }
 
-export function DialogAction({
-  className,
-  ...props
-}: ComponentProps<typeof Button>) {
-  return (
-    <Button
-      variant="outline"
-      className={cn(
-        "h-auto min-h-12 whitespace-normal border-foreground/60 px-4 py-3 text-base shadow-[inset_0_0_0_3px_var(--background),inset_0_0_0_4px_var(--border)]",
-        className,
-      )}
-      {...props}
-    />
-  );
+export function DialogAction(props: ComponentProps<typeof Button>) {
+  return <Button {...props} />;
 }

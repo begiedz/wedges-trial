@@ -1,5 +1,5 @@
 import { LEADERBOARD_SIZE, type LeaderboardResponse } from "@/api/contracts";
-import { TransportError } from "./game/api";
+import { requestJson } from "./http";
 
 export const LEADERBOARD_PAGE_SIZE = 10;
 
@@ -11,16 +11,7 @@ export async function getLeaderboardPage(
 ): Promise<LeaderboardResponse> {
   const query = new URLSearchParams({ limit: String(LEADERBOARD_PAGE_SIZE) });
   if (cursor) query.set("cursor", cursor);
-  const response = await fetch(`/api/leaderboard?${query}`, {
-    // Protected Preview deployments require Vercel's same-origin access cookie.
-    credentials: "same-origin",
-    cache: "no-store",
-    signal: signal
-      ? AbortSignal.any([signal, AbortSignal.timeout(15000)])
-      : AbortSignal.timeout(15000),
-  });
-  if (!response.ok) throw new TransportError(response.status);
-  const value: unknown = await response.json();
+  const value = await requestJson(`/api/leaderboard?${query}`, { signal });
   if (!value || typeof value !== "object")
     throw new TypeError("INVALID_RESPONSE");
   const { entries, rulesetVersion, nextCursor } = value as LeaderboardResponse;

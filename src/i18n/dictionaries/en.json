@@ -228,6 +228,7 @@
       "nickname": "Nickname",
       "help": "1–24 characters, without control characters. This is a public label, not an account.",
       "invalid": "Enter a nickname of 1–24 characters without control characters.",
+      "blocked": "This nickname contains a blocked word. Choose another name.",
       "submit": "Submit score",
       "submitting": "Submitting…",
       "retry": "Retry",
